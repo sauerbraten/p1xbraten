@@ -1,6 +1,13 @@
 # p1xbraten
 
-This repository contains the data, docs, packages and src directories from SVN, as well as some patches and a top-level Makefile. To build my client, simply use `make` in the repository root directory. This will apply all patches, compile a client binary, and put it into bin_unix/ into .sauerbraten_svn/bin_unix/ (which is where the patched sauerbraten_unix script will look first). To undo all changes to the files tracked by SVN, use `make clean`.
+This repository contains the data, docs, packages and src directories from SVN, as well as some patches and a top-level Makefile. To build my client, set the path to your Sauerbraten directory (currently, an SVN checkout is required), then use `make`:
+
+```
+export SAUER_DIR=~/sauerbraten-code
+make
+```
+
+This will apply all patches, compile a client binary, and put it into .sauerbraten_svn/bin_unix/ (which is where the patched sauerbraten_unix script will look first). To remove the custom client from your user directory and undo all patches to the Sauer code, use `make clean`.
 
 ## Patches
 
