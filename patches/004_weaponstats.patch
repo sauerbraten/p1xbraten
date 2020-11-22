@@ -80,20 +80,19 @@ Index: src/fpsgame/fps.cpp
          if(local) damage = d->dodamage(damage);
          else if(actor==player1) return;
 
-@@ -530,9 +533,9 @@
+@@ -530,9 +533,8 @@
      ICOMMAND(getfrags, "", (), intret(player1->frags));
      ICOMMAND(getflags, "", (), intret(player1->flags));
      ICOMMAND(getdeaths, "", (), intret(player1->deaths));
 -    ICOMMAND(getaccuracy, "", (), intret((player1->totaldamage*100)/max(player1->totalshots, 1)));
 -    ICOMMAND(gettotaldamage, "", (), intret(player1->totaldamage));
 -    ICOMMAND(gettotalshots, "", (), intret(player1->totalshots));
-+    ICOMMAND(getaccuracy, "", (), floatret(accuracy(player1)));
-+    ICOMMAND(gettotaldamage, "", (), intret(gundamage(player1, DMG_DEALT)));
-+    ICOMMAND(gettotalshots, "", (), intret(gundamage(player1, DMG_POTENTIAL)));
++    ICOMMAND(gettotaldamage, "", (), intret(damage(player1, DMG_DEALT)));
++    ICOMMAND(gettotalshots, "", (), intret(damage(player1, DMG_POTENTIAL)));
 
      vector<fpsent *> clients;
 
-@@ -620,6 +623,7 @@
+@@ -620,6 +622,7 @@
              d->maxhealth = 100;
              d->lifesequence = -1;
              d->respawned = d->suicided = -2;
@@ -154,7 +153,7 @@ Index: src/fpsgame/weaponstats.cpp
 ===================================================================
 --- src/fpsgame/weaponstats.cpp	(nonexistent)
 +++ src/fpsgame/weaponstats.cpp	(working copy)
-@@ -0,0 +1,53 @@
+@@ -0,0 +1,65 @@
 +#include "game.h"
 +
 +namespace game {
@@ -184,29 +183,41 @@ Index: src/fpsgame/weaponstats.cpp
 +        target->stats.add(DMG_RECEIVED, gun, damage);
 +    }
 +
-+    int gundamage(fpsent *p, int typ, int gun)
++    #define DMG_ICOMMAND(name,ret) ICOMMAND(name, "V", (tagval *args, int numargs), { \
++        int gun = numargs > 0 ? args[0].getint() : -1; \
++        fpsent *p = numargs > 1 ? getclient(args[1].getint()) : hudplayer(); \
++        return ret;\
++    })
++
++    int damage(fpsent *p, int typ, int gun)
 +    {
 +        if(!p) p = hudplayer();
 +        return p->stats.get(typ, gun);
 +    }
++    DMG_ICOMMAND(getdamagepotential, intret(damage(p, DMG_POTENTIAL, gun)))
++    DMG_ICOMMAND(getdamagedealt, intret(damage(p, DMG_DEALT, gun)))
++    DMG_ICOMMAND(getdamagereceived, intret(damage(p, DMG_RECEIVED, gun)))
 +
 +    int damagewasted(fpsent *p, int gun)
 +    {
 +        if(!p) p = hudplayer();
 +        return p->stats.wasted(gun);
 +    }
++    DMG_ICOMMAND(getdamagewasted, intret(damagewasted(p, gun)))
 +
 +    int netdamage(fpsent *p, int gun)
 +    {
 +        if(!p) p = hudplayer();
 +        return p->stats.net(gun);
 +    }
++    DMG_ICOMMAND(getnetdamage, intret(netdamage(p, gun)))
 +
 +    float accuracy(fpsent *p, int gun)
 +    {
 +        if(!p) p = hudplayer();
 +        return p->stats.accuracy(gun);
 +    }
++    DMG_ICOMMAND(getaccuracy, floatret(accuracy(p, gun)))
 +}
 Index: src/fpsgame/weaponstats.h
 ===================================================================
@@ -220,7 +231,7 @@ Index: src/fpsgame/weaponstats.h
 +    extern void recordshot(fpsent *shooter);
 +    extern bool shouldcounthit(fpsent *attacker, fpsent *target);
 +    extern void recordhit(fpsent *attacker, fpsent *target, int damage);
-+    extern int gundamage(fpsent *p, int typ, int gun = -1);
++    extern int damage(fpsent *p, int typ, int gun = -1);
 +    extern int damagewasted(fpsent *p, int gun = -1);
 +    extern int netdamage(fpsent *p, int gun = -1);
 +    extern float accuracy(fpsent *p, int gun = -1);

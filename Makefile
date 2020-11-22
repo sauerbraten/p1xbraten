@@ -8,14 +8,14 @@ all: check-env
 	${PATCH} < patches/001_wayland.patch
 	$(PATCH) < patches/002_homedir.patch
 	$(PATCH) < patches/003_moviehud.patch
-	$(PATCH) < patches/004_stats.patch
+	$(PATCH) < patches/004_weaponstats.patch
 	cd $(SAUER_DIR)/src && make client
 	mkdir -p $(SAUER_USER_DIR)/bin_unix
 	mv $(SAUER_DIR)/src/sauer_client $(SAUER_USER_DIR)/bin_unix/native_client
 
 clean: check-env
 	rm -f $(SAUER_USER_DIR)/bin_unix/native_client
-	$(PATCH) --reverse < patches/004_stats.patch
+	$(PATCH) --reverse < patches/004_weaponstats.patch
 	$(PATCH) --reverse < patches/003_moviehud.patch
 	$(PATCH) --reverse < patches/002_homedir.patch
 	$(PATCH) --reverse < patches/001_wayland.patch
