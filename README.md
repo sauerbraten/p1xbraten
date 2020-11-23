@@ -1,13 +1,14 @@
 # p1xbraten
 
-This repository contains my patches for the next Sauerbraten release. To build my client, set the path to your Sauerbraten directory (currently, an SVN checkout is required), then use `make`:
+This repository contains my patches for the next Sauerbraten release. To build my client, set the path to your Sauerbraten directory (currently, an SVN checkout is required), then use `make` and `make install`:
 
 ```
 export SAUER_DIR=~/sauerbraten-code
 make
+make install
 ```
 
-This will apply all patches, compile a client binary, and put it into .sauerbraten_svn/bin_unix/ (which is where the patched sauerbraten_unix script will look first). To remove the custom client from your user directory and undo all patches to the Sauer code, use `make clean`.
+`make` will apply all patches and run `make` inside SAUER_DIR, `make install` will put the compiled binary into .sauerbraten_svn/bin_unix/ (which is where the patched sauerbraten_unix script will look first). To remove the custom client from your user directory, use `make uninstall`, to undo all patches to the Sauer code, use `make undo-patches`. `make purge` will run `make uninstall`, `make undo-patches` and run `make clean` inside SAUER_DIR.
 
 ## Patches
 
