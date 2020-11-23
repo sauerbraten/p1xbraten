@@ -302,3 +302,56 @@ Index: src/fpsgame/weaponstats_type.h
 +};
 +
 +#endif
+Index: src/fpsgame/scoreboard.cpp
+===================================================================
+--- src/fpsgame/scoreboard.cpp	(revision 6295)
++++ src/fpsgame/scoreboard.cpp	(working copy)
+@@ -14,6 +14,9 @@
+     VARP(showconnecting, 0, 0, 1);
+     VARP(hidefrags, 0, 1, 1);
+     VARP(showdeaths, 0, 0, 1);
++    VARP(showkpd, 0, 0, 1);
++    VARP(showaccuracy, 0, 0, 1);
++    VARP(showdamage, 0, 0, 1);
+
+     static hashset<teaminfo> teaminfos;
+
+@@ -258,6 +261,38 @@
+                 g.poplist();
+             }
+
++            if(showkpd)
++            {
++                g.pushlist();
++                g.strut(5);
++                g.text("kpd", fgcolor);
++                loopscoregroup(o, g.textf("%.1f", 0xFFFFDD, NULL, (float)o->frags/max(1, o->deaths)));
++                g.poplist();
++            }
++
++            if(showaccuracy)
++            {
++                g.pushlist();
++                g.strut(5);
++                g.text("acc", fgcolor);
++                loopscoregroup(o, g.textf("%.0f%%", 0xFFFFDD, NULL, accuracy(o)));
++                g.poplist();
++            }
++
++            if(showdamage)
++            {
++                g.pushlist();
++                g.strut(6);
++                g.text("dd", fgcolor);
++                loopscoregroup(o, {
++                    float dmg = (float)damage(o, DMG_DEALT);
++                    const char *fmt = "%.0f";
++                    if(dmg > 1000.0f) { fmt = "%.1fk"; dmg = dmg/1000.0f; }
++                    g.textf(fmt, 0xFFFFDD, NULL, dmg);
++                });
++                g.poplist();
++            }
++
+             g.pushlist();
+             g.text("name", fgcolor);
+             g.strut(12);

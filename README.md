@@ -28,8 +28,16 @@ This will apply all patches, compile a client binary, and put it into .sauerbrat
 ### [weaponstats.patch](./patches/004_weaponstats.patch)
 
 - enables detailed per-weapon damage stats recording
-- adds `getdamagepotential`, `getdamagedealt`, `getdamagereceived` commands
-- adds `getdamagewasted` (= potential - dealt) command
-- adds `getnetdamage` (= dealt - received) command
-- all of these commands (as well as `getaccuracy`) default to showing your own stats across all weapons
-- however, they all take two optional integer arguments to query by weapon and player: `/<cmd> [weapon] [cn]` (use -1 to query damage across all weapons)
+- adds damage-related cubescript commands:
+    - `getdamagepotential`
+    - `getdamagedealt`
+    - `getdamagereceived`
+    - `getdamagewasted` (= potential - dealt)
+    - `getnetdamage` (= dealt - received)
+
+    all of these commands (as well as `getaccuracy`) default to showing your own stats across all weapons. however, they all take two optional integer arguments to query by weapon and player: `/<cmd> [weapon] [cn]` (use -1 to query damage across all weapons)
+
+- adds scoreboard toggles:
+    - `showkpd`: when 1, shows the players' frags/death ratio
+    - `showaccuracy`: when 1, shows the players' overall accuracy
+    - `showdamage`: when 1, shows the players' overall damage dealt
