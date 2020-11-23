@@ -1,6 +1,8 @@
 # p1xbraten
 
-This repository contains my patches for the next Sauerbraten release. To build my client, set the path to your Sauerbraten directory (currently, an SVN checkout is required), then use `make` and `make install`:
+This repository contains the source for my client mod, as well as the patches applied to the vanilla source to get there. To build, just run `make client` inside the src/ directory.
+
+To build my client using fresh vanilla sources, set the path to your Sauerbraten directory (currently, an SVN checkout is required), then use `make` and `make install`:
 
 ```
 export SAUER_DIR=~/sauerbraten-code
