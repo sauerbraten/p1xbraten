@@ -312,7 +312,7 @@ Index: src/fpsgame/scoreboard.cpp
      VARP(showdeaths, 0, 0, 1);
 +    VARP(showkpd, 0, 0, 1);
 +    VARP(showaccuracy, 0, 0, 1);
-+    VARP(showdamage, 0, 0, 1);
++    VARP(showdamage, 0, 0, 2);
 
      static hashset<teaminfo> teaminfos;
 
@@ -344,9 +344,9 @@ Index: src/fpsgame/scoreboard.cpp
 +                g.strut(6);
 +                g.text("dd", fgcolor);
 +                loopscoregroup(o, {
-+                    float dmg = (float)damage(o, DMG_DEALT);
++                    float dmg = (float) showdamage == 1 ? damage(o, DMG_DEALT) : netdamage(o);
 +                    const char *fmt = "%.0f";
-+                    if(dmg > 1000.0f) { fmt = "%.1fk"; dmg = dmg/1000.0f; }
++                    if(abs(dmg) > 1000.0f) { fmt = "%.1fk"; dmg = dmg/1000.0f; }
 +                    g.textf(fmt, 0xFFFFDD, NULL, dmg);
 +                });
 +                g.poplist();

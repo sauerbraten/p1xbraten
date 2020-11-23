@@ -40,4 +40,4 @@ This will apply all patches, compile a client binary, and put it into .sauerbrat
 - adds scoreboard toggles:
     - `showkpd`: when 1, shows the players' frags/death ratio
     - `showaccuracy`: when 1, shows the players' overall accuracy
-    - `showdamage`: when 1, shows the players' overall damage dealt
+    - `showdamage`: when 1, shows the players' overall damage dealt; when 2, shows the players' overall net damage (= dealt - received)
