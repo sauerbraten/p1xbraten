@@ -33,7 +33,7 @@ clean-sauer: check-env
 
 purge: uninstall undo-patches clean-sauer
 
-update-src: check-env clean-sauer
+update-src: build clean-sauer
 	rm --recursive --force src/
 	rsync --recursive --times --exclude=".*" $(SAUER_DIR)/src .
 

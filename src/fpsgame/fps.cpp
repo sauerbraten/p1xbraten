@@ -397,7 +397,7 @@ namespace game
     {
         if((d->state!=CS_ALIVE && d->state != CS_LAGGED && d->state != CS_SPAWNING) || intermission) return;
 
-        recordhit(actor, d, damage);
+        recorddamage(actor, d, damage);
 
         if(local) damage = d->dodamage(damage);
         else if(actor==player1) return;
@@ -533,8 +533,8 @@ namespace game
     ICOMMAND(getfrags, "", (), intret(player1->frags));
     ICOMMAND(getflags, "", (), intret(player1->flags));
     ICOMMAND(getdeaths, "", (), intret(player1->deaths));
-    ICOMMAND(gettotaldamage, "", (), intret(damage(player1, DMG_DEALT)));
-    ICOMMAND(gettotalshots, "", (), intret(damage(player1, DMG_POTENTIAL)));
+    ICOMMAND(gettotaldamage, "", (), intret(playerdamage(player1, DMG_DEALT)));
+    ICOMMAND(gettotalshots, "", (), intret(playerdamage(player1, DMG_POTENTIAL)));
 
     vector<fpsent *> clients;
 

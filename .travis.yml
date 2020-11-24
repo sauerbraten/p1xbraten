@@ -1,0 +1,21 @@
+os: linux
+dist: bionic
+language: cpp
+compiler: clang
+before_install: sudo apt-get install libsdl2-dev libsdl2-mixer-dev libsdl2-image-dev zlib1g-dev binutils
+script:
+  - cd src
+  - make client
+  - strip sauer_client
+  - cd ..
+before_deploy:
+  - mv src/sauer_client linux_64_client
+deploy:
+  provider: releases
+  api_key:
+    secure: "UaYEZk+Ve/Nn5fYhwors1dF3DjIxkVayuZmft8XFKhcResZO6yvQ+jeG6xpK4MgdFJ0GBdcXF1vkky7JkxioHQsVPl84a/NNH+eJysKlqRjABuOH4w7BaALZh0wWG2rOINOIvLZl0Pboj1MzvK4IA8CI1tEAZWkq/1ggDYycaObJvJjfa3vmikGQxw12abmIcEwIFn39CpakyIiq5erhypWZo46r46u1VNgy7eXNHg5FjgSD7UQRjns1uCC2NK85/ZPUiup69c2zdQzntNyFvlLgRQU/u82J0lLySalj2X+KjG5XnzKDkxV1s4QSidp6IFCyKOVBHsoRpnB80QgXdWSY+OO9yfCUuqzX31HQRksDTJ5JO5AKEV4l2RN/6sPFA9mKgs8OZx0Fq/MYvDhH1DWWHNiK6ufDyK9yUnACfxW5O5C5AabtiaS8IiIhXvW0kbv9O1tZXMbMCNIf8KwghP1o35NgyP/jvTk1V/BCzs0aqj5goiUgFUcmltlFS0toEnIjZJnXlxCNsbs3cpTPZDCCMiH63RUM+ZirOF0ADeUCoTK43eAV/m3p7yT5TfSodvlyMJLxZ37MIcrLlLwVB+bsUAu4ddgFPwXQatH++axsEHMfLxGedBdjpFcb1y+PM6ZQK8ZpopaVwwKDo/DcmP1/Ww0WMIwRwTM6iIZLZmg="
+  file: 'linux_64_client'
+  skip_cleanup: true
+  overwrite: true
+  on:
+    tags: true

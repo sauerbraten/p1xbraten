@@ -1,7 +1,7 @@
 #include "game.h"
 
 namespace game {
-    void recordshot(fpsent *shooter)
+    void recordpotentialdamage(fpsent *shooter)
     {
         if(!shooter) return;
         int gun = shooter->gunselect;
@@ -9,14 +9,14 @@ namespace game {
         shooter->stats.add(DMG_POTENTIAL, gun, potentialdamage);
     }
 
-    bool shouldcounthit(fpsent *attacker, fpsent *target)
+    bool shouldcountdamage(fpsent *attacker, fpsent *target)
     {
         return (attacker != target) && !isteam(attacker->team, target->team);
     }
 
-    void recordhit(fpsent *attacker, fpsent *target, int damage)
+    void recorddamage(fpsent *attacker, fpsent *target, int damage)
     {
-        if(!shouldcounthit(attacker, target)) return;
+        if(!shouldcountdamage(attacker, target)) return;
         int gun = attacker->gunselect;
         // try to fix gun used to deal the damage
         if(gun == GUN_RL || gun == GUN_GL || damage != guns[gun].damage * (attacker->quadmillis ? 4 : 1))
@@ -33,33 +33,33 @@ namespace game {
         return ret;\
     })
 
-    int damage(fpsent *p, int typ, int gun)
+    int playerdamage(fpsent *p, int typ, int gun)
     {
         if(!p) p = hudplayer();
         return p->stats.get(typ, gun);
     }
-    DMG_ICOMMAND(getdamagepotential, intret(damage(p, DMG_POTENTIAL, gun)))
-    DMG_ICOMMAND(getdamagedealt, intret(damage(p, DMG_DEALT, gun)))
-    DMG_ICOMMAND(getdamagereceived, intret(damage(p, DMG_RECEIVED, gun)))
+    DMG_ICOMMAND(getdamagepotential, intret(playerdamage(p, DMG_POTENTIAL, gun)))
+    DMG_ICOMMAND(getdamagedealt, intret(playerdamage(p, DMG_DEALT, gun)))
+    DMG_ICOMMAND(getdamagereceived, intret(playerdamage(p, DMG_RECEIVED, gun)))
 
-    int damagewasted(fpsent *p, int gun)
+    int playerdamagewasted(fpsent *p, int gun)
     {
         if(!p) p = hudplayer();
         return p->stats.wasted(gun);
     }
-    DMG_ICOMMAND(getdamagewasted, intret(damagewasted(p, gun)))
+    DMG_ICOMMAND(getdamagewasted, intret(playerdamagewasted(p, gun)))
 
-    int netdamage(fpsent *p, int gun)
+    int playernetdamage(fpsent *p, int gun)
     {
         if(!p) p = hudplayer();
         return p->stats.net(gun);
     }
-    DMG_ICOMMAND(getnetdamage, intret(netdamage(p, gun)))
+    DMG_ICOMMAND(getnetdamage, intret(playernetdamage(p, gun)))
 
-    float accuracy(fpsent *p, int gun)
+    float playeraccuracy(fpsent *p, int gun)
     {
         if(!p) p = hudplayer();
         return p->stats.accuracy(gun);
     }
-    DMG_ICOMMAND(getaccuracy, floatret(accuracy(p, gun)))
+    DMG_ICOMMAND(getaccuracy, floatret(playeraccuracy(p, gun)))
 }

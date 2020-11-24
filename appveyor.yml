@@ -1,0 +1,15 @@
+version: 1.0.{build}
+configuration: Release
+platform: x64
+build:
+  project: src/vcpp/sauerbraten.vcxproj
+  verbosity: minimal
+artifacts:
+- path: bin64/sauerbraten.exe
+deploy:
+- provider: GitHub
+  auth_token:
+    secure: CFYvYuxU2ihMXihnUfV4covPTRzzKgbgVk/I+ZEqVu39uLIJlMAGqhNXfGm1BNEv
+  force_update: true
+  on:
+    APPVEYOR_REPO_TAG: true

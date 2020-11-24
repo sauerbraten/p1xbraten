@@ -57,7 +57,7 @@ Index: src/fpsgame/client.cpp
                  s->lastaction = lastmillis;
                  s->lastattackgun = s->gunselect;
                  shoteffects(s->gunselect, from, to, s, false, id, prevaction);
-+                recordshot(s);
++                recordpotentialdamage(s);
                  break;
              }
 
@@ -75,7 +75,7 @@ Index: src/fpsgame/fps.cpp
      {
          if((d->state!=CS_ALIVE && d->state != CS_LAGGED && d->state != CS_SPAWNING) || intermission) return;
 
-+        recordhit(actor, d, damage);
++        recorddamage(actor, d, damage);
 +
          if(local) damage = d->dodamage(damage);
          else if(actor==player1) return;
@@ -87,8 +87,8 @@ Index: src/fpsgame/fps.cpp
 -    ICOMMAND(getaccuracy, "", (), intret((player1->totaldamage*100)/max(player1->totalshots, 1)));
 -    ICOMMAND(gettotaldamage, "", (), intret(player1->totaldamage));
 -    ICOMMAND(gettotalshots, "", (), intret(player1->totalshots));
-+    ICOMMAND(gettotaldamage, "", (), intret(damage(player1, DMG_DEALT)));
-+    ICOMMAND(gettotalshots, "", (), intret(damage(player1, DMG_POTENTIAL)));
++    ICOMMAND(gettotaldamage, "", (), intret(playerdamage(player1, DMG_DEALT)));
++    ICOMMAND(gettotalshots, "", (), intret(playerdamage(player1, DMG_POTENTIAL)));
 
      vector<fpsent *> clients;
 
@@ -145,7 +145,7 @@ Index: src/fpsgame/weapon.cpp
  		d->gunwait = guns[d->gunselect].attackdelay;
  		if(d->gunselect == GUN_PISTOL && d->ai) d->gunwait += int(d->gunwait*(((101-d->skill)+rnd(111-d->skill))/100.f));
          d->totalshots += guns[d->gunselect].damage*(d->quadmillis ? 4 : 1)*guns[d->gunselect].rays;
-+        recordshot(d);
++        recordpotentialdamage(d);
      }
 
      void adddynlights()
@@ -157,7 +157,7 @@ Index: src/fpsgame/weaponstats.cpp
 +#include "game.h"
 +
 +namespace game {
-+    void recordshot(fpsent *shooter)
++    void recordpotentialdamage(fpsent *shooter)
 +    {
 +        if(!shooter) return;
 +        int gun = shooter->gunselect;
@@ -165,14 +165,14 @@ Index: src/fpsgame/weaponstats.cpp
 +        shooter->stats.add(DMG_POTENTIAL, gun, potentialdamage);
 +    }
 +
-+    bool shouldcounthit(fpsent *attacker, fpsent *target)
++    bool shouldcountdamage(fpsent *attacker, fpsent *target)
 +    {
 +        return (attacker != target) && !isteam(attacker->team, target->team);
 +    }
 +
-+    void recordhit(fpsent *attacker, fpsent *target, int damage)
++    void recorddamage(fpsent *attacker, fpsent *target, int damage)
 +    {
-+        if(!shouldcounthit(attacker, target)) return;
++        if(!shouldcountdamage(attacker, target)) return;
 +        int gun = attacker->gunselect;
 +        // try to fix gun used to deal the damage
 +        if(gun == GUN_RL || gun == GUN_GL || damage != guns[gun].damage * (attacker->quadmillis ? 4 : 1))
@@ -189,35 +189,35 @@ Index: src/fpsgame/weaponstats.cpp
 +        return ret;\
 +    })
 +
-+    int damage(fpsent *p, int typ, int gun)
++    int playerdamage(fpsent *p, int typ, int gun)
 +    {
 +        if(!p) p = hudplayer();
 +        return p->stats.get(typ, gun);
 +    }
-+    DMG_ICOMMAND(getdamagepotential, intret(damage(p, DMG_POTENTIAL, gun)))
-+    DMG_ICOMMAND(getdamagedealt, intret(damage(p, DMG_DEALT, gun)))
-+    DMG_ICOMMAND(getdamagereceived, intret(damage(p, DMG_RECEIVED, gun)))
++    DMG_ICOMMAND(getdamagepotential, intret(playerdamage(p, DMG_POTENTIAL, gun)))
++    DMG_ICOMMAND(getdamagedealt, intret(playerdamage(p, DMG_DEALT, gun)))
++    DMG_ICOMMAND(getdamagereceived, intret(playerdamage(p, DMG_RECEIVED, gun)))
 +
-+    int damagewasted(fpsent *p, int gun)
++    int playerdamagewasted(fpsent *p, int gun)
 +    {
 +        if(!p) p = hudplayer();
 +        return p->stats.wasted(gun);
 +    }
-+    DMG_ICOMMAND(getdamagewasted, intret(damagewasted(p, gun)))
++    DMG_ICOMMAND(getdamagewasted, intret(playerdamagewasted(p, gun)))
 +
-+    int netdamage(fpsent *p, int gun)
++    int playernetdamage(fpsent *p, int gun)
 +    {
 +        if(!p) p = hudplayer();
 +        return p->stats.net(gun);
 +    }
-+    DMG_ICOMMAND(getnetdamage, intret(netdamage(p, gun)))
++    DMG_ICOMMAND(getnetdamage, intret(playernetdamage(p, gun)))
 +
-+    float accuracy(fpsent *p, int gun)
++    float playeraccuracy(fpsent *p, int gun)
 +    {
 +        if(!p) p = hudplayer();
 +        return p->stats.accuracy(gun);
 +    }
-+    DMG_ICOMMAND(getaccuracy, floatret(accuracy(p, gun)))
++    DMG_ICOMMAND(getaccuracy, floatret(playeraccuracy(p, gun)))
 +}
 Index: src/fpsgame/weaponstats.h
 ===================================================================
@@ -228,13 +228,13 @@ Index: src/fpsgame/weaponstats.h
 +#define __WEAPONSTATS_H__
 +
 +namespace game {
-+    extern void recordshot(fpsent *shooter);
-+    extern bool shouldcounthit(fpsent *attacker, fpsent *target);
-+    extern void recordhit(fpsent *attacker, fpsent *target, int damage);
-+    extern int damage(fpsent *p, int typ, int gun = -1);
-+    extern int damagewasted(fpsent *p, int gun = -1);
-+    extern int netdamage(fpsent *p, int gun = -1);
-+    extern float accuracy(fpsent *p, int gun = -1);
++    extern void recordpotentialdamage(fpsent *shooter);
++    extern bool shouldcountdamage(fpsent *attacker, fpsent *target);
++    extern void recorddamage(fpsent *attacker, fpsent *target, int damage);
++    extern int playerdamage(fpsent *p, int typ, int gun = -1);
++    extern int playerdamagewasted(fpsent *p, int gun = -1);
++    extern int playernetdamage(fpsent *p, int gun = -1);
++    extern float playeraccuracy(fpsent *p, int gun = -1);
 +}
 +
 +#endif
@@ -334,7 +334,7 @@ Index: src/fpsgame/scoreboard.cpp
 +                g.pushlist();
 +                g.strut(5);
 +                g.text("acc", fgcolor);
-+                loopscoregroup(o, g.textf("%.0f%%", 0xFFFFDD, NULL, accuracy(o)));
++                loopscoregroup(o, g.textf("%.0f%%", 0xFFFFDD, NULL, playeraccuracy(o)));
 +                g.poplist();
 +            }
 +
@@ -344,9 +344,9 @@ Index: src/fpsgame/scoreboard.cpp
 +                g.strut(6);
 +                g.text("dd", fgcolor);
 +                loopscoregroup(o, {
-+                    float dmg = (float) showdamage == 1 ? damage(o, DMG_DEALT) : netdamage(o);
++                    float dmg = (float) showdamage == 1 ? playerdamage(o, DMG_DEALT) : playernetdamage(o);
 +                    const char *fmt = "%.0f";
-+                    if(abs(dmg) > 1000.0f) { fmt = "%.1fk"; dmg = dmg/1000.0f; }
++                    if(fabs(dmg) > 1000.0f) { fmt = "%.1fk"; dmg = dmg/1000.0f; }
 +                    g.textf(fmt, 0xFFFFDD, NULL, dmg);
 +                });
 +                g.poplist();

@@ -1502,7 +1502,7 @@ namespace game
                 s->lastaction = lastmillis;
                 s->lastattackgun = s->gunselect;
                 shoteffects(s->gunselect, from, to, s, false, id, prevaction);
-                recordshot(s);
+                recordpotentialdamage(s);
                 break;
             }
 
