@@ -57,11 +57,11 @@ ifneq (,$(STRIP))
   STRIP= $(TOOLCHAIN)strip
 endif
 endif
-OSXMIN= 10.6
+OSXMIN= 10.9
 override CC+= -arch x86_64 -mmacosx-version-min=$(OSXMIN)
 override CXX+= -arch x86_64 -mmacosx-version-min=$(OSXMIN)
 CLIENT_INCLUDES= $(INCLUDES) -Iinclude
-CLIENT_LIBS= -Fxcode/Frameworks -framework SDL2 -framework SDL2_image
+CLIENT_LIBS= -F../sauerbraten.app/Contents/Frameworks/ -framework SDL2 -framework SDL2_image
 CLIENT_LIBS+= -framework SDL2_mixer -framework CoreAudio -framework AudioToolbox
 CLIENT_LIBS+= -framework AudioUnit -framework OpenGL -framework Cocoa -lz -Lenet -lenet
 else
@@ -165,7 +165,7 @@ MASTER_OBJS= \
 SERVER_MASTER_OBJS= $(SERVER_OBJS) $(filter-out $(SERVER_OBJS),$(MASTER_OBJS))
 
 ifneq (,$(findstring DARWIN,$(PLATFORM)))
-CLIENT_OBJS+= xcode/macutils.o xcode/main.o xcode/Launcher.o
+CLIENT_OBJS+= macos/macutils.o macos/SDLMain.o
 
 %.o: %.mm
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
@@ -209,10 +209,12 @@ server: $(SERVER_OBJS)
 master: $(MASTER_OBJS)
 	$(CXX) $(CXXFLAGS) -o $(WINBIN)/sauer_master.exe $(MASTER_OBJS) $(MASTER_LIBS)
 
-install: all
 else
 client:	libenet $(CLIENT_OBJS)
 	$(CXX) $(CXXFLAGS) -o sauer_client $(CLIENT_OBJS) $(CLIENT_LIBS)
+ifneq (,$(findstring DARWIN,$(PLATFORM)))
+	install_name_tool -add_rpath @executable_path/../Frameworks sauer_client
+endif
 
 server:	libenet $(SERVER_OBJS)
 	$(CXX) $(CXXFLAGS) -o sauer_server $(SERVER_OBJS) $(SERVER_LIBS)  
@@ -226,12 +228,20 @@ shared/cube2font.o: shared/cube2font.c
 cube2font: shared/cube2font.o
 	$(CXX) $(CXXFLAGS) -o cube2font shared/cube2font.o `freetype-config --libs` -lz
 
+ifneq (,$(findstring DARWIN,$(PLATFORM)))
+install: client
+	cp sauer_client	../sauerbraten.app/Contents/MacOS/sauerbraten_universal
+ifneq (,$(STRIP))
+	$(STRIP) ../sauerbraten.app/Contents/MacOS/sauerbraten_universal
+endif
+else
 install: all
 	cp sauer_client	../bin_unix/$(PLATFORM_PREFIX)_client
 	cp sauer_server	../bin_unix/$(PLATFORM_PREFIX)_server
 ifneq (,$(STRIP))
 	$(STRIP) ../bin_unix/$(PLATFORM_PREFIX)_client
 	$(STRIP) ../bin_unix/$(PLATFORM_PREFIX)_server
+endif
 endif
 endif
 

@@ -1,0 +1,2159 @@
+Index: src/Makefile
+===================================================================
+--- src/Makefile	(revision 6328)
++++ src/Makefile	(working copy)
+@@ -57,11 +57,11 @@
+   STRIP= $(TOOLCHAIN)strip
+ endif
+ endif
+-OSXMIN= 10.6
++OSXMIN= 10.9
+ override CC+= -arch x86_64 -mmacosx-version-min=$(OSXMIN)
+ override CXX+= -arch x86_64 -mmacosx-version-min=$(OSXMIN)
+ CLIENT_INCLUDES= $(INCLUDES) -Iinclude
+-CLIENT_LIBS= -Fxcode/Frameworks -framework SDL2 -framework SDL2_image
++CLIENT_LIBS= -F../sauerbraten.app/Contents/Frameworks/ -framework SDL2 -framework SDL2_image
+ CLIENT_LIBS+= -framework SDL2_mixer -framework CoreAudio -framework AudioToolbox
+ CLIENT_LIBS+= -framework AudioUnit -framework OpenGL -framework Cocoa -lz -Lenet -lenet
+ else
+@@ -164,7 +164,7 @@
+ SERVER_MASTER_OBJS= $(SERVER_OBJS) $(filter-out $(SERVER_OBJS),$(MASTER_OBJS))
+ 
+ ifneq (,$(findstring DARWIN,$(PLATFORM)))
+-CLIENT_OBJS+= xcode/macutils.o xcode/main.o xcode/Launcher.o
++CLIENT_OBJS+= macos/macutils.o macos/SDLMain.o
+ 
+ %.o: %.mm
+ 	$(CXX) $(CXXFLAGS) -c -o $@ $<
+@@ -208,10 +208,12 @@
+ master: $(MASTER_OBJS)
+ 	$(CXX) $(CXXFLAGS) -o $(WINBIN)/sauer_master.exe $(MASTER_OBJS) $(MASTER_LIBS)
+ 
+-install: all
+ else
+ client:	libenet $(CLIENT_OBJS)
+ 	$(CXX) $(CXXFLAGS) -o sauer_client $(CLIENT_OBJS) $(CLIENT_LIBS)
++ifneq (,$(findstring DARWIN,$(PLATFORM)))
++	install_name_tool -add_rpath @executable_path/../Frameworks sauer_client
++endif
+ 
+ server:	libenet $(SERVER_OBJS)
+ 	$(CXX) $(CXXFLAGS) -o sauer_server $(SERVER_OBJS) $(SERVER_LIBS)  
+@@ -225,6 +227,13 @@
+ cube2font: shared/cube2font.o
+ 	$(CXX) $(CXXFLAGS) -o cube2font shared/cube2font.o `freetype-config --libs` -lz
+ 
++ifneq (,$(findstring DARWIN,$(PLATFORM)))
++install: client
++	cp sauer_client	../sauerbraten.app/Contents/MacOS/sauerbraten_universal
++ifneq (,$(STRIP))
++	$(STRIP) ../sauerbraten.app/Contents/MacOS/sauerbraten_universal
++endif
++else
+ install: all
+ 	cp sauer_client	../bin_unix/$(PLATFORM_PREFIX)_client
+ 	cp sauer_server	../bin_unix/$(PLATFORM_PREFIX)_server
+@@ -233,6 +242,7 @@
+ 	$(STRIP) ../bin_unix/$(PLATFORM_PREFIX)_server
+ endif
+ endif
++endif
+ 
+ enet/libenet.a:
+ 	$(MAKE) -C enet CC='$(CC)' AR='$(AR)'
+Index: src/macos/SDLMain.h
+===================================================================
+--- src/macos/SDLMain.h	(nonexistent)
++++ src/macos/SDLMain.h	(working copy)
+@@ -0,0 +1,16 @@
++/*   SDLMain.m - main entry point for our Cocoa-ized SDL app
++       Initial Version: Darrell Walisser <dwaliss1@purdue.edu>
++       Non-NIB-Code & other changes: Max Horn <max@quendi.de>
++
++    Feel free to customize this file to suit your needs
++*/
++
++#ifndef _SDLMain_h_
++#define _SDLMain_h_
++
++#import <Cocoa/Cocoa.h>
++
++@interface SDLMain : NSObject
++@end
++
++#endif /* _SDLMain_h_ */
+Index: src/macos/SDLMain.m
+===================================================================
+--- src/macos/SDLMain.m	(nonexistent)
++++ src/macos/SDLMain.m	(working copy)
+@@ -0,0 +1,381 @@
++/*   SDLMain.m - main entry point for our Cocoa-ized SDL app
++       Initial Version: Darrell Walisser <dwaliss1@purdue.edu>
++       Non-NIB-Code & other changes: Max Horn <max@quendi.de>
++
++    Feel free to customize this file to suit your needs
++*/
++
++#include "SDL.h"
++#include "SDLMain.h"
++#include <sys/param.h> /* for MAXPATHLEN */
++#include <unistd.h>
++
++/* For some reaon, Apple removed setAppleMenu from the headers in 10.4,
++ but the method is still there and works. To avoid warnings, we declare
++ it ourselves here. */
++@interface NSApplication(SDL_Missing_Methods)
++- (void)setAppleMenu:(NSMenu *)menu;
++@end
++
++/* Use this flag to determine whether we use SDLMain.nib or not */
++#define		SDL_USE_NIB_FILE	0
++
++/* Use this flag to determine whether we use CPS (docking) or not */
++#define		SDL_USE_CPS		1
++#ifdef SDL_USE_CPS
++/* Portions of CPS.h */
++typedef struct CPSProcessSerNum
++{
++	UInt32		lo;
++	UInt32		hi;
++} CPSProcessSerNum;
++
++extern OSErr	CPSGetCurrentProcess( CPSProcessSerNum *psn);
++extern OSErr 	CPSEnableForegroundOperation( CPSProcessSerNum *psn, UInt32 _arg2, UInt32 _arg3, UInt32 _arg4, UInt32 _arg5);
++extern OSErr	CPSSetFrontProcess( CPSProcessSerNum *psn);
++
++#endif /* SDL_USE_CPS */
++
++static int    gArgc;
++static char  **gArgv;
++static BOOL   gFinderLaunch;
++static BOOL   gCalledAppMainline = FALSE;
++
++static NSString *getApplicationName(void)
++{
++    const NSDictionary *dict;
++    NSString *appName = 0;
++
++    /* Determine the application name */
++    dict = (const NSDictionary *)CFBundleGetInfoDictionary(CFBundleGetMainBundle());
++    if (dict)
++        appName = [dict objectForKey: @"CFBundleName"];
++    
++    if (![appName length])
++        appName = [[NSProcessInfo processInfo] processName];
++
++    return appName;
++}
++
++#if SDL_USE_NIB_FILE
++/* A helper category for NSString */
++@interface NSString (ReplaceSubString)
++- (NSString *)stringByReplacingRange:(NSRange)aRange with:(NSString *)aString;
++@end
++#endif
++
++@interface NSApplication (SDLApplication)
++@end
++
++@implementation NSApplication (SDLApplication)
++/* Invoked from the Quit menu item */
++- (void)terminate:(id)sender
++{
++    /* Post a SDL_QUIT event */
++    SDL_Event event;
++    event.type = SDL_QUIT;
++    SDL_PushEvent(&event);
++}
++@end
++
++/* The main class of the application, the application's delegate */
++@implementation SDLMain
++
++/* Set the working directory to the .app's parent directory */
++- (void) setupWorkingDirectory:(BOOL)shouldChdir
++{
++    if (shouldChdir)
++    {
++        char parentdir[MAXPATHLEN];
++        CFURLRef url = CFBundleCopyBundleURL(CFBundleGetMainBundle());
++        CFURLRef url2 = CFURLCreateCopyDeletingLastPathComponent(0, url);
++        if (CFURLGetFileSystemRepresentation(url2, 1, (UInt8 *)parentdir, MAXPATHLEN)) {
++            chdir(parentdir);   /* chdir to the binary app's parent */
++        }
++        CFRelease(url);
++        CFRelease(url2);
++    }
++}
++
++#if SDL_USE_NIB_FILE
++
++/* Fix menu to contain the real app name instead of "SDL App" */
++- (void)fixMenu:(NSMenu *)aMenu withAppName:(NSString *)appName
++{
++    NSRange aRange;
++    NSEnumerator *enumerator;
++    NSMenuItem *menuItem;
++
++    aRange = [[aMenu title] rangeOfString:@"SDL App"];
++    if (aRange.length != 0)
++        [aMenu setTitle: [[aMenu title] stringByReplacingRange:aRange with:appName]];
++
++    enumerator = [[aMenu itemArray] objectEnumerator];
++    while ((menuItem = [enumerator nextObject]))
++    {
++        aRange = [[menuItem title] rangeOfString:@"SDL App"];
++        if (aRange.length != 0)
++            [menuItem setTitle: [[menuItem title] stringByReplacingRange:aRange with:appName]];
++        if ([menuItem hasSubmenu])
++            [self fixMenu:[menuItem submenu] withAppName:appName];
++    }
++}
++
++#else
++
++static void setApplicationMenu(void)
++{
++    /* warning: this code is very odd */
++    NSMenu *appleMenu;
++    NSMenuItem *menuItem;
++    NSString *title;
++    NSString *appName;
++    
++    appName = getApplicationName();
++    appleMenu = [[NSMenu alloc] initWithTitle:@""];
++    
++    /* Add menu items */
++    title = [@"About " stringByAppendingString:appName];
++    [appleMenu addItemWithTitle:title action:@selector(orderFrontStandardAboutPanel:) keyEquivalent:@""];
++
++    [appleMenu addItem:[NSMenuItem separatorItem]];
++
++    title = [@"Hide " stringByAppendingString:appName];
++    [appleMenu addItemWithTitle:title action:@selector(hide:) keyEquivalent:@"h"];
++
++    menuItem = (NSMenuItem *)[appleMenu addItemWithTitle:@"Hide Others" action:@selector(hideOtherApplications:) keyEquivalent:@"h"];
++    [menuItem setKeyEquivalentModifierMask:(NSAlternateKeyMask|NSCommandKeyMask)];
++
++    [appleMenu addItemWithTitle:@"Show All" action:@selector(unhideAllApplications:) keyEquivalent:@""];
++
++    [appleMenu addItem:[NSMenuItem separatorItem]];
++
++    title = [@"Quit " stringByAppendingString:appName];
++    [appleMenu addItemWithTitle:title action:@selector(terminate:) keyEquivalent:@"q"];
++
++    
++    /* Put menu into the menubar */
++    menuItem = [[NSMenuItem alloc] initWithTitle:@"" action:nil keyEquivalent:@""];
++    [menuItem setSubmenu:appleMenu];
++    [[NSApp mainMenu] addItem:menuItem];
++
++    /* Tell the application object that this is now the application menu */
++    [NSApp setAppleMenu:appleMenu];
++
++    /* Finally give up our references to the objects */
++    [appleMenu release];
++    [menuItem release];
++}
++
++/* Create a window menu */
++static void setupWindowMenu(void)
++{
++    NSMenu      *windowMenu;
++    NSMenuItem  *windowMenuItem;
++    NSMenuItem  *menuItem;
++
++    windowMenu = [[NSMenu alloc] initWithTitle:@"Window"];
++    
++    /* "Minimize" item */
++    menuItem = [[NSMenuItem alloc] initWithTitle:@"Minimize" action:@selector(performMiniaturize:) keyEquivalent:@"m"];
++    [windowMenu addItem:menuItem];
++    [menuItem release];
++    
++    /* Put menu into the menubar */
++    windowMenuItem = [[NSMenuItem alloc] initWithTitle:@"Window" action:nil keyEquivalent:@""];
++    [windowMenuItem setSubmenu:windowMenu];
++    [[NSApp mainMenu] addItem:windowMenuItem];
++    
++    /* Tell the application object that this is now the window menu */
++    [NSApp setWindowsMenu:windowMenu];
++
++    /* Finally give up our references to the objects */
++    [windowMenu release];
++    [windowMenuItem release];
++}
++
++/* Replacement for NSApplicationMain */
++static void CustomApplicationMain (int argc, char **argv)
++{
++    NSAutoreleasePool	*pool = [[NSAutoreleasePool alloc] init];
++    SDLMain				*sdlMain;
++
++    /* Ensure the application object is initialised */
++    [NSApplication sharedApplication];
++    
++#ifdef SDL_USE_CPS
++    {
++        CPSProcessSerNum PSN;
++        /* Tell the dock about us */
++        if (!CPSGetCurrentProcess(&PSN))
++            if (!CPSEnableForegroundOperation(&PSN,0x03,0x3C,0x2C,0x1103))
++                if (!CPSSetFrontProcess(&PSN))
++                    [NSApplication sharedApplication];
++    }
++#endif /* SDL_USE_CPS */
++
++    /* Set up the menubar */
++    [NSApp setMainMenu:[[NSMenu alloc] init]];
++    setApplicationMenu();
++    setupWindowMenu();
++
++    /* Create SDLMain and make it the app delegate */
++    sdlMain = [[SDLMain alloc] init];
++    [NSApp setDelegate:sdlMain];
++    
++    /* Start the main event loop */
++    [NSApp run];
++    
++    [sdlMain release];
++    [pool release];
++}
++
++#endif
++
++
++/*
++ * Catch document open requests...this lets us notice files when the app
++ *  was launched by double-clicking a document, or when a document was
++ *  dragged/dropped on the app's icon. You need to have a
++ *  CFBundleDocumentsType section in your Info.plist to get this message,
++ *  apparently.
++ *
++ * Files are added to gArgv, so to the app, they'll look like command line
++ *  arguments. Previously, apps launched from the finder had nothing but
++ *  an argv[0].
++ *
++ * This message may be received multiple times to open several docs on launch.
++ *
++ * This message is ignored once the app's mainline has been called.
++ */
++- (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename
++{
++    const char *temparg;
++    size_t arglen;
++    char *arg;
++    char **newargv;
++
++    if (!gFinderLaunch)  /* MacOS is passing command line args. */
++        return FALSE;
++
++    if (gCalledAppMainline)  /* app has started, ignore this document. */
++        return FALSE;
++
++    temparg = [filename UTF8String];
++    arglen = SDL_strlen(temparg) + 1;
++    arg = (char *) SDL_malloc(arglen);
++    if (arg == NULL)
++        return FALSE;
++
++    newargv = (char **) realloc(gArgv, sizeof (char *) * (gArgc + 2));
++    if (newargv == NULL)
++    {
++        SDL_free(arg);
++        return FALSE;
++    }
++    gArgv = newargv;
++
++    SDL_strlcpy(arg, temparg, arglen);
++    gArgv[gArgc++] = arg;
++    gArgv[gArgc] = NULL;
++    return TRUE;
++}
++
++
++/* Called when the internal event loop has just started running */
++- (void) applicationDidFinishLaunching: (NSNotification *) note
++{
++    int status;
++
++    /* Set the working directory to the .app's parent directory */
++    [self setupWorkingDirectory:gFinderLaunch];
++
++#if SDL_USE_NIB_FILE
++    /* Set the main menu to contain the real app name instead of "SDL App" */
++    [self fixMenu:[NSApp mainMenu] withAppName:getApplicationName()];
++#endif
++
++    /* Hand off to main application code */
++    gCalledAppMainline = TRUE;
++    status = SDL_main (gArgc, gArgv);
++
++    /* We're done, thank you for playing */
++    exit(status);
++}
++@end
++
++
++@implementation NSString (ReplaceSubString)
++
++- (NSString *)stringByReplacingRange:(NSRange)aRange with:(NSString *)aString
++{
++    unsigned int bufferSize;
++    unsigned int selfLen = [self length];
++    unsigned int aStringLen = [aString length];
++    unichar *buffer;
++    NSRange localRange;
++    NSString *result;
++
++    bufferSize = selfLen + aStringLen - aRange.length;
++    buffer = (unichar *)NSAllocateMemoryPages(bufferSize*sizeof(unichar));
++    
++    /* Get first part into buffer */
++    localRange.location = 0;
++    localRange.length = aRange.location;
++    [self getCharacters:buffer range:localRange];
++    
++    /* Get middle part into buffer */
++    localRange.location = 0;
++    localRange.length = aStringLen;
++    [aString getCharacters:(buffer+aRange.location) range:localRange];
++     
++    /* Get last part into buffer */
++    localRange.location = aRange.location + aRange.length;
++    localRange.length = selfLen - localRange.location;
++    [self getCharacters:(buffer+aRange.location+aStringLen) range:localRange];
++    
++    /* Build output string */
++    result = [NSString stringWithCharacters:buffer length:bufferSize];
++    
++    NSDeallocateMemoryPages(buffer, bufferSize);
++    
++    return result;
++}
++
++@end
++
++
++
++#ifdef main
++#  undef main
++#endif
++
++
++/* Main entry point to executable - should *not* be SDL_main! */
++int main (int argc, char **argv)
++{
++    /* Copy the arguments into a global variable */
++    /* This is passed if we are launched by double-clicking */
++    if ( argc >= 2 && strncmp (argv[1], "-psn", 4) == 0 ) {
++        gArgv = (char **) SDL_malloc(sizeof (char *) * 2);
++        gArgv[0] = argv[0];
++        gArgv[1] = NULL;
++        gArgc = 1;
++        gFinderLaunch = YES;
++    } else {
++        int i;
++        gArgc = argc;
++        gArgv = (char **) SDL_malloc(sizeof (char *) * (argc+1));
++        for (i = 0; i <= argc; i++)
++            gArgv[i] = argv[i];
++        gFinderLaunch = NO;
++    }
++
++#if SDL_USE_NIB_FILE
++    NSApplicationMain (argc, argv);
++#else
++    CustomApplicationMain (argc, argv);
++#endif
++    return 0;
++}
++
+Index: src/macos/macutils.mm
+===================================================================
+--- src/macos/macutils.mm	(nonexistent)
++++ src/macos/macutils.mm	(working copy)
+@@ -0,0 +1,50 @@
++#import <Foundation/Foundation.h>
++#import <Cocoa/Cocoa.h>
++#include <CoreFoundation/CoreFoundation.h>
++#include <ApplicationServices/ApplicationServices.h>
++#import <CoreFoundation/CFBundle.h>
++
++// -- copied from tools.h -- including the full file introduces too many problems
++#define MAXSTRLEN 512
++typedef char string[MAXSTRLEN];
++inline char *copystring(char *d, const char *s, size_t len = MAXSTRLEN)
++{
++    size_t slen = strlen(s)+1;
++    if (slen > len) slen = len;
++    memcpy(d, s, slen);
++    d[slen-1] = 0;
++    return d;
++}
++// --
++
++const char *mac_personaldir() {
++    static string dir;
++    NSString *path = nil;
++    FSRef folder;
++    if(FSFindFolder(kUserDomain, kApplicationSupportFolderType, NO, &folder) == noErr) 
++    {
++        CFURLRef url = CFURLCreateFromFSRef(kCFAllocatorDefault, &folder);
++        path = [(NSURL *)url path];
++        CFRelease(url);
++    }
++    return path ? copystring(dir, [path fileSystemRepresentation]) : NULL;
++}
++
++const char *mac_sauerbratendir() {
++    static string dir;
++    NSString *path = [[NSWorkspace sharedWorkspace] fullPathForApplication:@"sauerbraten"];
++    if(path) path = [path stringByAppendingPathComponent:@"Contents/gamedata"];
++    return path ? copystring(dir, [path fileSystemRepresentation]) : NULL;
++}
++
++bool mac_capslock()
++{
++    NSUInteger flags = [NSEvent modifierFlags]&NSDeviceIndependentModifierFlagsMask;
++    return (flags&NSAlphaShiftKeyMask)!=0;
++}
++
++bool mac_numlock()
++{
++    NSUInteger flags = [NSEvent modifierFlags]&NSDeviceIndependentModifierFlagsMask;
++    return (flags&NSNumericPadKeyMask)!=0;
++}
+Index: src/xcode/ConsoleView.h
+===================================================================
+--- src/xcode/ConsoleView.h	(revision 6328)
++++ src/xcode/ConsoleView.h	(nonexistent)
+@@ -1,25 +0,0 @@
+-#import <Cocoa/Cocoa.h>
+-
+-/*
+- * A basic console view
+- */
+-
+-@interface ConsoleView : NSView {
+-@private
+-    NSMutableArray *array;
+-    NSDictionary *attr;
+-    BOOL endScroll;
+-}
+-- (void)scrollToEnd:(BOOL)enable;
+-
+-/*
+- * Append the given line
+- */
+-- (void)appendLine:(NSString*)line;
+-
+-/*
+- * Append multiple lines, skip blank ones
+- */
+-- (void)appendText:(NSString*)text;
+-
+-@end
+Index: src/xcode/ConsoleView.m
+===================================================================
+--- src/xcode/ConsoleView.m	(revision 6328)
++++ src/xcode/ConsoleView.m	(nonexistent)
+@@ -1,120 +0,0 @@
+-#import "ConsoleView.h"
+-
+-#define MAX_LINES 200
+-#define LINE_WIDTH 500
+-#define LINE_HEIGHT 12
+-
+-/*
+- * This VScroller sends a scrollToEnd message to the console based on whether you hit page/line down or not
+- */
+-@interface VScroller : NSScroller {
+-}
+-@end
+-@implementation VScroller
+-- (NSScrollerPart)hitPart {
+-    ConsoleView *view =  (ConsoleView *)[(NSScrollView*)[self superview] documentView];
+-    NSScrollerPart part = [super hitPart];
+-    [view scrollToEnd:((part == NSScrollerIncrementPage) || (part == NSScrollerIncrementLine))];
+-    return part;
+-}
+-@end
+-
+-
+-@implementation ConsoleView
+-
+-- (id)initWithFrame:(NSRect)frame {
+-    self = [super initWithFrame:frame];
+-    if (self) {
+-        array = [[[NSMutableArray alloc] init] retain];
+-        
+-        attr = [[NSDictionary dictionaryWithObjectsAndKeys:
+-            [NSFont userFontOfSize:(LINE_HEIGHT-2)], NSFontAttributeName, 
+-            [NSColor colorWithCalibratedRed:0.2 green:0.8 blue:0.2 alpha:1.0], NSForegroundColorAttributeName, 
+-            nil] retain];
+-    }
+-    return self;
+-}
+-
+-- (void)awakeFromNib {
+-    [self scrollToEnd:YES];
+-    
+-    NSScroller *vscroll = [[VScroller alloc] init];
+-    [vscroll setControlSize:[[[self enclosingScrollView] verticalScroller] controlSize]];
+-    [[self enclosingScrollView] setVerticalScroller:vscroll];
+-}
+-
+-- (void)dealloc {
+-    [attr release];
+-    [array release];
+-    [super dealloc];
+-}
+-
+-- (BOOL)isFlipped { 
+-    return YES; 
+-}
+-
+-- (void)drawRect:(NSRect)rect { 
+-    //draw the visible lines only
+-    int startLine = rect.origin.y/LINE_HEIGHT;
+-    int endLine = 1 + (rect.origin.y+rect.size.height)/LINE_HEIGHT;
+-    if(startLine < 0) startLine = 0;
+-    if(endLine > [array count]) endLine = [array count];
+-    int i;  
+-    for(i = startLine; i < endLine; i++) {
+-        NSString *str = [array objectAtIndex:i];
+-        [str drawAtPoint:NSMakePoint(2, i * LINE_HEIGHT) withAttributes:attr];
+-    }
+-}
+-
+-- (void)scrollToEnd:(BOOL)enable {
+-    endScroll = enable;
+-}
+-
+-- (void)appendLine:(NSString*)line {
+-    BOOL chop = [array count] > MAX_LINES;
+-    if(chop) {
+-        [array removeObjectAtIndex:0]; // limit the number of lines
+-    }
+-    [array addObject:line]; 
+-    int i = [array count];
+-    [self setFrame:NSMakeRect(0, 0, LINE_WIDTH, i*LINE_HEIGHT)]; // increase the frame size 
+-        
+-    NSRect rect = NSMakeRect(0, (i-1)*LINE_HEIGHT, LINE_WIDTH, LINE_HEIGHT);
+-    if(endScroll) {
+-        // Scroll to the line just added
+-        if([self scrollRectToVisible:rect]) return;
+-    } else {
+-        // Lock the scrolling on the first visible line
+-        i = [self visibleRect].origin.y/LINE_HEIGHT;
+-        if(!chop) i++;
+-        if(i < 0) i = 0; 
+-        if(i > [array count]) i = [array count];
+-        NSRect vrect = NSMakeRect(0, (i-1)*LINE_HEIGHT, LINE_WIDTH, LINE_HEIGHT);
+-        if([self scrollRectToVisible:vrect]) return;
+-    }
+-    if(chop)
+-        [self setNeedsDisplay:YES];
+-    else
+-        [self setNeedsDisplayInRect:rect];
+-}
+-
+-- (void)appendText:(NSString*)text {
+-    NSArray *lines = [text componentsSeparatedByString:@"\n"]; //@TODO assumes we get given lines rather than fragments...
+-    int i;
+-    for(i = 0; i < [lines count]; i++) {
+-        NSString *line = [lines objectAtIndex:i];
+-        if([line length] == 0) continue; //skip empty
+-        [self appendLine:line];
+-    }
+-}
+-
+-- (BOOL)acceptsFirstResponder { 
+-    return YES; 
+-}
+-
+-- (IBAction)delete:(id)sender {
+-    [array removeAllObjects];
+-    [self setFrame:NSMakeRect(0,0,0,0)];
+-}
+-
+-@end
+Index: src/xcode/English.lproj/InfoPlist.strings
+===================================================================
+Cannot display: file marked as a binary type.
+svn:mime-type = application/octet-stream
+
+Property changes on: src/xcode/English.lproj/InfoPlist.strings
+___________________________________________________________________
+Deleted: svn:mime-type
+## -1 +0,0 ##
+-application/octet-stream
+\ No newline at end of property
+Index: src/xcode/English.lproj/Localizable.strings
+===================================================================
+--- src/xcode/English.lproj/Localizable.strings	(revision 6328)
++++ src/xcode/English.lproj/Localizable.strings	(nonexistent)
+@@ -1,26 +0,0 @@
+-/* note ':s' becomes 'sauerbraten' */
+-
+-/* tabs */
+-"Main" = "Main";
+-"Maps" = "Maps";
+-"Keys" = "Keys";
+-"Server" = "Server";
+-"Help" = "Help";
+-
+-"Ok" = "Ok";
+-"Cancel" = "Cancel";
+-"Start" = "Start";
+-"Stop" = "Stop";
+-"ServerAlertMesg" = "Error - Can't launch server";
+-
+-"ClientAlertTitle" = "Can't start :s";
+-"ClientAlertMesg" = "Try moving the game folder contain :s so that the path doesn't contain weird characters, or start :s manually.";
+-
+-"InitAlertTitle" = "Invalid installation";
+-"InitAlertMesg" = "Cannot find gamedata folder within :s";
+-
+-"FileAlertTitle" = "Invalid file location";
+-"FileAlertMesg" = "Can only load files that are within the :s/packages/ folder. Do you want to show this folder?";
+-
+-/* for MOD convenience */
+-"forumURL" = "http://sauerbraten.org/";
+Index: src/xcode/English.lproj/MainMenu.nib/classes.nib
+===================================================================
+--- src/xcode/English.lproj/MainMenu.nib/classes.nib	(revision 6328)
++++ src/xcode/English.lproj/MainMenu.nib/classes.nib	(nonexistent)
+@@ -1,86 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+-<plist version="1.0">
+-<dict>
+-	<key>IBClasses</key>
+-	<array>
+-		<dict>
+-			<key>ACTIONS</key>
+-			<dict>
+-				<key>helpAction</key>
+-				<string>id</string>
+-				<key>multiplayerAction</key>
+-				<string>id</string>
+-				<key>openUserdir</key>
+-				<string>id</string>
+-				<key>playAction</key>
+-				<string>id</string>
+-				<key>playMap</key>
+-				<string>id</string>
+-				<key>playRpg</key>
+-				<string>id</string>
+-				<key>showForum</key>
+-				<string>id</string>
+-			</dict>
+-			<key>CLASS</key>
+-			<string>Launcher</string>
+-			<key>LANGUAGE</key>
+-			<string>ObjC</string>
+-			<key>OUTLETS</key>
+-			<dict>
+-				<key>console</key>
+-				<string>ConsoleView</string>
+-				<key>keys</key>
+-				<string>NSArrayController</string>
+-				<key>maps</key>
+-				<string>NSArrayController</string>
+-				<key>multiplayer</key>
+-				<string>NSButton</string>
+-				<key>prog</key>
+-				<string>NSProgressIndicator</string>
+-				<key>resolutions</key>
+-				<string>NSPopUpButton</string>
+-				<key>tabs</key>
+-				<string>NSTabView</string>
+-				<key>view1</key>
+-				<string>NSView</string>
+-				<key>view2</key>
+-				<string>NSView</string>
+-				<key>view3</key>
+-				<string>NSView</string>
+-				<key>view4</key>
+-				<string>NSView</string>
+-				<key>view5</key>
+-				<string>NSView</string>
+-				<key>window</key>
+-				<string>NSWindow</string>
+-			</dict>
+-			<key>SUPERCLASS</key>
+-			<string>NSObject</string>
+-		</dict>
+-		<dict>
+-			<key>ACTIONS</key>
+-			<dict>
+-				<key></key>
+-				<string>id</string>
+-			</dict>
+-			<key>CLASS</key>
+-			<string>FirstResponder</string>
+-			<key>LANGUAGE</key>
+-			<string>ObjC</string>
+-			<key>SUPERCLASS</key>
+-			<string>NSObject</string>
+-		</dict>
+-		<dict>
+-			<key>CLASS</key>
+-			<string>ConsoleView</string>
+-			<key>LANGUAGE</key>
+-			<string>ObjC</string>
+-			<key>SUPERCLASS</key>
+-			<string>NSView</string>
+-		</dict>
+-	</array>
+-	<key>IBVersion</key>
+-	<string>1</string>
+-</dict>
+-</plist>
+Index: src/xcode/English.lproj/MainMenu.nib/info.nib
+===================================================================
+--- src/xcode/English.lproj/MainMenu.nib/info.nib	(revision 6328)
++++ src/xcode/English.lproj/MainMenu.nib/info.nib	(nonexistent)
+@@ -1,21 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+-<plist version="1.0">
+-<dict>
+-	<key>IBFramework Version</key>
+-	<string>670</string>
+-	<key>IBLastKnownRelativeProjectPath</key>
+-	<string>../sauerbraten.xcodeproj</string>
+-	<key>IBOldestOS</key>
+-	<integer>5</integer>
+-	<key>IBOpenObjects</key>
+-	<array>
+-		<integer>111</integer>
+-		<integer>208</integer>
+-	</array>
+-	<key>IBSystem Version</key>
+-	<string>9E17</string>
+-	<key>targetFramework</key>
+-	<string>IBCocoaFramework</string>
+-</dict>
+-</plist>
+Index: src/xcode/English.lproj/MainMenu.nib/keyedobjects.nib
+===================================================================
+Cannot display: file marked as a binary type.
+svn:mime-type = application/octet-stream
+
+Property changes on: src/xcode/English.lproj/MainMenu.nib/keyedobjects.nib
+___________________________________________________________________
+Deleted: svn:mime-type
+## -1 +0,0 ##
+-application/octet-stream
+\ No newline at end of property
+Index: src/xcode/SDLMain.h
+===================================================================
+--- src/xcode/SDLMain.h	(revision 6328)
++++ src/xcode/SDLMain.h	(nonexistent)
+@@ -1,16 +0,0 @@
+-/*   SDLMain.m - main entry point for our Cocoa-ized SDL app
+-       Initial Version: Darrell Walisser <dwaliss1@purdue.edu>
+-       Non-NIB-Code & other changes: Max Horn <max@quendi.de>
+-
+-    Feel free to customize this file to suit your needs
+-*/
+-
+-#ifndef _SDLMain_h_
+-#define _SDLMain_h_
+-
+-#import <Cocoa/Cocoa.h>
+-
+-@interface SDLMain : NSObject
+-@end
+-
+-#endif /* _SDLMain_h_ */
+Index: src/xcode/SDLMain.m
+===================================================================
+--- src/xcode/SDLMain.m	(revision 6328)
++++ src/xcode/SDLMain.m	(nonexistent)
+@@ -1,381 +0,0 @@
+-/*   SDLMain.m - main entry point for our Cocoa-ized SDL app
+-       Initial Version: Darrell Walisser <dwaliss1@purdue.edu>
+-       Non-NIB-Code & other changes: Max Horn <max@quendi.de>
+-
+-    Feel free to customize this file to suit your needs
+-*/
+-
+-#include "SDL.h"
+-#include "SDLMain.h"
+-#include <sys/param.h> /* for MAXPATHLEN */
+-#include <unistd.h>
+-
+-/* For some reaon, Apple removed setAppleMenu from the headers in 10.4,
+- but the method is still there and works. To avoid warnings, we declare
+- it ourselves here. */
+-@interface NSApplication(SDL_Missing_Methods)
+-- (void)setAppleMenu:(NSMenu *)menu;
+-@end
+-
+-/* Use this flag to determine whether we use SDLMain.nib or not */
+-#define		SDL_USE_NIB_FILE	0
+-
+-/* Use this flag to determine whether we use CPS (docking) or not */
+-#define		SDL_USE_CPS		1
+-#ifdef SDL_USE_CPS
+-/* Portions of CPS.h */
+-typedef struct CPSProcessSerNum
+-{
+-	UInt32		lo;
+-	UInt32		hi;
+-} CPSProcessSerNum;
+-
+-extern OSErr	CPSGetCurrentProcess( CPSProcessSerNum *psn);
+-extern OSErr 	CPSEnableForegroundOperation( CPSProcessSerNum *psn, UInt32 _arg2, UInt32 _arg3, UInt32 _arg4, UInt32 _arg5);
+-extern OSErr	CPSSetFrontProcess( CPSProcessSerNum *psn);
+-
+-#endif /* SDL_USE_CPS */
+-
+-static int    gArgc;
+-static char  **gArgv;
+-static BOOL   gFinderLaunch;
+-static BOOL   gCalledAppMainline = FALSE;
+-
+-static NSString *getApplicationName(void)
+-{
+-    const NSDictionary *dict;
+-    NSString *appName = 0;
+-
+-    /* Determine the application name */
+-    dict = (const NSDictionary *)CFBundleGetInfoDictionary(CFBundleGetMainBundle());
+-    if (dict)
+-        appName = [dict objectForKey: @"CFBundleName"];
+-    
+-    if (![appName length])
+-        appName = [[NSProcessInfo processInfo] processName];
+-
+-    return appName;
+-}
+-
+-#if SDL_USE_NIB_FILE
+-/* A helper category for NSString */
+-@interface NSString (ReplaceSubString)
+-- (NSString *)stringByReplacingRange:(NSRange)aRange with:(NSString *)aString;
+-@end
+-#endif
+-
+-@interface NSApplication (SDLApplication)
+-@end
+-
+-@implementation NSApplication (SDLApplication)
+-/* Invoked from the Quit menu item */
+-- (void)terminate:(id)sender
+-{
+-    /* Post a SDL_QUIT event */
+-    SDL_Event event;
+-    event.type = SDL_QUIT;
+-    SDL_PushEvent(&event);
+-}
+-@end
+-
+-/* The main class of the application, the application's delegate */
+-@implementation SDLMain
+-
+-/* Set the working directory to the .app's parent directory */
+-- (void) setupWorkingDirectory:(BOOL)shouldChdir
+-{
+-    if (shouldChdir)
+-    {
+-        char parentdir[MAXPATHLEN];
+-        CFURLRef url = CFBundleCopyBundleURL(CFBundleGetMainBundle());
+-        CFURLRef url2 = CFURLCreateCopyDeletingLastPathComponent(0, url);
+-        if (CFURLGetFileSystemRepresentation(url2, 1, (UInt8 *)parentdir, MAXPATHLEN)) {
+-            chdir(parentdir);   /* chdir to the binary app's parent */
+-        }
+-        CFRelease(url);
+-        CFRelease(url2);
+-    }
+-}
+-
+-#if SDL_USE_NIB_FILE
+-
+-/* Fix menu to contain the real app name instead of "SDL App" */
+-- (void)fixMenu:(NSMenu *)aMenu withAppName:(NSString *)appName
+-{
+-    NSRange aRange;
+-    NSEnumerator *enumerator;
+-    NSMenuItem *menuItem;
+-
+-    aRange = [[aMenu title] rangeOfString:@"SDL App"];
+-    if (aRange.length != 0)
+-        [aMenu setTitle: [[aMenu title] stringByReplacingRange:aRange with:appName]];
+-
+-    enumerator = [[aMenu itemArray] objectEnumerator];
+-    while ((menuItem = [enumerator nextObject]))
+-    {
+-        aRange = [[menuItem title] rangeOfString:@"SDL App"];
+-        if (aRange.length != 0)
+-            [menuItem setTitle: [[menuItem title] stringByReplacingRange:aRange with:appName]];
+-        if ([menuItem hasSubmenu])
+-            [self fixMenu:[menuItem submenu] withAppName:appName];
+-    }
+-}
+-
+-#else
+-
+-static void setApplicationMenu(void)
+-{
+-    /* warning: this code is very odd */
+-    NSMenu *appleMenu;
+-    NSMenuItem *menuItem;
+-    NSString *title;
+-    NSString *appName;
+-    
+-    appName = getApplicationName();
+-    appleMenu = [[NSMenu alloc] initWithTitle:@""];
+-    
+-    /* Add menu items */
+-    title = [@"About " stringByAppendingString:appName];
+-    [appleMenu addItemWithTitle:title action:@selector(orderFrontStandardAboutPanel:) keyEquivalent:@""];
+-
+-    [appleMenu addItem:[NSMenuItem separatorItem]];
+-
+-    title = [@"Hide " stringByAppendingString:appName];
+-    [appleMenu addItemWithTitle:title action:@selector(hide:) keyEquivalent:@"h"];
+-
+-    menuItem = (NSMenuItem *)[appleMenu addItemWithTitle:@"Hide Others" action:@selector(hideOtherApplications:) keyEquivalent:@"h"];
+-    [menuItem setKeyEquivalentModifierMask:(NSAlternateKeyMask|NSCommandKeyMask)];
+-
+-    [appleMenu addItemWithTitle:@"Show All" action:@selector(unhideAllApplications:) keyEquivalent:@""];
+-
+-    [appleMenu addItem:[NSMenuItem separatorItem]];
+-
+-    title = [@"Quit " stringByAppendingString:appName];
+-    [appleMenu addItemWithTitle:title action:@selector(terminate:) keyEquivalent:@"q"];
+-
+-    
+-    /* Put menu into the menubar */
+-    menuItem = [[NSMenuItem alloc] initWithTitle:@"" action:nil keyEquivalent:@""];
+-    [menuItem setSubmenu:appleMenu];
+-    [[NSApp mainMenu] addItem:menuItem];
+-
+-    /* Tell the application object that this is now the application menu */
+-    [NSApp setAppleMenu:appleMenu];
+-
+-    /* Finally give up our references to the objects */
+-    [appleMenu release];
+-    [menuItem release];
+-}
+-
+-/* Create a window menu */
+-static void setupWindowMenu(void)
+-{
+-    NSMenu      *windowMenu;
+-    NSMenuItem  *windowMenuItem;
+-    NSMenuItem  *menuItem;
+-
+-    windowMenu = [[NSMenu alloc] initWithTitle:@"Window"];
+-    
+-    /* "Minimize" item */
+-    menuItem = [[NSMenuItem alloc] initWithTitle:@"Minimize" action:@selector(performMiniaturize:) keyEquivalent:@"m"];
+-    [windowMenu addItem:menuItem];
+-    [menuItem release];
+-    
+-    /* Put menu into the menubar */
+-    windowMenuItem = [[NSMenuItem alloc] initWithTitle:@"Window" action:nil keyEquivalent:@""];
+-    [windowMenuItem setSubmenu:windowMenu];
+-    [[NSApp mainMenu] addItem:windowMenuItem];
+-    
+-    /* Tell the application object that this is now the window menu */
+-    [NSApp setWindowsMenu:windowMenu];
+-
+-    /* Finally give up our references to the objects */
+-    [windowMenu release];
+-    [windowMenuItem release];
+-}
+-
+-/* Replacement for NSApplicationMain */
+-static void CustomApplicationMain (int argc, char **argv)
+-{
+-    NSAutoreleasePool	*pool = [[NSAutoreleasePool alloc] init];
+-    SDLMain				*sdlMain;
+-
+-    /* Ensure the application object is initialised */
+-    [NSApplication sharedApplication];
+-    
+-#ifdef SDL_USE_CPS
+-    {
+-        CPSProcessSerNum PSN;
+-        /* Tell the dock about us */
+-        if (!CPSGetCurrentProcess(&PSN))
+-            if (!CPSEnableForegroundOperation(&PSN,0x03,0x3C,0x2C,0x1103))
+-                if (!CPSSetFrontProcess(&PSN))
+-                    [NSApplication sharedApplication];
+-    }
+-#endif /* SDL_USE_CPS */
+-
+-    /* Set up the menubar */
+-    [NSApp setMainMenu:[[NSMenu alloc] init]];
+-    setApplicationMenu();
+-    setupWindowMenu();
+-
+-    /* Create SDLMain and make it the app delegate */
+-    sdlMain = [[SDLMain alloc] init];
+-    [NSApp setDelegate:sdlMain];
+-    
+-    /* Start the main event loop */
+-    [NSApp run];
+-    
+-    [sdlMain release];
+-    [pool release];
+-}
+-
+-#endif
+-
+-
+-/*
+- * Catch document open requests...this lets us notice files when the app
+- *  was launched by double-clicking a document, or when a document was
+- *  dragged/dropped on the app's icon. You need to have a
+- *  CFBundleDocumentsType section in your Info.plist to get this message,
+- *  apparently.
+- *
+- * Files are added to gArgv, so to the app, they'll look like command line
+- *  arguments. Previously, apps launched from the finder had nothing but
+- *  an argv[0].
+- *
+- * This message may be received multiple times to open several docs on launch.
+- *
+- * This message is ignored once the app's mainline has been called.
+- */
+-- (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename
+-{
+-    const char *temparg;
+-    size_t arglen;
+-    char *arg;
+-    char **newargv;
+-
+-    if (!gFinderLaunch)  /* MacOS is passing command line args. */
+-        return FALSE;
+-
+-    if (gCalledAppMainline)  /* app has started, ignore this document. */
+-        return FALSE;
+-
+-    temparg = [filename UTF8String];
+-    arglen = SDL_strlen(temparg) + 1;
+-    arg = (char *) SDL_malloc(arglen);
+-    if (arg == NULL)
+-        return FALSE;
+-
+-    newargv = (char **) realloc(gArgv, sizeof (char *) * (gArgc + 2));
+-    if (newargv == NULL)
+-    {
+-        SDL_free(arg);
+-        return FALSE;
+-    }
+-    gArgv = newargv;
+-
+-    SDL_strlcpy(arg, temparg, arglen);
+-    gArgv[gArgc++] = arg;
+-    gArgv[gArgc] = NULL;
+-    return TRUE;
+-}
+-
+-
+-/* Called when the internal event loop has just started running */
+-- (void) applicationDidFinishLaunching: (NSNotification *) note
+-{
+-    int status;
+-
+-    /* Set the working directory to the .app's parent directory */
+-    [self setupWorkingDirectory:gFinderLaunch];
+-
+-#if SDL_USE_NIB_FILE
+-    /* Set the main menu to contain the real app name instead of "SDL App" */
+-    [self fixMenu:[NSApp mainMenu] withAppName:getApplicationName()];
+-#endif
+-
+-    /* Hand off to main application code */
+-    gCalledAppMainline = TRUE;
+-    status = SDL_main (gArgc, gArgv);
+-
+-    /* We're done, thank you for playing */
+-    exit(status);
+-}
+-@end
+-
+-
+-@implementation NSString (ReplaceSubString)
+-
+-- (NSString *)stringByReplacingRange:(NSRange)aRange with:(NSString *)aString
+-{
+-    unsigned int bufferSize;
+-    unsigned int selfLen = [self length];
+-    unsigned int aStringLen = [aString length];
+-    unichar *buffer;
+-    NSRange localRange;
+-    NSString *result;
+-
+-    bufferSize = selfLen + aStringLen - aRange.length;
+-    buffer = (unichar *)NSAllocateMemoryPages(bufferSize*sizeof(unichar));
+-    
+-    /* Get first part into buffer */
+-    localRange.location = 0;
+-    localRange.length = aRange.location;
+-    [self getCharacters:buffer range:localRange];
+-    
+-    /* Get middle part into buffer */
+-    localRange.location = 0;
+-    localRange.length = aStringLen;
+-    [aString getCharacters:(buffer+aRange.location) range:localRange];
+-     
+-    /* Get last part into buffer */
+-    localRange.location = aRange.location + aRange.length;
+-    localRange.length = selfLen - localRange.location;
+-    [self getCharacters:(buffer+aRange.location+aStringLen) range:localRange];
+-    
+-    /* Build output string */
+-    result = [NSString stringWithCharacters:buffer length:bufferSize];
+-    
+-    NSDeallocateMemoryPages(buffer, bufferSize);
+-    
+-    return result;
+-}
+-
+-@end
+-
+-
+-
+-#ifdef main
+-#  undef main
+-#endif
+-
+-
+-/* Main entry point to executable - should *not* be SDL_main! */
+-int main (int argc, char **argv)
+-{
+-    /* Copy the arguments into a global variable */
+-    /* This is passed if we are launched by double-clicking */
+-    if ( argc >= 2 && strncmp (argv[1], "-psn", 4) == 0 ) {
+-        gArgv = (char **) SDL_malloc(sizeof (char *) * 2);
+-        gArgv[0] = argv[0];
+-        gArgv[1] = NULL;
+-        gArgc = 1;
+-        gFinderLaunch = YES;
+-    } else {
+-        int i;
+-        gArgc = argc;
+-        gArgv = (char **) SDL_malloc(sizeof (char *) * (argc+1));
+-        for (i = 0; i <= argc; i++)
+-            gArgv[i] = argv[i];
+-        gFinderLaunch = NO;
+-    }
+-
+-#if SDL_USE_NIB_FILE
+-    NSApplicationMain (argc, argv);
+-#else
+-    CustomApplicationMain (argc, argv);
+-#endif
+-    return 0;
+-}
+-
+Index: src/xcode/macbuild.sh
+===================================================================
+--- src/xcode/macbuild.sh	(revision 6328)
++++ src/xcode/macbuild.sh	(nonexistent)
+@@ -1,16 +0,0 @@
+-#!/bin/sh
+-while [ -n "$1" ]; do
+- case "$1" in
+-  clean)
+-   xcodebuild -project src/xcode/sauerbraten.xcodeproj clean -configuration Release
+-   ;;
+-  all)
+-   xcodebuild -project src/xcode/sauerbraten.xcodeproj -configuration Release -alltargets
+-   ;;
+-  install)
+-   cp -v src/xcode/build/Release/sauerbraten.app/Contents/MacOS/sauerbraten sauerbraten.app/Contents/MacOS/sauerbraten_universal
+-   chmod +x sauerbraten.app/Contents/MacOS/sauerbraten_universal
+-   ;;
+- esac
+- shift
+-done
+
+Property changes on: src/xcode/macbuild.sh
+___________________________________________________________________
+Deleted: svn:executable
+## -1 +0,0 ##
+-*
+\ No newline at end of property
+Index: src/xcode/macutils.mm
+===================================================================
+--- src/xcode/macutils.mm	(revision 6328)
++++ src/xcode/macutils.mm	(nonexistent)
+@@ -1,50 +0,0 @@
+-#import <Foundation/Foundation.h>
+-#import <Cocoa/Cocoa.h>
+-#include <CoreFoundation/CoreFoundation.h>
+-#include <ApplicationServices/ApplicationServices.h>
+-#import <CoreFoundation/CFBundle.h>
+-
+-// -- copied from tools.h -- including the full file introduces too many problems
+-#define MAXSTRLEN 512
+-typedef char string[MAXSTRLEN];
+-inline char *copystring(char *d, const char *s, size_t len = MAXSTRLEN)
+-{
+-    size_t slen = strlen(s)+1;
+-    if (slen > len) slen = len;
+-    memcpy(d, s, slen);
+-    d[slen-1] = 0;
+-    return d;
+-}
+-// --
+-
+-const char *mac_personaldir() {
+-    static string dir;
+-    NSString *path = nil;
+-    FSRef folder;
+-    if(FSFindFolder(kUserDomain, kApplicationSupportFolderType, NO, &folder) == noErr) 
+-    {
+-        CFURLRef url = CFURLCreateFromFSRef(kCFAllocatorDefault, &folder);
+-        path = [(NSURL *)url path];
+-        CFRelease(url);
+-    }
+-    return path ? copystring(dir, [path fileSystemRepresentation]) : NULL;
+-}
+-
+-const char *mac_sauerbratendir() {
+-    static string dir;
+-    NSString *path = [[NSWorkspace sharedWorkspace] fullPathForApplication:@"sauerbraten"];
+-    if(path) path = [path stringByAppendingPathComponent:@"Contents/gamedata"];
+-    return path ? copystring(dir, [path fileSystemRepresentation]) : NULL;
+-}
+-
+-bool mac_capslock()
+-{
+-    NSUInteger flags = [NSEvent modifierFlags]&NSDeviceIndependentModifierFlagsMask;
+-    return (flags&NSAlphaShiftKeyMask)!=0;
+-}
+-
+-bool mac_numlock()
+-{
+-    NSUInteger flags = [NSEvent modifierFlags]&NSDeviceIndependentModifierFlagsMask;
+-    return (flags&NSNumericPadKeyMask)!=0;
+-}
+Index: src/xcode/main.m
+===================================================================
+--- src/xcode/main.m	(revision 6328)
++++ src/xcode/main.m	(nonexistent)
+@@ -1,6 +0,0 @@
+-#import <Cocoa/Cocoa.h>
+-
+-int main(int argc, char *argv[])
+-{
+-    return NSApplicationMain(argc,  (const char **) argv);
+-}
+\ No newline at end of file
+Index: src/xcode/sauerbraten.icns
+===================================================================
+Cannot display: file marked as a binary type.
+svn:mime-type = application/octet-stream
+
+Property changes on: src/xcode/sauerbraten.icns
+___________________________________________________________________
+Deleted: svn:mime-type
+## -1 +0,0 ##
+-application/octet-stream
+\ No newline at end of property
+Index: src/xcode/sauerbraten.plist
+===================================================================
+--- src/xcode/sauerbraten.plist	(revision 6328)
++++ src/xcode/sauerbraten.plist	(nonexistent)
+@@ -1,30 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+-<plist version="1.0">
+-<dict>
+-	<key>CFBundleDevelopmentRegion</key>
+-	<string>English</string>
+-	<key>CFBundleExecutable</key>
+-	<string>sauerbraten</string>
+-	<key>CFBundleIconFile</key>
+-	<string>sauerbraten</string>
+-	<key>CFBundleIdentifier</key>
+-	<string>com.dot3labs.sauerbraten</string>
+-	<key>CFBundleInfoDictionaryVersion</key>
+-	<string>6.0</string>
+-	<key>CFBundlePackageType</key>
+-	<string>APPL</string>
+-	<key>CFBundleShortVersionString</key>
+-	<string>1.5.4</string>
+-	<key>CFBundleSignature</key>
+-	<string>????</string>
+-	<key>LSApplicationCategoryType</key>
+-	<string>public.app-category.action-games</string>
+-	<key>LSUIElement</key>
+-	<string>1</string>
+-	<key>NSMainNibFile</key>
+-	<string>MainMenu</string>
+-	<key>NSPrincipalClass</key>
+-	<string>NSApplication</string>
+-</dict>
+-</plist>
+Index: src/xcode/sauerbraten.xcodeproj/project.pbxproj
+===================================================================
+--- src/xcode/sauerbraten.xcodeproj/project.pbxproj	(revision 6328)
++++ src/xcode/sauerbraten.xcodeproj/project.pbxproj	(nonexistent)
+@@ -1,756 +0,0 @@
+-// !$*UTF8*$!
+-{
+-	archiveVersion = 1;
+-	classes = {
+-	};
+-	objectVersion = 46;
+-	objects = {
+-
+-/* Begin PBXBuildFile section */
+-		2D9FA6A523B9B042004A1465 /* glemu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2D9FA6A423B9B042004A1465 /* glemu.cpp */; };
+-		B90ADD4509B344D800A5B00B /* callbacks.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD0009B344D800A5B00B /* callbacks.c */; };
+-		B90ADD5709B344D800A5B00B /* host.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD1309B344D800A5B00B /* host.c */; };
+-		B90ADD6A09B344D800A5B00B /* list.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD2809B344D800A5B00B /* list.c */; };
+-		B90ADD7109B344D800A5B00B /* packet.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD2F09B344D800A5B00B /* packet.c */; };
+-		B90ADD7209B344D800A5B00B /* peer.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD3009B344D800A5B00B /* peer.c */; };
+-		B90ADD7309B344D800A5B00B /* protocol.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD3109B344D800A5B00B /* protocol.c */; };
+-		B90ADD7609B344D800A5B00B /* unix.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD3409B344D800A5B00B /* unix.c */; };
+-		B91D40210D525FE0004EF78A /* decal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B91D40200D525FE0004EF78A /* decal.cpp */; };
+-		B92DC0FC09D08CF9008219BD /* SDL2_image.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B92DC0F909D08CF9008219BD /* SDL2_image.framework */; };
+-		B92DC0FD09D08CF9008219BD /* SDL2_mixer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B92DC0FA09D08CF9008219BD /* SDL2_mixer.framework */; };
+-		B92DC0FE09D08CF9008219BD /* SDL2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B92DC0FB09D08CF9008219BD /* SDL2.framework */; };
+-		B941988C09207E810029DAD1 /* SDLMain.h in Headers */ = {isa = PBXBuildFile; fileRef = F5A47A9D01A0482F01D3D55B /* SDLMain.h */; };
+-		B94198A809207E810029DAD1 /* SDLMain.m in Sources */ = {isa = PBXBuildFile; fileRef = F5A47A9E01A0483001D3D55B /* SDLMain.m */; };
+-		B94198C309207E810029DAD1 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+-		B94198C409207E810029DAD1 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B2F67ED704C74A3F00A80002 /* OpenGL.framework */; };
+-		B9AC7ACF0D06DB44005506F8 /* 3dgui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7A840D06DB44005506F8 /* 3dgui.cpp */; };
+-		B9AC7AD00D06DB44005506F8 /* bih.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7A850D06DB44005506F8 /* bih.cpp */; };
+-		B9AC7AD20D06DB44005506F8 /* client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7A870D06DB44005506F8 /* client.cpp */; };
+-		B9AC7AD30D06DB44005506F8 /* command.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7A880D06DB44005506F8 /* command.cpp */; };
+-		B9AC7AD40D06DB44005506F8 /* console.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7A890D06DB44005506F8 /* console.cpp */; };
+-		B9AC7AD50D06DB44005506F8 /* cubeloader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7A8A0D06DB44005506F8 /* cubeloader.cpp */; };
+-		B9AC7AD70D06DB44005506F8 /* grass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7A8C0D06DB44005506F8 /* grass.cpp */; };
+-		B9AC7AD80D06DB44005506F8 /* lightmap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7A8D0D06DB44005506F8 /* lightmap.cpp */; };
+-		B9AC7ADA0D06DB44005506F8 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7A8F0D06DB44005506F8 /* main.cpp */; };
+-		B9AC7ADB0D06DB44005506F8 /* material.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7A900D06DB44005506F8 /* material.cpp */; };
+-		B9AC7ADE0D06DB44005506F8 /* menus.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7A930D06DB44005506F8 /* menus.cpp */; };
+-		B9AC7AE00D06DB44005506F8 /* normal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7A950D06DB44005506F8 /* normal.cpp */; };
+-		B9AC7AE10D06DB44005506F8 /* octa.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7A960D06DB44005506F8 /* octa.cpp */; };
+-		B9AC7AE30D06DB44005506F8 /* octaedit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7A980D06DB44005506F8 /* octaedit.cpp */; };
+-		B9AC7AE40D06DB44005506F8 /* octarender.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7A990D06DB44005506F8 /* octarender.cpp */; };
+-		B9AC7AE50D06DB44005506F8 /* physics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7A9A0D06DB44005506F8 /* physics.cpp */; };
+-		B9AC7AE60D06DB44005506F8 /* rendergl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7A9B0D06DB44005506F8 /* rendergl.cpp */; };
+-		B9AC7AE70D06DB44005506F8 /* rendermodel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7A9C0D06DB44005506F8 /* rendermodel.cpp */; };
+-		B9AC7AE80D06DB44005506F8 /* renderparticles.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7A9D0D06DB44005506F8 /* renderparticles.cpp */; };
+-		B9AC7AE90D06DB44005506F8 /* rendersky.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7A9E0D06DB44005506F8 /* rendersky.cpp */; };
+-		B9AC7AEA0D06DB44005506F8 /* rendertext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7A9F0D06DB44005506F8 /* rendertext.cpp */; };
+-		B9AC7AEB0D06DB44005506F8 /* renderva.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7AA00D06DB44005506F8 /* renderva.cpp */; };
+-		B9AC7AEC0D06DB44005506F8 /* server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7AA10D06DB44005506F8 /* server.cpp */; };
+-		B9AC7AED0D06DB44005506F8 /* serverbrowser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7AA20D06DB44005506F8 /* serverbrowser.cpp */; };
+-		B9AC7AEE0D06DB44005506F8 /* shader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7AA30D06DB44005506F8 /* shader.cpp */; };
+-		B9AC7AEF0D06DB44005506F8 /* shadowmap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7AA40D06DB44005506F8 /* shadowmap.cpp */; };
+-		B9AC7AF00D06DB44005506F8 /* sound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7AA50D06DB44005506F8 /* sound.cpp */; };
+-		B9AC7AF10D06DB44005506F8 /* texture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7AA60D06DB44005506F8 /* texture.cpp */; };
+-		B9AC7AF40D06DB44005506F8 /* water.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7AA90D06DB44005506F8 /* water.cpp */; };
+-		B9AC7AF50D06DB44005506F8 /* world.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7AAA0D06DB44005506F8 /* world.cpp */; };
+-		B9AC7AF70D06DB44005506F8 /* worldio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7AAC0D06DB44005506F8 /* worldio.cpp */; };
+-		B9AC7AFB0D06DB44005506F8 /* fps.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7AB10D06DB44005506F8 /* fps.cpp */; };
+-		B9AC7B0D0D06DB44005506F8 /* geom.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7AC50D06DB44005506F8 /* geom.cpp */; };
+-		B9AC7B110D06DB44005506F8 /* pch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7AC90D06DB44005506F8 /* pch.cpp */; };
+-		B9AC7B150D06DB44005506F8 /* tools.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7ACD0D06DB44005506F8 /* tools.cpp */; };
+-		D118DEB60D979281000E8C4C /* glare.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D118DEB50D979281000E8C4C /* glare.cpp */; };
+-		D11B024E0F830BA400334D69 /* ai.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D11B024A0F830BA400334D69 /* ai.cpp */; };
+-		D11B02510F830BA400334D69 /* waypoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D11B024D0F830BA400334D69 /* waypoint.cpp */; };
+-		D16BD00D0D7000EA0053CECE /* dynlight.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D16BD00C0D7000EA0053CECE /* dynlight.cpp */; };
+-		D16E4E140ED107C300C401A2 /* blend.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D16E4E130ED107C300C401A2 /* blend.cpp */; };
+-		D1B87D600F7F57C80063BD1C /* crypto.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1B87D5D0F7F57C80063BD1C /* crypto.cpp */; };
+-		D1B87D610F7F57C80063BD1C /* stream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1B87D5E0F7F57C80063BD1C /* stream.cpp */; };
+-		D1B87D620F7F57C80063BD1C /* zip.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1B87D5F0F7F57C80063BD1C /* zip.cpp */; };
+-		D1C660CA0D5467C8002E52C1 /* pvs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1C660C90D5467C8002E52C1 /* pvs.cpp */; };
+-		D1D040DA0F830C350043BA95 /* movie.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1D040D90F830C350043BA95 /* movie.cpp */; };
+-		D1D07EFE0F645590007098A8 /* client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1D07EF60F645590007098A8 /* client.cpp */; };
+-		D1D07EFF0F645590007098A8 /* entities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1D07EF70F645590007098A8 /* entities.cpp */; };
+-		D1D07F000F645590007098A8 /* monster.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1D07EF80F645590007098A8 /* monster.cpp */; };
+-		D1D07F010F645590007098A8 /* movable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1D07EF90F645590007098A8 /* movable.cpp */; };
+-		D1D07F020F645590007098A8 /* render.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1D07EFA0F645590007098A8 /* render.cpp */; };
+-		D1D07F030F645590007098A8 /* scoreboard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1D07EFB0F645590007098A8 /* scoreboard.cpp */; };
+-		D1D07F040F645590007098A8 /* server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1D07EFC0F645590007098A8 /* server.cpp */; };
+-		D1D07F050F645590007098A8 /* weapon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1D07EFD0F645590007098A8 /* weapon.cpp */; };
+-		D1D6C6AE0EAEA703009B1A5C /* blob.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1D6C6AC0EAEA703009B1A5C /* blob.cpp */; };
+-		D1E605B90E2416150045244E /* sauerbraten.icns in Resources */ = {isa = PBXBuildFile; fileRef = B97E99CE085F4B3E002F9BC6 /* sauerbraten.icns */; };
+-
+-/* End PBXBuildFile section */
+-
+-/* Begin PBXFileReference section */
+-		089C165DFE840E0CC02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+-		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
+-		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
+-		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
+-		2D9FA6A423B9B042004A1465 /* glemu.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = glemu.cpp; sourceTree = "<group>"; };
+-		2D9FA6A623B9B057004A1465 /* glemu.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = glemu.h; sourceTree = "<group>"; };
+-		666E40EF0B67D87F005B491F /* macutils.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = macutils.mm; sourceTree = "<group>"; };
+-		B2F67ED704C74A3F00A80002 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = /System/Library/Frameworks/OpenGL.framework; sourceTree = "<absolute>"; };
+-		B90ADD0009B344D800A5B00B /* callbacks.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = callbacks.c; sourceTree = "<group>"; };
+-		B90ADD1309B344D800A5B00B /* host.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = host.c; sourceTree = "<group>"; };
+-		B90ADD2809B344D800A5B00B /* list.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = list.c; sourceTree = "<group>"; };
+-		B90ADD2F09B344D800A5B00B /* packet.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = packet.c; sourceTree = "<group>"; };
+-		B90ADD3009B344D800A5B00B /* peer.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = peer.c; sourceTree = "<group>"; };
+-		B90ADD3109B344D800A5B00B /* protocol.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = protocol.c; sourceTree = "<group>"; };
+-		B90ADD3409B344D800A5B00B /* unix.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = unix.c; sourceTree = "<group>"; };
+-		B91D401E0D525FD3004EF78A /* animmodel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = animmodel.h; sourceTree = "<group>"; };
+-		B91D40200D525FE0004EF78A /* decal.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = decal.cpp; sourceTree = "<group>"; };
+-		B91D40220D525FE9004EF78A /* md5.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = md5.h; sourceTree = "<group>"; };
+-		B91D40240D52600A004EF78A /* skelmodel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = skelmodel.h; sourceTree = "<group>"; };
+-		B92DC0F909D08CF9008219BD /* SDL2_image.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2_image.framework; path = /Library/Frameworks/SDL2_image.framework; sourceTree = "<absolute>"; };
+-		B92DC0FA09D08CF9008219BD /* SDL2_mixer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2_mixer.framework; path = /Library/Frameworks/SDL2_mixer.framework; sourceTree = "<absolute>"; };
+-		B92DC0FB09D08CF9008219BD /* SDL2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2.framework; path = /Library/Frameworks/SDL2.framework; sourceTree = "<absolute>"; };
+-		B930D0900A3D9BC700BDFB85 /* ConsoleView.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = ConsoleView.h; sourceTree = "<group>"; };
+-		B930D0910A3D9BC700BDFB85 /* ConsoleView.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = ConsoleView.m; sourceTree = "<group>"; };
+-		B94198CB09207E810029DAD1 /* sauerbraten.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = sauerbraten.app; sourceTree = BUILT_PRODUCTS_DIR; };
+-		B96D0D5B0920971300B6C936 /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = English.lproj/MainMenu.nib; sourceTree = "<group>"; };
+-		B96D0D6C0920976E00B6C936 /* main.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+-		B97E99CE085F4B3E002F9BC6 /* sauerbraten.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = sauerbraten.icns; sourceTree = "<group>"; };
+-		B9AC7A840D06DB44005506F8 /* 3dgui.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = 3dgui.cpp; sourceTree = "<group>"; };
+-		B9AC7A850D06DB44005506F8 /* bih.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = bih.cpp; sourceTree = "<group>"; };
+-		B9AC7A860D06DB44005506F8 /* bih.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bih.h; sourceTree = "<group>"; };
+-		B9AC7A870D06DB44005506F8 /* client.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = client.cpp; sourceTree = "<group>"; };
+-		B9AC7A880D06DB44005506F8 /* command.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = command.cpp; sourceTree = "<group>"; };
+-		B9AC7A890D06DB44005506F8 /* console.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = console.cpp; sourceTree = "<group>"; };
+-		B9AC7A8A0D06DB44005506F8 /* cubeloader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cubeloader.cpp; sourceTree = "<group>"; };
+-		B9AC7A8B0D06DB44005506F8 /* engine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = engine.h; sourceTree = "<group>"; };
+-		B9AC7A8C0D06DB44005506F8 /* grass.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = grass.cpp; sourceTree = "<group>"; };
+-		B9AC7A8D0D06DB44005506F8 /* lightmap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = lightmap.cpp; sourceTree = "<group>"; };
+-		B9AC7A8E0D06DB44005506F8 /* lightmap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lightmap.h; sourceTree = "<group>"; };
+-		B9AC7A8F0D06DB44005506F8 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+-		B9AC7A900D06DB44005506F8 /* material.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = material.cpp; sourceTree = "<group>"; };
+-		B9AC7A910D06DB44005506F8 /* md2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = md2.h; sourceTree = "<group>"; };
+-		B9AC7A920D06DB44005506F8 /* md3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = md3.h; sourceTree = "<group>"; };
+-		B9AC7A930D06DB44005506F8 /* menus.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = menus.cpp; sourceTree = "<group>"; };
+-		B9AC7A940D06DB44005506F8 /* model.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = model.h; sourceTree = "<group>"; };
+-		B9AC7A950D06DB44005506F8 /* normal.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = normal.cpp; sourceTree = "<group>"; };
+-		B9AC7A960D06DB44005506F8 /* octa.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = octa.cpp; sourceTree = "<group>"; };
+-		B9AC7A970D06DB44005506F8 /* octa.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = octa.h; sourceTree = "<group>"; };
+-		B9AC7A980D06DB44005506F8 /* octaedit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = octaedit.cpp; sourceTree = "<group>"; };
+-		B9AC7A990D06DB44005506F8 /* octarender.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = octarender.cpp; sourceTree = "<group>"; };
+-		B9AC7A9A0D06DB44005506F8 /* physics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = physics.cpp; sourceTree = "<group>"; };
+-		B9AC7A9B0D06DB44005506F8 /* rendergl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rendergl.cpp; sourceTree = "<group>"; };
+-		B9AC7A9C0D06DB44005506F8 /* rendermodel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rendermodel.cpp; sourceTree = "<group>"; };
+-		B9AC7A9D0D06DB44005506F8 /* renderparticles.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = renderparticles.cpp; sourceTree = "<group>"; };
+-		B9AC7A9E0D06DB44005506F8 /* rendersky.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rendersky.cpp; sourceTree = "<group>"; };
+-		B9AC7A9F0D06DB44005506F8 /* rendertext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rendertext.cpp; sourceTree = "<group>"; };
+-		B9AC7AA00D06DB44005506F8 /* renderva.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = renderva.cpp; sourceTree = "<group>"; };
+-		B9AC7AA10D06DB44005506F8 /* server.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = server.cpp; sourceTree = "<group>"; };
+-		B9AC7AA20D06DB44005506F8 /* serverbrowser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = serverbrowser.cpp; sourceTree = "<group>"; };
+-		B9AC7AA30D06DB44005506F8 /* shader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = shader.cpp; sourceTree = "<group>"; };
+-		B9AC7AA40D06DB44005506F8 /* shadowmap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = shadowmap.cpp; sourceTree = "<group>"; };
+-		B9AC7AA50D06DB44005506F8 /* sound.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sound.cpp; sourceTree = "<group>"; };
+-		B9AC7AA60D06DB44005506F8 /* texture.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = texture.cpp; sourceTree = "<group>"; };
+-		B9AC7AA70D06DB44005506F8 /* texture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = texture.h; sourceTree = "<group>"; };
+-		B9AC7AA80D06DB44005506F8 /* vertmodel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = vertmodel.h; sourceTree = "<group>"; };
+-		B9AC7AA90D06DB44005506F8 /* water.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = water.cpp; sourceTree = "<group>"; };
+-		B9AC7AAA0D06DB44005506F8 /* world.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = world.cpp; sourceTree = "<group>"; };
+-		B9AC7AAB0D06DB44005506F8 /* world.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = world.h; sourceTree = "<group>"; };
+-		B9AC7AAC0D06DB44005506F8 /* worldio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = worldio.cpp; sourceTree = "<group>"; };
+-		B9AC7AAE0D06DB44005506F8 /* capture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = capture.h; sourceTree = "<group>"; };
+-		B9AC7AB10D06DB44005506F8 /* fps.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = fps.cpp; sourceTree = "<group>"; };
+-		B9AC7AB40D06DB44005506F8 /* game.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = game.h; sourceTree = "<group>"; };
+-		B9AC7AC20D06DB44005506F8 /* command.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = command.h; sourceTree = "<group>"; };
+-		B9AC7AC30D06DB44005506F8 /* cube.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cube.h; sourceTree = "<group>"; };
+-		B9AC7AC40D06DB44005506F8 /* ents.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ents.h; sourceTree = "<group>"; };
+-		B9AC7AC50D06DB44005506F8 /* geom.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = geom.cpp; sourceTree = "<group>"; };
+-		B9AC7AC60D06DB44005506F8 /* geom.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = geom.h; sourceTree = "<group>"; };
+-		B9AC7AC70D06DB44005506F8 /* iengine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iengine.h; sourceTree = "<group>"; };
+-		B9AC7AC80D06DB44005506F8 /* igame.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = igame.h; sourceTree = "<group>"; };
+-		B9AC7AC90D06DB44005506F8 /* pch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pch.cpp; sourceTree = "<group>"; };
+-		B9AC7ACD0D06DB44005506F8 /* tools.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tools.cpp; sourceTree = "<group>"; };
+-		B9AC7ACE0D06DB44005506F8 /* tools.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tools.h; sourceTree = "<group>"; };
+-		B9CACA12092099DF00A13F04 /* sauerbraten.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist.xml; path = sauerbraten.plist; sourceTree = "<group>"; };
+-		D116C0AA0D9F7DB500E8B945 /* rendertarget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = rendertarget.h; sourceTree = "<group>"; };
+-		D118DEB50D979281000E8C4C /* glare.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = glare.cpp; sourceTree = "<group>"; };
+-		D11B024A0F830BA400334D69 /* ai.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ai.cpp; sourceTree = "<group>"; };
+-		D11B024B0F830BA400334D69 /* ai.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ai.h; sourceTree = "<group>"; };
+-		D11B024C0F830BA400334D69 /* aiman.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = aiman.h; sourceTree = "<group>"; };
+-		D11B024D0F830BA400334D69 /* waypoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = waypoint.cpp; sourceTree = "<group>"; };
+-		D123F95A0DA8B312001DB09F /* ctf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ctf.h; sourceTree = "<group>"; };
+-		D16BD00C0D7000EA0053CECE /* dynlight.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dynlight.cpp; sourceTree = "<group>"; };
+-		D16C16900E04812500A522EB /* obj.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = obj.h; sourceTree = "<group>"; };
+-		D16C16910E04812500A522EB /* textedit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = textedit.h; sourceTree = "<group>"; };
+-		D16E4E130ED107C300C401A2 /* blend.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = blend.cpp; sourceTree = "<group>"; };
+-		D18B8FBE0DB0AF8200171439 /* explosion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = explosion.h; sourceTree = "<group>"; };
+-		D18B8FBF0DB0AF8200171439 /* lensflare.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lensflare.h; sourceTree = "<group>"; };
+-		D18B8FC00DB0AF8200171439 /* lightning.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lightning.h; sourceTree = "<group>"; };
+-		D19E773011977E1E003753EF /* ent.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ent.cpp; path = ../rpggame/ent.cpp; sourceTree = SOURCE_ROOT; };
+-		D19E773111977E1E003753EF /* entities.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = entities.cpp; path = ../rpggame/entities.cpp; sourceTree = SOURCE_ROOT; };
+-		D19E773211977E1E003753EF /* objset.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = objset.cpp; path = ../rpggame/objset.cpp; sourceTree = SOURCE_ROOT; };
+-		D19E773311977E1E003753EF /* rpg.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = rpg.cpp; path = ../rpggame/rpg.cpp; sourceTree = SOURCE_ROOT; };
+-		D19E773411977E1E003753EF /* rpg.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = rpg.h; path = ../rpggame/rpg.h; sourceTree = SOURCE_ROOT; };
+-		D19E773511977E1E003753EF /* rpgent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = rpgent.h; path = ../rpggame/rpgent.h; sourceTree = SOURCE_ROOT; };
+-		D19E773611977E1E003753EF /* rpgobj.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = rpgobj.h; path = ../rpggame/rpgobj.h; sourceTree = SOURCE_ROOT; };
+-		D19E773711977E1E003753EF /* stats.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stats.h; path = ../rpggame/stats.h; sourceTree = SOURCE_ROOT; };
+-		D19E775D11977E82003753EF /* iqm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iqm.h; sourceTree = "<group>"; };
+-		D19E775E11977E82003753EF /* mpr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mpr.h; sourceTree = "<group>"; };
+-		D19E776011977E82003753EF /* smd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = smd.h; sourceTree = "<group>"; };
+-		D19E776111977E82003753EF /* glexts.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = glexts.h; sourceTree = "<group>"; };
+-		D1AB44FB0E245F7A00B5D3A5 /* help */ = {isa = PBXFileReference; lastKnownFileType = folder; path = help; sourceTree = "<group>"; };
+-		D1B87D5D0F7F57C80063BD1C /* crypto.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = crypto.cpp; sourceTree = "<group>"; };
+-		D1B87D5E0F7F57C80063BD1C /* stream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = stream.cpp; sourceTree = "<group>"; };
+-		D1B87D5F0F7F57C80063BD1C /* zip.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zip.cpp; sourceTree = "<group>"; };
+-		D1BAE4260F1F1B170077022C /* ragdoll.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ragdoll.h; sourceTree = "<group>"; };
+-		D1C660C90D5467C8002E52C1 /* pvs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pvs.cpp; sourceTree = "<group>"; };
+-		D1D040D90F830C350043BA95 /* movie.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = movie.cpp; sourceTree = "<group>"; };
+-		D1D07EF60F645590007098A8 /* client.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = client.cpp; sourceTree = "<group>"; };
+-		D1D07EF70F645590007098A8 /* entities.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = entities.cpp; sourceTree = "<group>"; };
+-		D1D07EF80F645590007098A8 /* monster.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = monster.cpp; sourceTree = "<group>"; };
+-		D1D07EF90F645590007098A8 /* movable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = movable.cpp; sourceTree = "<group>"; };
+-		D1D07EFA0F645590007098A8 /* render.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = render.cpp; sourceTree = "<group>"; };
+-		D1D07EFB0F645590007098A8 /* scoreboard.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = scoreboard.cpp; sourceTree = "<group>"; };
+-		D1D07EFC0F645590007098A8 /* server.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = server.cpp; sourceTree = "<group>"; };
+-		D1D07EFD0F645590007098A8 /* weapon.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = weapon.cpp; sourceTree = "<group>"; };
+-		D1D6C6AC0EAEA703009B1A5C /* blob.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = blob.cpp; sourceTree = "<group>"; };
+-		D1D6C6AD0EAEA703009B1A5C /* depthfx.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = depthfx.h; sourceTree = "<group>"; };
+-		D1DE11180E21986800FA387C /* extinfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = extinfo.h; sourceTree = "<group>"; };
+-		D1DB53E50D70F1C3003AE25C /* English */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/Localizable.strings; sourceTree = "<group>"; };
+-		F5A47A9D01A0482F01D3D55B /* SDLMain.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SDLMain.h; sourceTree = SOURCE_ROOT; };
+-		F5A47A9E01A0483001D3D55B /* SDLMain.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = SDLMain.m; sourceTree = SOURCE_ROOT; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
+-/* End PBXFileReference section */
+-
+-/* Begin PBXFrameworksBuildPhase section */
+-		B94198C209207E810029DAD1 /* Frameworks */ = {
+-			isa = PBXFrameworksBuildPhase;
+-			buildActionMask = 2147483647;
+-			files = (
+-				B94198C309207E810029DAD1 /* Cocoa.framework in Frameworks */,
+-				B94198C409207E810029DAD1 /* OpenGL.framework in Frameworks */,
+-				B92DC0FC09D08CF9008219BD /* SDL2_image.framework in Frameworks */,
+-				B92DC0FD09D08CF9008219BD /* SDL2_mixer.framework in Frameworks */,
+-				B92DC0FE09D08CF9008219BD /* SDL2.framework in Frameworks */,
+-			);
+-			runOnlyForDeploymentPostprocessing = 0;
+-		};
+-/* End PBXFrameworksBuildPhase section */
+-
+-/* Begin PBXGroup section */
+-		080E96DDFE201D6D7F000001 /* Classes */ = {
+-			isa = PBXGroup;
+-			children = (
+-				B930D0900A3D9BC700BDFB85 /* ConsoleView.h */,
+-				B930D0910A3D9BC700BDFB85 /* ConsoleView.m */,
+-				666E40EF0B67D87F005B491F /* macutils.mm */,
+-				B96D0D6C0920976E00B6C936 /* main.m */,
+-				F5A47A9D01A0482F01D3D55B /* SDLMain.h */,
+-				F5A47A9E01A0483001D3D55B /* SDLMain.m */,
+-			);
+-			name = Classes;
+-			sourceTree = "<group>";
+-		};
+-		1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */ = {
+-			isa = PBXGroup;
+-			children = (
+-				B92DC0F909D08CF9008219BD /* SDL2_image.framework */,
+-				B92DC0FA09D08CF9008219BD /* SDL2_mixer.framework */,
+-				B92DC0FB09D08CF9008219BD /* SDL2.framework */,
+-				1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */,
+-				B2F67ED704C74A3F00A80002 /* OpenGL.framework */,
+-			);
+-			name = "Linked Frameworks";
+-			sourceTree = "<group>";
+-		};
+-		1058C7A2FEA54F0111CA2CBB /* Other Frameworks */ = {
+-			isa = PBXGroup;
+-			children = (
+-				29B97325FDCFA39411CA2CEA /* Foundation.framework */,
+-				29B97324FDCFA39411CA2CEA /* AppKit.framework */,
+-			);
+-			name = "Other Frameworks";
+-			sourceTree = "<group>";
+-		};
+-		19C28FACFE9D520D11CA2CBB /* Products */ = {
+-			isa = PBXGroup;
+-			children = (
+-				B94198CB09207E810029DAD1 /* sauerbraten.app */,
+-			);
+-			name = Products;
+-			sourceTree = "<group>";
+-		};
+-		29B97314FDCFA39411CA2CEA /* sauerbraten */ = {
+-			isa = PBXGroup;
+-			children = (
+-				080E96DDFE201D6D7F000001 /* Classes */,
+-				29B97323FDCFA39411CA2CEA /* Frameworks */,
+-				29B97315FDCFA39411CA2CEA /* Other Sources */,
+-				19C28FACFE9D520D11CA2CBB /* Products */,
+-				29B97317FDCFA39411CA2CEA /* Resources */,
+-			);
+-			name = sauerbraten;
+-			sourceTree = "<group>";
+-		};
+-		29B97315FDCFA39411CA2CEA /* Other Sources */ = {
+-			isa = PBXGroup;
+-			children = (
+-				B90ADCEE09B344D800A5B00B /* enet */,
+-				B9AC7A830D06DB44005506F8 /* engine */,
+-				B9AC7AAD0D06DB44005506F8 /* fpsgame */,
+-				B9AC7AC10D06DB44005506F8 /* shared */,
+-			);
+-			name = "Other Sources";
+-			sourceTree = "<group>";
+-		};
+-		29B97317FDCFA39411CA2CEA /* Resources */ = {
+-			isa = PBXGroup;
+-			children = (
+-				B9CACA12092099DF00A13F04 /* sauerbraten.plist */,
+-				B97E99CE085F4B3E002F9BC6 /* sauerbraten.icns */,
+-				B96D0D5A0920971300B6C936 /* MainMenu.nib */,
+-				089C165CFE840E0CC02AAC07 /* InfoPlist.strings */,
+-				D1DB53E70D70F1CD003AE25C /* Localizable.strings */,
+-			);
+-			name = Resources;
+-			sourceTree = "<group>";
+-		};
+-		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
+-			isa = PBXGroup;
+-			children = (
+-				1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */,
+-				1058C7A2FEA54F0111CA2CBB /* Other Frameworks */,
+-			);
+-			name = Frameworks;
+-			sourceTree = "<group>";
+-		};
+-		B90ADCEE09B344D800A5B00B /* enet */ = {
+-			isa = PBXGroup;
+-			children = (
+-				B90ADD0009B344D800A5B00B /* callbacks.c */,
+-				B90ADD1309B344D800A5B00B /* host.c */,
+-				B90ADD2809B344D800A5B00B /* list.c */,
+-				B90ADD2F09B344D800A5B00B /* packet.c */,
+-				B90ADD3009B344D800A5B00B /* peer.c */,
+-				B90ADD3109B344D800A5B00B /* protocol.c */,
+-				B90ADD3409B344D800A5B00B /* unix.c */,
+-			);
+-			name = enet;
+-			path = ../enet;
+-			sourceTree = SOURCE_ROOT;
+-		};
+-		B9AC7A830D06DB44005506F8 /* engine */ = {
+-			isa = PBXGroup;
+-			children = (
+-				D1D040D90F830C350043BA95 /* movie.cpp */,
+-				B9AC7A840D06DB44005506F8 /* 3dgui.cpp */,
+-				B9AC7A850D06DB44005506F8 /* bih.cpp */,
+-				D16E4E130ED107C300C401A2 /* blend.cpp */,
+-				D1D6C6AC0EAEA703009B1A5C /* blob.cpp */,
+-				B9AC7A870D06DB44005506F8 /* client.cpp */,
+-				B9AC7A880D06DB44005506F8 /* command.cpp */,
+-				B9AC7A890D06DB44005506F8 /* console.cpp */,
+-				B9AC7A8A0D06DB44005506F8 /* cubeloader.cpp */,
+-				B91D40200D525FE0004EF78A /* decal.cpp */,
+-				D16BD00C0D7000EA0053CECE /* dynlight.cpp */,
+-				D118DEB50D979281000E8C4C /* glare.cpp */,
+-				B9AC7A8C0D06DB44005506F8 /* grass.cpp */,
+-				B9AC7A8D0D06DB44005506F8 /* lightmap.cpp */,
+-				B9AC7A8F0D06DB44005506F8 /* main.cpp */,
+-				B9AC7A900D06DB44005506F8 /* material.cpp */,
+-				B9AC7A930D06DB44005506F8 /* menus.cpp */,
+-				B9AC7A950D06DB44005506F8 /* normal.cpp */,
+-				B9AC7A960D06DB44005506F8 /* octa.cpp */,
+-				B9AC7A9A0D06DB44005506F8 /* physics.cpp */,
+-				D1C660C90D5467C8002E52C1 /* pvs.cpp */,
+-				B9AC7A980D06DB44005506F8 /* octaedit.cpp */,
+-				B9AC7A990D06DB44005506F8 /* octarender.cpp */,
+-				B9AC7A9B0D06DB44005506F8 /* rendergl.cpp */,
+-				B9AC7A9C0D06DB44005506F8 /* rendermodel.cpp */,
+-				B9AC7A9D0D06DB44005506F8 /* renderparticles.cpp */,
+-				B9AC7A9E0D06DB44005506F8 /* rendersky.cpp */,
+-				B9AC7A9F0D06DB44005506F8 /* rendertext.cpp */,
+-				B9AC7AA00D06DB44005506F8 /* renderva.cpp */,
+-				B9AC7AA10D06DB44005506F8 /* server.cpp */,
+-				B9AC7AA20D06DB44005506F8 /* serverbrowser.cpp */,
+-				B9AC7AA30D06DB44005506F8 /* shader.cpp */,
+-				B9AC7AA40D06DB44005506F8 /* shadowmap.cpp */,
+-				B9AC7AA50D06DB44005506F8 /* sound.cpp */,
+-				B9AC7AA60D06DB44005506F8 /* texture.cpp */,
+-				B9AC7AA90D06DB44005506F8 /* water.cpp */,
+-				B9AC7AAA0D06DB44005506F8 /* world.cpp */,
+-				B9AC7AAC0D06DB44005506F8 /* worldio.cpp */,
+-				B91D401E0D525FD3004EF78A /* animmodel.h */,
+-				B9AC7A860D06DB44005506F8 /* bih.h */,
+-				D1D6C6AD0EAEA703009B1A5C /* depthfx.h */,
+-				B9AC7A8B0D06DB44005506F8 /* engine.h */,
+-				D18B8FBE0DB0AF8200171439 /* explosion.h */,
+-				D19E775D11977E82003753EF /* iqm.h */,
+-				D18B8FBF0DB0AF8200171439 /* lensflare.h */,
+-				D18B8FC00DB0AF8200171439 /* lightning.h */,
+-				B9AC7A8E0D06DB44005506F8 /* lightmap.h */,
+-				B9AC7A910D06DB44005506F8 /* md2.h */,
+-				B9AC7A920D06DB44005506F8 /* md3.h */,
+-				B91D40220D525FE9004EF78A /* md5.h */,
+-				B9AC7A940D06DB44005506F8 /* model.h */,
+-				D19E775E11977E82003753EF /* mpr.h */,
+-				D16C16900E04812500A522EB /* obj.h */,
+-				B9AC7A970D06DB44005506F8 /* octa.h */,
+-				D1BAE4260F1F1B170077022C /* ragdoll.h */,
+-				D116C0AA0D9F7DB500E8B945 /* rendertarget.h */,
+-				B91D40240D52600A004EF78A /* skelmodel.h */,
+-				D19E776011977E82003753EF /* smd.h */,
+-				D16C16910E04812500A522EB /* textedit.h */,
+-				B9AC7AA70D06DB44005506F8 /* texture.h */,
+-				B9AC7AA80D06DB44005506F8 /* vertmodel.h */,
+-				B9AC7AAB0D06DB44005506F8 /* world.h */,
+-			);
+-			name = engine;
+-			path = ../engine;
+-			sourceTree = SOURCE_ROOT;
+-		};
+-		B9AC7AAD0D06DB44005506F8 /* fpsgame */ = {
+-			isa = PBXGroup;
+-			children = (
+-				D11B024A0F830BA400334D69 /* ai.cpp */,
+-				D1D07EF60F645590007098A8 /* client.cpp */,
+-				D1D07EF70F645590007098A8 /* entities.cpp */,
+-				D1D07EF80F645590007098A8 /* monster.cpp */,
+-				D1D07EF90F645590007098A8 /* movable.cpp */,
+-				D1D07EFA0F645590007098A8 /* render.cpp */,
+-				D1D07EFB0F645590007098A8 /* scoreboard.cpp */,
+-				D1D07EFC0F645590007098A8 /* server.cpp */,
+-				D11B024D0F830BA400334D69 /* waypoint.cpp */,
+-				D1D07EFD0F645590007098A8 /* weapon.cpp */,
+-				B9AC7AB10D06DB44005506F8 /* fps.cpp */,
+-				D11B024B0F830BA400334D69 /* ai.h */,
+-				D11B024C0F830BA400334D69 /* aiman.h */,
+-				D1DE11180E21986800FA387C /* extinfo.h */,
+-				D123F95A0DA8B312001DB09F /* ctf.h */,
+-				B9AC7AAE0D06DB44005506F8 /* capture.h */,
+-				B9AC7AB40D06DB44005506F8 /* game.h */,
+-			);
+-			name = fpsgame;
+-			path = ../fpsgame;
+-			sourceTree = SOURCE_ROOT;
+-		};
+-		B9AC7AC10D06DB44005506F8 /* shared */ = {
+-			isa = PBXGroup;
+-			children = (
+-				2D9FA6A623B9B057004A1465 /* glemu.h */,
+-				2D9FA6A423B9B042004A1465 /* glemu.cpp */,
+-				D19E776111977E82003753EF /* glexts.h */,
+-				D1B87D5D0F7F57C80063BD1C /* crypto.cpp */,
+-				D1B87D5E0F7F57C80063BD1C /* stream.cpp */,
+-				D1B87D5F0F7F57C80063BD1C /* zip.cpp */,
+-				B9AC7AC50D06DB44005506F8 /* geom.cpp */,
+-				B9AC7AC90D06DB44005506F8 /* pch.cpp */,
+-				B9AC7ACD0D06DB44005506F8 /* tools.cpp */,
+-				B9AC7AC20D06DB44005506F8 /* command.h */,
+-				B9AC7AC30D06DB44005506F8 /* cube.h */,
+-				B9AC7AC40D06DB44005506F8 /* ents.h */,
+-				B9AC7AC60D06DB44005506F8 /* geom.h */,
+-				B9AC7AC70D06DB44005506F8 /* iengine.h */,
+-				B9AC7AC80D06DB44005506F8 /* igame.h */,
+-				B9AC7ACE0D06DB44005506F8 /* tools.h */,
+-			);
+-			name = shared;
+-			path = ../shared;
+-			sourceTree = SOURCE_ROOT;
+-		};
+-/* End PBXGroup section */
+-
+-/* Begin PBXNativeTarget section */
+-		B941988A09207E810029DAD1 /* sauerbraten */ = {
+-			isa = PBXNativeTarget;
+-			buildConfigurationList = B94198C609207E810029DAD1 /* Build configuration list for PBXNativeTarget "sauerbraten" */;
+-			buildPhases = (
+-				B94198A409207E810029DAD1 /* Resources */,
+-				B94198A709207E810029DAD1 /* Sources */,
+-				B94198C209207E810029DAD1 /* Frameworks */,
+-			);
+-			buildRules = (
+-			);
+-			dependencies = (
+-			);
+-			name = sauerbraten;
+-			productInstallPath = "$(HOME)/Desktop/sauerbraten";
+-			productName = sauerbraten;
+-			productReference = B94198CB09207E810029DAD1 /* sauerbraten.app */;
+-			productType = "com.apple.product-type.application";
+-		};
+-/* End PBXNativeTarget section */
+-
+-/* Begin PBXProject section */
+-		29B97313FDCFA39411CA2CEA /* Project object */ = {
+-			isa = PBXProject;
+-			attributes = {
+-				BuildIndependentTargetsInParallel = NO;
+-				LastUpgradeCheck = 0620;
+-			};
+-			buildConfigurationList = B960CF35085F3CC7004FB142 /* Build configuration list for PBXProject "sauerbraten" */;
+-			compatibilityVersion = "Xcode 3.2";
+-			developmentRegion = English;
+-			hasScannedForEncodings = 1;
+-			knownRegions = (
+-				English,
+-				en,
+-			);
+-			mainGroup = 29B97314FDCFA39411CA2CEA /* sauerbraten */;
+-			projectDirPath = "";
+-			projectRoot = ../..;
+-			targets = (
+-				B941988A09207E810029DAD1 /* sauerbraten */,
+-			);
+-		};
+-/* End PBXProject section */
+-
+-/* Begin PBXResourcesBuildPhase section */
+-		B94198A409207E810029DAD1 /* Resources */ = {
+-			isa = PBXResourcesBuildPhase;
+-			buildActionMask = 2147483647;
+-			files = (
+-				D1E605B90E2416150045244E /* sauerbraten.icns in Resources */,
+-			);
+-			runOnlyForDeploymentPostprocessing = 0;
+-		};
+-/* End PBXResourcesBuildPhase section */
+-
+-/* Begin PBXSourcesBuildPhase section */
+-		B94198A709207E810029DAD1 /* Sources */ = {
+-			isa = PBXSourcesBuildPhase;
+-			buildActionMask = 2147483647;
+-			files = (
+-				B94198A809207E810029DAD1 /* SDLMain.m in Sources */,
+-				B90ADD4509B344D800A5B00B /* callbacks.c in Sources */,
+-				B90ADD5709B344D800A5B00B /* host.c in Sources */,
+-				B90ADD6A09B344D800A5B00B /* list.c in Sources */,
+-				B90ADD7109B344D800A5B00B /* packet.c in Sources */,
+-				B90ADD7209B344D800A5B00B /* peer.c in Sources */,
+-				B90ADD7309B344D800A5B00B /* protocol.c in Sources */,
+-				B90ADD7609B344D800A5B00B /* unix.c in Sources */,
+-				666E40F00B67D87F005B491F /* macutils.mm in Sources */,
+-				B9AC7ACF0D06DB44005506F8 /* 3dgui.cpp in Sources */,
+-				B9AC7AD00D06DB44005506F8 /* bih.cpp in Sources */,
+-				B9AC7AD20D06DB44005506F8 /* client.cpp in Sources */,
+-				B9AC7AD30D06DB44005506F8 /* command.cpp in Sources */,
+-				B9AC7AD40D06DB44005506F8 /* console.cpp in Sources */,
+-				B9AC7AD50D06DB44005506F8 /* cubeloader.cpp in Sources */,
+-				B9AC7AD70D06DB44005506F8 /* grass.cpp in Sources */,
+-				B9AC7AD80D06DB44005506F8 /* lightmap.cpp in Sources */,
+-				B9AC7ADA0D06DB44005506F8 /* main.cpp in Sources */,
+-				B9AC7ADB0D06DB44005506F8 /* material.cpp in Sources */,
+-				B9AC7ADE0D06DB44005506F8 /* menus.cpp in Sources */,
+-				B9AC7AE00D06DB44005506F8 /* normal.cpp in Sources */,
+-				B9AC7AE10D06DB44005506F8 /* octa.cpp in Sources */,
+-				B9AC7AE30D06DB44005506F8 /* octaedit.cpp in Sources */,
+-				2D9FA6A523B9B042004A1465 /* glemu.cpp in Sources */,
+-				B9AC7AE40D06DB44005506F8 /* octarender.cpp in Sources */,
+-				B9AC7AE50D06DB44005506F8 /* physics.cpp in Sources */,
+-				B9AC7AE60D06DB44005506F8 /* rendergl.cpp in Sources */,
+-				B9AC7AE70D06DB44005506F8 /* rendermodel.cpp in Sources */,
+-				B9AC7AE80D06DB44005506F8 /* renderparticles.cpp in Sources */,
+-				B9AC7AE90D06DB44005506F8 /* rendersky.cpp in Sources */,
+-				B9AC7AEA0D06DB44005506F8 /* rendertext.cpp in Sources */,
+-				B9AC7AEB0D06DB44005506F8 /* renderva.cpp in Sources */,
+-				B9AC7AEC0D06DB44005506F8 /* server.cpp in Sources */,
+-				B9AC7AED0D06DB44005506F8 /* serverbrowser.cpp in Sources */,
+-				B9AC7AEE0D06DB44005506F8 /* shader.cpp in Sources */,
+-				B9AC7AEF0D06DB44005506F8 /* shadowmap.cpp in Sources */,
+-				B9AC7AF00D06DB44005506F8 /* sound.cpp in Sources */,
+-				B9AC7AF10D06DB44005506F8 /* texture.cpp in Sources */,
+-				B9AC7AF40D06DB44005506F8 /* water.cpp in Sources */,
+-				B9AC7AF50D06DB44005506F8 /* world.cpp in Sources */,
+-				B9AC7AF70D06DB44005506F8 /* worldio.cpp in Sources */,
+-				B9AC7AFB0D06DB44005506F8 /* fps.cpp in Sources */,
+-				B9AC7B0D0D06DB44005506F8 /* geom.cpp in Sources */,
+-				B9AC7B110D06DB44005506F8 /* pch.cpp in Sources */,
+-				B9AC7B150D06DB44005506F8 /* tools.cpp in Sources */,
+-				B91D40210D525FE0004EF78A /* decal.cpp in Sources */,
+-				D1C660CA0D5467C8002E52C1 /* pvs.cpp in Sources */,
+-				D16BD00D0D7000EA0053CECE /* dynlight.cpp in Sources */,
+-				D118DEB60D979281000E8C4C /* glare.cpp in Sources */,
+-				D1D6C6AE0EAEA703009B1A5C /* blob.cpp in Sources */,
+-				D16E4E140ED107C300C401A2 /* blend.cpp in Sources */,
+-				D1D07EFE0F645590007098A8 /* client.cpp in Sources */,
+-				D1D07EFF0F645590007098A8 /* entities.cpp in Sources */,
+-				D1D07F000F645590007098A8 /* monster.cpp in Sources */,
+-				D1D07F010F645590007098A8 /* movable.cpp in Sources */,
+-				D1D07F020F645590007098A8 /* render.cpp in Sources */,
+-				D1D07F030F645590007098A8 /* scoreboard.cpp in Sources */,
+-				D1D07F040F645590007098A8 /* server.cpp in Sources */,
+-				D1D07F050F645590007098A8 /* weapon.cpp in Sources */,
+-				D1B87D600F7F57C80063BD1C /* crypto.cpp in Sources */,
+-				D1B87D610F7F57C80063BD1C /* stream.cpp in Sources */,
+-				D1B87D620F7F57C80063BD1C /* zip.cpp in Sources */,
+-				D11B024E0F830BA400334D69 /* ai.cpp in Sources */,
+-				D11B02510F830BA400334D69 /* waypoint.cpp in Sources */,
+-				D1D040DA0F830C350043BA95 /* movie.cpp in Sources */,
+-
+-			);
+-			runOnlyForDeploymentPostprocessing = 0;
+-		};
+-/* End PBXSourcesBuildPhase section */
+-
+-/* Begin PBXVariantGroup section */
+-		089C165CFE840E0CC02AAC07 /* InfoPlist.strings */ = {
+-			isa = PBXVariantGroup;
+-			children = (
+-				089C165DFE840E0CC02AAC07 /* English */,
+-			);
+-			name = InfoPlist.strings;
+-			sourceTree = "<group>";
+-		};
+-		B96D0D5A0920971300B6C936 /* MainMenu.nib */ = {
+-			isa = PBXVariantGroup;
+-			children = (
+-				B96D0D5B0920971300B6C936 /* English */,
+-			);
+-			name = MainMenu.nib;
+-			sourceTree = "<group>";
+-		};
+-		D1DB53E70D70F1CD003AE25C /* Localizable.strings */ = {
+-			isa = PBXVariantGroup;
+-			children = (
+-				D1DB53E50D70F1C3003AE25C /* English */,
+-			);
+-			name = Localizable.strings;
+-			sourceTree = "<group>";
+-		};
+-/* End PBXVariantGroup section */
+-
+-/* Begin XCBuildConfiguration section */
+-		3E18417F123861470098590C /* Release */ = {
+-			isa = XCBuildConfiguration;
+-			buildSettings = {
+-				COPY_PHASE_STRIP = YES;
+-				DEPLOYMENT_POSTPROCESSING = YES;
+-				FRAMEWORK_SEARCH_PATHS = (
+-					"$(USER_LIBRARY_DIR)/Frameworks",
+-					"$(LOCAL_LIBRARY_DIR)/Frameworks",
+-				);
+-				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+-				GCC_OPTIMIZATION_LEVEL = 3;
+-				GCC_VERSION = 4.0;
+-				INSTALL_PATH = "";
+-				SKIP_INSTALL = NO;
+-				STRIP_INSTALLED_PRODUCT = YES;
+-			};
+-			name = Release;
+-		};
+-		3E184180123861470098590C /* Release */ = {
+-			isa = XCBuildConfiguration;
+-			buildSettings = {
+-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+-				COMBINE_HIDPI_IMAGES = YES;
+-				DEPLOYMENT_LOCATION = YES;
+-				DEPLOYMENT_POSTPROCESSING = YES;
+-				FRAMEWORK_SEARCH_PATHS = (
+-					../../sauerbraten.app/Contents/Frameworks,
+-					"$(USER_LIBRARY_DIR)/Frameworks",
+-					"$(LOCAL_LIBRARY_DIR)/Frameworks",
+-				);
+-				GCC_ENABLE_CPP_EXCEPTIONS = NO;
+-				GCC_ENABLE_OBJC_EXCEPTIONS = NO;
+-				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+-				GCC_PREFIX_HEADER = "";
+-				GCC_PREPROCESSOR_DEFINITIONS = "";
+-				GCC_VERSION = "";
+-				HEADER_SEARCH_PATHS = (
+-					../include,
+-					../shared,
+-					../enet/include,
+-					/usr/X11/include/,
+-					"$(inherited)",
+-				);
+-				INFOPLIST_FILE = "sauerbraten.plist";
+-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
+-				MACOSX_DEPLOYMENT_TARGET = 10.9;
+-				OTHER_CPLUSPLUSFLAGS = (
+-					"-fomit-frame-pointer",
+-					"-Wno-invalid-offsetof",
+-				);
+-				OTHER_LDFLAGS = (
+-					"-lz",
+-				);
+-				PRODUCT_NAME = sauerbraten;
+-				SDKROOT = macosx;
+-				SKIP_INSTALL = NO;
+-				VALID_ARCHS = x86_64;
+-			};
+-			name = Release;
+-		};
+-		B94198C709207E810029DAD1 /* Debug */ = {
+-			isa = XCBuildConfiguration;
+-			buildSettings = {
+-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+-				COMBINE_HIDPI_IMAGES = YES;
+-				FRAMEWORK_SEARCH_PATHS = (
+-					../../sauerbraten.app/Contents/Frameworks,
+-					"$(USER_LIBRARY_DIR)/Frameworks",
+-					"$(LOCAL_LIBRARY_DIR)/Frameworks",
+-				);
+-				GCC_ENABLE_CPP_EXCEPTIONS = NO;
+-				GCC_ENABLE_OBJC_EXCEPTIONS = NO;
+-				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+-				GCC_PREFIX_HEADER = "";
+-				GCC_PREPROCESSOR_DEFINITIONS = "";
+-				GCC_VERSION = "";
+-				HEADER_SEARCH_PATHS = (
+-					../include,
+-					../shared,
+-					../enet/include,
+-					/usr/X11/include/,
+-					"$(inherited)",
+-				);
+-				INFOPLIST_FILE = "sauerbraten.plist";
+-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
+-				MACOSX_DEPLOYMENT_TARGET = 10.9;
+-				OTHER_CPLUSPLUSFLAGS = (
+-					"-Wno-invalid-offsetof",
+-				);
+-				OTHER_LDFLAGS = (
+-					"-lz",
+-					"-L../../sauerbraten.app/Contents/Frameworks",
+-				);
+-				PRODUCT_NAME = sauerbraten;
+-				SDKROOT = macosx;
+-				VALID_ARCHS = x86_64;
+-			};
+-			name = Debug;
+-		};
+-		B960CF36085F3CC7004FB142 /* Debug */ = {
+-			isa = XCBuildConfiguration;
+-			buildSettings = {
+-				COPY_PHASE_STRIP = NO;
+-				FRAMEWORK_SEARCH_PATHS = (
+-					"$(USER_LIBRARY_DIR)/Frameworks",
+-					"$(LOCAL_LIBRARY_DIR)/Frameworks",
+-				);
+-				GCC_OPTIMIZATION_LEVEL = 0;
+-				GCC_VERSION = 4.0;
+-				MACOSX_DEPLOYMENT_TARGET = 10.9;
+-				ONLY_ACTIVE_ARCH = YES;
+-				PREBINDING = NO;
+-				SDKROOT = macosx;
+-				STRIP_INSTALLED_PRODUCT = NO;
+-			};
+-			name = Debug;
+-		};
+-/* End XCBuildConfiguration section */
+-
+-/* Begin XCConfigurationList section */
+-		B94198C609207E810029DAD1 /* Build configuration list for PBXNativeTarget "sauerbraten" */ = {
+-			isa = XCConfigurationList;
+-			buildConfigurations = (
+-				B94198C709207E810029DAD1 /* Debug */,
+-				3E184180123861470098590C /* Release */,
+-			);
+-			defaultConfigurationIsVisible = 0;
+-			defaultConfigurationName = Release;
+-		};
+-		B960CF35085F3CC7004FB142 /* Build configuration list for PBXProject "sauerbraten" */ = {
+-			isa = XCConfigurationList;
+-			buildConfigurations = (
+-				B960CF36085F3CC7004FB142 /* Debug */,
+-				3E18417F123861470098590C /* Release */,
+-			);
+-			defaultConfigurationIsVisible = 0;
+-			defaultConfigurationName = Release;
+-		};
+-/* End XCConfigurationList section */
+-	};
+-	rootObject = 29B97313FDCFA39411CA2CEA /* Project object */;
+-}

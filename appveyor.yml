@@ -1,11 +1,34 @@
-version: 1.0.{build}
-configuration: Release
+image:
+  - Visual Studio 2019
+  - macOS
 platform: x64
-build:
-  project: src/vcpp/sauerbraten.vcxproj
-  verbosity: minimal
-artifacts:
-- path: bin64/sauerbraten.exe
+
+for:
+-
+  matrix:
+    only:
+      - image: Visual Studio 2019
+  configuration: Release
+  build:
+    project: src/vcpp/sauerbraten.vcxproj
+    verbosity: minimal
+  artifacts:
+  - path: bin64/sauerbraten.exe
+-
+  matrix:
+    only:
+      - image: macOS
+  before_build:
+    - cd src
+  build_script:
+    - make
+  after_build:
+    - strip sauer_client
+    - mv sauer_client ../sauerbraten_universal
+    - cd ..
+  artifacts:
+  - path: sauerbraten_universal
+
 deploy:
 - provider: GitHub
   auth_token:
