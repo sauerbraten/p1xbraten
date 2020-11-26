@@ -5,9 +5,9 @@ compiler: clang
 install: sudo apt-get install libsdl2-dev libsdl2-mixer-dev libsdl2-image-dev zlib1g-dev binutils
 before script: cd src
 script: make client
-after_script: strip sauer_client
 before_deploy:
-  - strip src/sauer_client
+  - strip sauer_client
+  - cd ..
   - mv src/sauer_client linux_64_client
 deploy:
   provider: releases
