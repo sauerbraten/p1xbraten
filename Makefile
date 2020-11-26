@@ -7,11 +7,13 @@ PATCH=patch --directory=${SAUER_DIR} --strip=0 --remove-empty-files --ignore-whi
 build: apply-patches build-sauer
 
 apply-patches: check-env
+	dos2unix $(SAUER_DIR)/src/vcpp/sauerbraten.vcxproj
 	${PATCH} < patches/001_wayland.patch
 	$(PATCH) < patches/002_homedir.patch
 	$(PATCH) < patches/003_moviehud.patch
 	$(PATCH) < patches/004_weaponstats.patch
 	$(PATCH) < patches/005_macos-builds.patch
+	unix2dos $(SAUER_DIR)/src/vcpp/sauerbraten.vcxproj
 
 install: check-env
 	mkdir --parents $(SAUER_USER_DIR)/bin_unix
@@ -21,11 +23,13 @@ uninstall: check-env
 	rm --force $(SAUER_USER_DIR)/bin_unix/native_client
 
 undo-patches: check-env
+	dos2unix $(SAUER_DIR)/src/vcpp/sauerbraten.vcxproj
 	$(PATCH) --reverse < patches/005_macos-builds.patch
 	$(PATCH) --reverse < patches/004_weaponstats.patch
 	$(PATCH) --reverse < patches/003_moviehud.patch
 	$(PATCH) --reverse < patches/002_homedir.patch
 	$(PATCH) --reverse < patches/001_wayland.patch
+	unix2dos $(SAUER_DIR)/src/vcpp/sauerbraten.vcxproj
 
 build-sauer: check-env
 	cd $(SAUER_DIR)/src && make client

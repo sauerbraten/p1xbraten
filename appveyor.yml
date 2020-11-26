@@ -21,7 +21,7 @@ for:
   before_build:
     - cd src
   build_script:
-    - make
+    - make client
   after_build:
     - strip sauer_client
     - mv sauer_client ../sauerbraten_universal
