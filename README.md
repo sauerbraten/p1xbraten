@@ -1,8 +1,32 @@
 # p1xbraten
 
-This repository contains the source for my client mod, as well as the patches applied to the vanilla source to get there. To build, just run `make client` inside the src/ directory.
+This repository contains the source for my client mod, as well as the patches applied to the vanilla source to get there.
 
-To build my client using fresh vanilla sources, set the path to your Sauerbraten directory (currently, an SVN checkout is required), then use `make` and `make install`:
+## Installation
+
+The latest builds are always at https://github.com/sauerbraten/p1xbraten/releases/latest.
+
+### Windows
+
+Put sauerbraten.exe into bin64/ of your Sauerbraten installation.
+
+### macOS
+
+Put sauerbraten_universal into sauerbraten.app/Contents/MacOS/, then `chmod +x sauerbraten.app/Contents/MacOS/sauerbraten_universal`.
+
+### Linux
+
+Put linux_64_client into bin_unix/, then `chmod +x bin_unix/linux_64_client`.
+
+## Building your own binary
+
+On Linux and macOS, just run `make && make install` **inside the src/ directory** (given you installed the usual Sauerbraten dependencies). On Linux, the [./start.sh](./start.sh) script will launch the new binary using the Sauerbraten files in $SAUER_DIR and `~/.p1xbraten` as user data directory.
+
+On Windows, open src/vcpp/sauerbraten.vcxproj with Visual Studio and build in there.
+
+### Fresh build
+
+On Linux and macOS, you can easily build my client using fresh vanilla sources. Set $SAUER_DIR to the path of your Sauerbraten directory (currently, an SVN checkout is required), then use `make` and `make install` in the repository root:
 
 ```
 export SAUER_DIR=~/sauerbraten-code
@@ -10,25 +34,16 @@ make
 make install
 ```
 
-`make` will apply all patches and run `make` inside SAUER_DIR, `make install` will put the compiled binary into .sauerbraten_svn/bin_unix/ (which is where the patched sauerbraten_unix script will look first). To remove the custom client from your user directory, use `make uninstall`, to undo all patches to the Sauer code, use `make undo-patches`. `make purge` will run `make uninstall`, `make undo-patches` and run `make clean` inside SAUER_DIR.
+`make` will copy the src/ directory from $SAUER_DIR, apply all patches and run `make` inside src/; `make install` will put the compiled binary into the usual place (depending on your OS).
 
 ## Patches
 
-### [wayland.patch](./patches/001_wayland.patch)
-
-- sets `SDL_VIDEODRIVER=wayland` env var before launching Sauer to get more than 60fps on systems using Gnome 3.38 on Wayland (e.g. Fedora)
-
-### [homedir.patch](./patches/002_homedir.patch)
-
-- sets up sauerbraten_unix to use .sauerbraten_svn as the user's content directory (avoids conflicts with an existing .sauerbraten directory from the installed release)
-- makes sauerbraten_unix launch (if it exists) `native_client` from .sauerbraten_svn/bin_unix/ (which is where `make` put the compiled binary)
-
-### [moviehud.patch](./patches/003_moviehud.patch)
+### [moviehud.patch](./patches/moviehud.patch)
 
 - adds `hidespecfollow` toggle: when 1, hides the "SPECTATOR" and player name in the lower right of the screen when spectating)
 - adds `namesabovehead` toggle: when 0, hides the names above players' models (usually rendered as particle text), while keeping status icons for health boost, armor and quad
 
-### [weaponstats.patch](./patches/004_weaponstats.patch)
+### [weaponstats.patch](./patches/weaponstats.patch)
 
 - enables detailed per-weapon damage stats recording
 - adds damage-related cubescript commands:

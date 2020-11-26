@@ -10,7 +10,7 @@ Index: src/Makefile
  	fpsgame/waypoint.o \
  	fpsgame/weapon.o
 
-@@ -468,6 +469,7 @@
+@@ -476,6 +477,7 @@
  fpsgame/client.o: shared/ents.h shared/command.h shared/glexts.h
  fpsgame/client.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
  fpsgame/client.o: fpsgame/capture.h fpsgame/ctf.h fpsgame/collect.h
@@ -18,7 +18,7 @@ Index: src/Makefile
  fpsgame/entities.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
  fpsgame/entities.o: shared/ents.h shared/command.h shared/glexts.h
  fpsgame/entities.o: shared/glemu.h shared/iengine.h shared/igame.h
-@@ -475,6 +477,7 @@
+@@ -483,6 +485,7 @@
  fpsgame/fps.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
  fpsgame/fps.o: shared/ents.h shared/command.h shared/glexts.h shared/glemu.h
  fpsgame/fps.o: shared/iengine.h shared/igame.h fpsgame/ai.h
@@ -26,7 +26,7 @@ Index: src/Makefile
  fpsgame/monster.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
  fpsgame/monster.o: shared/ents.h shared/command.h shared/glexts.h
  fpsgame/monster.o: shared/glemu.h shared/iengine.h shared/igame.h
-@@ -502,6 +505,8 @@
+@@ -510,6 +513,8 @@
  fpsgame/weapon.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
  fpsgame/weapon.o: shared/ents.h shared/command.h shared/glexts.h
  fpsgame/weapon.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
@@ -35,7 +35,7 @@ Index: src/Makefile
 
  shared/cube.h.gch: shared/tools.h shared/geom.h shared/ents.h
  shared/cube.h.gch: shared/command.h shared/glexts.h shared/glemu.h
-@@ -514,6 +519,7 @@
+@@ -522,6 +527,7 @@
  fpsgame/game.h.gch: shared/cube.h shared/tools.h shared/geom.h shared/ents.h
  fpsgame/game.h.gch: shared/command.h shared/glexts.h shared/glemu.h
  fpsgame/game.h.gch: shared/iengine.h shared/igame.h fpsgame/ai.h

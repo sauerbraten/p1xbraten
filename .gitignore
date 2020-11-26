@@ -1,1 +1,12 @@
+src/**/*.a
+src/**/*.gch
+src/**/*.o
+src/sauer_client
+src/sauer_server
 patch_drafts
+bin/*
+bin64/*
+bin_unix/*
+sauerbraten.app/*
+!sauerbraten.app/Contents/Frameworks
+!/**/.gitkeep

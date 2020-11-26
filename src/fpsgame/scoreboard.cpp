@@ -283,7 +283,7 @@ namespace game
             {
                 g.pushlist();
                 g.strut(6);
-                g.text("dd", fgcolor);
+                g.text("dmg", fgcolor);
                 loopscoregroup(o, {
                     float dmg = (float) showdamage == 1 ? playerdamage(o, DMG_DEALT) : playernetdamage(o);
                     const char *fmt = "%.0f";

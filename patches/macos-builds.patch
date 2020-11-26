@@ -2,7 +2,7 @@ Index: src/Makefile
 ===================================================================
 --- src/Makefile	(revision 6346)
 +++ src/Makefile	(working copy)
-@@ -231,6 +232,9 @@
+@@ -232,6 +232,9 @@
  ifneq (,$(findstring DARWIN,$(PLATFORM)))
  install: client
  	cp sauer_client ../sauerbraten.app/Contents/MacOS/sauerbraten_universal
