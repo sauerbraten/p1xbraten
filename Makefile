@@ -7,6 +7,7 @@ build: update-src apply-patches
 
 install:
 	cd src && make install
+	cp -R data ~/.p1xbraten/
 
 clean:
 	cd src && make clean
@@ -14,16 +15,18 @@ clean:
 
 apply-patches:
 	$(PATCH) < patches/moviehud.patch
+	$(PATCH) < patches/clean_scoreboard.patch
 	dos2unix src/vcpp/sauerbraten.vcxproj
 	$(PATCH) < patches/weaponstats.patch
 	unix2dos src/vcpp/sauerbraten.vcxproj
-	$(PATCH) < patches/macos-builds.patch
+	$(PATCH) < patches/macos_builds.patch
 
 undo-patches:
-	$(PATCH) --reverse < patches/macos-builds.patch
+	$(PATCH) --reverse < patches/macos_builds.patch
 	dos2unix src/vcpp/sauerbraten.vcxproj
 	$(PATCH) --reverse < patches/weaponstats.patch
 	unix2dos src/vcpp/sauerbraten.vcxproj
+	$(PATCH) --reverse < patches/clean_scoreboard.patch
 	$(PATCH) --reverse < patches/moviehud.patch
 
 clean-sauer: check-env
@@ -32,7 +35,7 @@ clean-sauer: check-env
 
 update-src: clean-sauer
 	rm --recursive --force src/
-	rsync --recursive --times --exclude=".*" $(SAUER_DIR)/src .
+	rsync --recursive --ignore-times --times --exclude=".*" $(SAUER_DIR)/src .
 
 check-env:
 ifndef SAUER_DIR

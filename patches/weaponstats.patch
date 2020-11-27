@@ -26,7 +26,7 @@ Index: src/Makefile
  fpsgame/monster.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
  fpsgame/monster.o: shared/ents.h shared/command.h shared/glexts.h
  fpsgame/monster.o: shared/glemu.h shared/iengine.h shared/igame.h
-@@ -510,6 +513,8 @@
+@@ -511,6 +514,8 @@
  fpsgame/weapon.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
  fpsgame/weapon.o: shared/ents.h shared/command.h shared/glexts.h
  fpsgame/weapon.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
@@ -35,7 +35,7 @@ Index: src/Makefile
 
  shared/cube.h.gch: shared/tools.h shared/geom.h shared/ents.h
  shared/cube.h.gch: shared/command.h shared/glexts.h shared/glemu.h
-@@ -522,6 +527,7 @@
+@@ -523,6 +528,7 @@
  fpsgame/game.h.gch: shared/cube.h shared/tools.h shared/geom.h shared/ents.h
  fpsgame/game.h.gch: shared/command.h shared/glexts.h shared/glemu.h
  fpsgame/game.h.gch: shared/iengine.h shared/igame.h fpsgame/ai.h
@@ -331,7 +331,7 @@ Index: src/fpsgame/scoreboard.cpp
 ===================================================================
 --- src/fpsgame/scoreboard.cpp	(revision 6295)
 +++ src/fpsgame/scoreboard.cpp	(working copy)
-@@ -14,6 +14,9 @@
+@@ -15,6 +15,9 @@
      VARP(showconnecting, 0, 0, 1);
      VARP(hidefrags, 0, 1, 1);
      VARP(showdeaths, 0, 0, 1);
@@ -341,7 +341,7 @@ Index: src/fpsgame/scoreboard.cpp
 
      static hashset<teaminfo> teaminfos;
 
-@@ -258,6 +261,38 @@
+@@ -248,6 +251,38 @@
                  g.poplist();
              }
 
@@ -349,8 +349,8 @@ Index: src/fpsgame/scoreboard.cpp
 +            {
 +                g.pushlist();
 +                g.strut(5);
-+                g.text("kpd", fgcolor);
-+                loopscoregroup(o, g.textf("%.1f", 0xFFFFDD, NULL, (float)o->frags/max(1, o->deaths)));
++                g.text("kpd", COL_GRAY);
++                loopscoregroup(o, g.textf("%.1f", COL_WHITE, NULL, (float)o->frags/max(1, o->deaths)));
 +                g.poplist();
 +            }
 +
@@ -358,8 +358,8 @@ Index: src/fpsgame/scoreboard.cpp
 +            {
 +                g.pushlist();
 +                g.strut(5);
-+                g.text("acc", fgcolor);
-+                loopscoregroup(o, g.textf("%.0f%%", 0xFFFFDD, NULL, playeraccuracy(o)));
++                g.text("acc", COL_GRAY);
++                loopscoregroup(o, g.textf("%.0f%%", COL_WHITE, NULL, playeraccuracy(o)));
 +                g.poplist();
 +            }
 +
@@ -367,16 +367,16 @@ Index: src/fpsgame/scoreboard.cpp
 +            {
 +                g.pushlist();
 +                g.strut(6);
-+                g.text("dmg", fgcolor);
++                g.text("dmg", COL_GRAY);
 +                loopscoregroup(o, {
 +                    float dmg = (float) showdamage == 1 ? playerdamage(o, DMG_DEALT) : playernetdamage(o);
 +                    const char *fmt = "%.0f";
 +                    if(fabs(dmg) > 1000.0f) { fmt = "%.1fk"; dmg = dmg/1000.0f; }
-+                    g.textf(fmt, 0xFFFFDD, NULL, dmg);
++                    g.textf(fmt, COL_WHITE, NULL, dmg);
 +                });
 +                g.poplist();
 +            }
 +
-             g.pushlist();
-             g.text("name", fgcolor);
-             g.strut(12);
+             if(multiplayer(false) || demoplayback)
+             {
+                 if(showpj || showping) g.space(1);

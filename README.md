@@ -59,3 +59,11 @@ make install
     - `showkpd`: when 1, shows the players' frags/death ratio
     - `showaccuracy`: when 1, shows the players' overall accuracy
     - `showdamage`: when 1, shows the players' overall damage dealt; when 2, shows the players' overall net damage (= dealt - received)
+
+### [clean_scoreboard.patch](./patches/clean_scoreboard.patch)
+
+- filename says it all:
+
+    ![ectf](https://i.imgur.com/6DXW4Pj.jpg)
+    ![duel](https://i.imgur.com/cbGUTxk.jpg)
+    ![multiple teams](https://i.imgur.com/aC8rHms.jpg)

@@ -222,9 +222,9 @@ static void text_color(char c, char *stack, int size, int &sp, bvec color, int a
         switch(c)
         {
             case '0': color = bvec( 64, 255, 128); break;   // green: player talk
-            case '1': color = bvec( 96, 160, 255); break;   // blue: "echo" command
+            case '1': color = bvec( 46, 130, 255); break;   // blue: "echo" command
             case '2': color = bvec(255, 192,  64); break;   // yellow: gameplay messages 
-            case '3': color = bvec(255,  64,  64); break;   // red: important errors
+            case '3': color = bvec(237,  43,  44); break;   // red: important errors
             case '4': color = bvec(128, 128, 128); break;   // gray
             case '5': color = bvec(192,  64, 192); break;   // magenta
             case '6': color = bvec(255, 128,   0); break;   // orange
