@@ -2,6 +2,12 @@
 
 PATCH=patch --strip=0 --remove-empty-files --ignore-whitespace
 
+ifndef SAUER_DIR
+ifneq (,$(wildcard ~/sauerbraten-code))
+	SAUER_DIR=~/sauerbraten-code
+endif
+endif
+
 build: update-src apply-patches
 	cd src && make client
 

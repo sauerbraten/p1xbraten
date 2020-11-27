@@ -1,11 +1,19 @@
 #!/bin/sh
-# SAUER_DATA should refer to the directory in which Sauerbraten data files are placed.
-#SAUER_DATA=~/sauerbraten
-#SAUER_DATA=/usr/local/sauerbraten
-SAUER_DATA=.
+# SAUER_DIR should refer to the directory in which Sauerbraten data files are placed.
+#SAUER_DIR=~/sauerbraten
+if [ -z ${SAUER_DIR} ]
+then
+  if [ -x ~/sauerbraten-code ]
+  then
+    SAUER_DIR=~/sauerbraten-code
+  else
+    echo "SAUER_DIR not set and ~/sauerbraten-code does not exist"
+    exit 1
+  fi
+fi
 
 # SAUER_BIN should refer to the directory in which Sauerbraten executable files are placed.
-SAUER_BIN=${SAUER_DATA}/bin_unix
+SAUER_BIN=./bin_unix
 
 # SAUER_OPTIONS contains any command line options you would like to start Sauerbraten with.
 #SAUER_OPTIONS="-f"
@@ -52,7 +60,6 @@ fi
 
 if [ -x ${SAUER_BIN}/${SYSTEM_NAME}${MACHINE_NAME}client ]
 then
-  cd ${SAUER_DATA}
   exec ${SAUER_BIN}/${SYSTEM_NAME}${MACHINE_NAME}client ${SAUER_OPTIONS} "$@"
 else
   echo "Your platform does not have a pre-compiled Sauerbraten client."
