@@ -531,7 +531,7 @@ struct captureclientmode : clientmode
             defformatstring(alias, "base_%d", e->attr2);
             const char *name = getalias(alias);
             copystring(b.name, name);
-            b.tag = e->attr2 || name[0] ? e->attr2 : bases.length();
+            b.tag = e->attr2>0 ? e->attr2 : bases.length();
             b.light = e->light;
         }
     }

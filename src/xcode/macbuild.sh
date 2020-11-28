@@ -5,12 +5,12 @@ while [ -n "$1" ]; do
   clean)
    xcodebuild -project sauerbraten.xcodeproj clean -configuration Release
    ;;
-  all)
+  build)
    xcodebuild -project sauerbraten.xcodeproj -configuration Release -alltargets
    ;;
   install)
    cp -v build/Release/sauerbraten.app/Contents/MacOS/sauerbraten ../../sauerbraten.app/Contents/MacOS/sauerbraten_universal
-   chmod +x ../sauerbraten.app/Contents/MacOS/sauerbraten_universal
+   chmod +x ../../sauerbraten.app/Contents/MacOS/sauerbraten_universal
    ;;
   package)
    exec ./package.sh

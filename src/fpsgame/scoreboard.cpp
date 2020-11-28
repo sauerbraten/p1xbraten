@@ -190,7 +190,7 @@ namespace game
         g.spring();
         g.poplist();
 
-        g.space(.5);
+        g.space(.75f);
 
         int numgroups = groupplayers();
         loopk(numgroups)
@@ -338,18 +338,20 @@ namespace game
             else
             {
                 g.poplist(); // horizontal
-                if(k+1<numgroups) g.space(.5);
+                if(k+1<numgroups) g.space(.75f);
         }
         }
 
         if(showspectators && spectators.length())
         {
+            g.space(.75f);
+
             if(showclientnum || player1->privilege>=PRIV_MASTER)
             {
                 g.pushlist();
 
                 g.pushlist();
-                g.text("spectator", COL_GRAY, " ");
+                g.text("spectator", COL_GRAY);
                 g.strut(12);
                 loopv(spectators)
                 {
@@ -391,7 +393,7 @@ namespace game
             }
             else
             {
-                g.textf("%d spectator%s", COL_GRAY, " ", spectators.length(), spectators.length()!=1 ? "s" : "");
+                g.textf("%d spectator%s", COL_GRAY, NULL, spectators.length(), spectators.length()!=1 ? "s" : "");
                 loopv(spectators)
                 {
                     if((i%3)==0)

@@ -607,7 +607,7 @@ namespace server
     VAR(maxdemos, 0, 5, 25);
     VAR(maxdemosize, 0, 16, 31);
     VAR(restrictdemos, 0, 1, 1);
-    VAR(autorecorddemo, 0, 0, 1);
+    VARF(autorecorddemo, 0, 0, 1, demonextmatch = autorecorddemo!=0);
 
     VAR(restrictpausegame, 0, 1, 1);
     VAR(restrictgamespeed, 0, 1, 1);
@@ -982,10 +982,15 @@ namespace server
         loopi(sizeof(team)/sizeof(team[0]))
         {
             addteaminfo(teamnames[i]);
-            if(!persistteams) loopvj(team[i])
+            loopvj(team[i])
             {
                 clientinfo *ci = team[i][j];
                 if(!strcmp(ci->team, teamnames[i])) continue;
+                if(persistteams && ci->team[0] && (!smode || smode->canchangeteam(ci, teamnames[i], ci->team)))
+                {
+                    addteaminfo(ci->team);
+                    continue;
+                }
                 copystring(ci->team, teamnames[i], MAXTEAMLEN+1);
                 sendf(-1, 1, "riisi", N_SETTEAM, ci->clientnum, teamnames[i], -1);
             }
@@ -2048,13 +2053,13 @@ namespace server
 
         sendf(-1, 1, "risii", N_MAPCHANGE, smapname, gamemode, 1);
 
-        clearteaminfo();
-        if(m_teammode) autoteam();
-
         if(m_capture) smode = &capturemode;
         else if(m_ctf) smode = &ctfmode;
         else if(m_collect) smode = &collectmode;
         else smode = NULL;
+
+        clearteaminfo();
+        if(m_teammode) autoteam();
 
         if(m_timed && smapname[0]) sendf(-1, 1, "ri2", N_TIMEUP, gamemillis < gamelimit && !interm ? max((gamelimit - gamemillis)/1000, 1) : 0);
         loopv(clients)
