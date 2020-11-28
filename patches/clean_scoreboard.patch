@@ -28,7 +28,7 @@ Index: src/engine/rendertext.cpp
              case '6': color = bvec(255, 128,   0); break;   // orange
 Index: src/fpsgame/scoreboard.cpp
 ===================================================================
---- src/fpsgame/scoreboard.cpp	(revision 6353)
+--- src/fpsgame/scoreboard.cpp	(revision 6404)
 +++ src/fpsgame/scoreboard.cpp	(working copy)
 @@ -1,5 +1,6 @@
  // creation of scoreboard
@@ -106,7 +106,7 @@ Index: src/fpsgame/scoreboard.cpp
          g.poplist();
 
 -        g.separator();
-+        g.space(.5);
++        g.space(.75f);
 
          int numgroups = groupplayers();
          loopk(numgroups)
@@ -282,7 +282,7 @@ Index: src/fpsgame/scoreboard.cpp
                  g.poplist();
              }
 
-@@ -349,8 +300,12 @@
+@@ -349,17 +300,23 @@
              g.poplist(); // vertical
 
              if(k+1<numgroups && (k+1)%2) g.space(2);
@@ -290,22 +290,25 @@ Index: src/fpsgame/scoreboard.cpp
 +            else
 +            {
 +                g.poplist(); // horizontal
-+                if(k+1<numgroups) g.space(.5);
++                if(k+1<numgroups) g.space(.75f);
          }
 +        }
 
          if(showspectators && spectators.length())
          {
-@@ -359,7 +314,7 @@
++            g.space(.75f);
++
+             if(showclientnum || player1->privilege>=PRIV_MASTER)
+             {
                  g.pushlist();
 
                  g.pushlist();
 -                g.text("spectator", 0xFFFF80, " ");
-+                g.text("spectator", COL_GRAY, " ");
++                g.text("spectator", COL_GRAY);
                  g.strut(12);
                  loopv(spectators)
                  {
-@@ -367,9 +322,9 @@
+@@ -367,9 +324,9 @@
                      if(o==player1 && highlightscore)
                      {
                          g.pushlist();
@@ -317,7 +320,7 @@ Index: src/fpsgame/scoreboard.cpp
                      if(o==player1 && highlightscore) g.poplist();
                  }
                  g.poplist();
-@@ -378,7 +333,7 @@
+@@ -378,7 +335,7 @@
                  {
                      g.space(1);
                      g.pushlist();
@@ -326,7 +329,7 @@ Index: src/fpsgame/scoreboard.cpp
                      g.strut(6);
                      loopv(spectators)
                      {
-@@ -385,8 +340,8 @@
+@@ -385,8 +342,8 @@
                          fpsent *o = spectators[i];
                          fpsent *p = o->ownernum >= 0 ? getclient(o->ownernum) : o;
                          if(!p) p = o;
@@ -337,7 +340,7 @@ Index: src/fpsgame/scoreboard.cpp
                      }
                      g.poplist();
                  }
-@@ -393,8 +348,8 @@
+@@ -393,8 +350,8 @@
 
                  g.space(1);
                  g.pushlist();
@@ -348,12 +351,12 @@ Index: src/fpsgame/scoreboard.cpp
                  g.poplist();
 
                  g.poplist();
-@@ -401,21 +356,21 @@
+@@ -401,21 +358,21 @@
              }
              else
              {
 -                g.textf("%d spectator%s", 0xFFFF80, " ", spectators.length(), spectators.length()!=1 ? "s" : "");
-+                g.textf("%d spectator%s", COL_GRAY, " ", spectators.length(), spectators.length()!=1 ? "s" : "");
++                g.textf("%d spectator%s", COL_GRAY, NULL, spectators.length(), spectators.length()!=1 ? "s" : "");
                  loopv(spectators)
                  {
                      if((i%3)==0)
@@ -374,7 +377,7 @@ Index: src/fpsgame/scoreboard.cpp
                      if(o==player1 && highlightscore) g.poplist();
                      if(i+1<spectators.length() && (i+1)%3) g.space(1);
                      else g.poplist();
-@@ -475,8 +430,8 @@
+@@ -475,8 +432,8 @@
      VARP(hudscorealign, -1, 0, 1);
      FVARP(hudscorex, 0, 0.50f, 1);
      FVARP(hudscorey, 0, 0.03f, 1);
