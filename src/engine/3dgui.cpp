@@ -32,6 +32,17 @@ static float cursorx = 0.5f, cursory = 0.5f;
 VARP(guiautotab, 6, 16, 40);
 VARP(guiclicktab, 0, 0, 1);
 VARP(guifadein, 0, 1, 1);
+VARP(guipreviewtime, 0, 15, 1000);
+
+static int lastpreview = 0;
+
+static inline bool throttlepreview(bool loaded)
+{
+    if(loaded) return true;
+    if(totalmillis - lastpreview < guipreviewtime) return false;
+    lastpreview = totalmillis;
+    return true;
+}
 
 struct gui : g3d_gui
 {
@@ -287,12 +298,12 @@ struct gui : g3d_gui
         return windowhit==this && hitx>=x && hity>=y && hitx<x+w && hity<y+h;
     }
 
-    int image(Texture *t, float scale, bool overlaid)
+    int image(Texture *t, float scale, const char *overlaid)
     {
         autotab();
         if(scale==0) scale = 1;
         int size = (int)(scale*2*FONTH)-SHADOW;
-        if(visible()) icon_(t, overlaid, curx, cury, size, ishit(size+SHADOW, size+SHADOW));
+        if(visible()) icon_(t, overlaid!=NULL, curx, cury, size, ishit(size+SHADOW, size+SHADOW), overlaid);
         return layout(size+SHADOW, size+SHADOW);
     }
     
@@ -305,12 +316,12 @@ struct gui : g3d_gui
         return layout(size+SHADOW, size+SHADOW);
     }
 
-    int playerpreview(int model, int team, int weap, float sizescale, bool overlaid)
+    int playerpreview(int model, int team, int weap, float sizescale, const char *overlaid)
     {
         autotab();
         if(sizescale==0) sizescale = 1;
         int size = (int)(sizescale*2*FONTH)-SHADOW;
-        if(visible())
+        if(model>=0 && visible())
         {
             bool hit = ishit(size+SHADOW, size+SHADOW);
             float xs = size, ys = size, xi = curx, yi = cury;
@@ -341,6 +352,7 @@ struct gui : g3d_gui
                     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                     hudshader->set();
                 }
+                if(overlaid[0]) text_(overlaid, xi + xs/12, yi + ys - ys/12 - FONTH, hit ? 0xFF0000 : 0xFFFFFF, hit, hit);
                 if(!overlaytex) overlaytex = textureload("data/guioverlay.png", 3);
                 gle::color(light);
                 glBindTexture(GL_TEXTURE_2D, overlaytex->id);
@@ -350,12 +362,12 @@ struct gui : g3d_gui
         return layout(size+SHADOW, size+SHADOW);
     }
 
-    int modelpreview(const char *name, int anim, float sizescale, bool overlaid)
+    int modelpreview(const char *name, int anim, float sizescale, const char *overlaid, bool throttle)
     {
         autotab();
         if(sizescale==0) sizescale = 1;
         int size = (int)(sizescale*2*FONTH)-SHADOW;
-        if(visible())
+        if(name[0] && visible() && (!throttle || throttlepreview(modelloaded(name))))
         {
             bool hit = ishit(size+SHADOW, size+SHADOW);
             float xs = size, ys = size, xi = curx, yi = cury;
@@ -397,6 +409,7 @@ struct gui : g3d_gui
                     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                     hudshader->set();
                 }
+                if(overlaid[0]) text_(overlaid, xi + xs/12, yi + ys - ys/12 - FONTH, hit ? 0xFF0000 : 0xFFFFFF, hit, hit);
                 if(!overlaytex) overlaytex = textureload("data/guioverlay.png", 3);
                 gle::color(light);
                 glBindTexture(GL_TEXTURE_2D, overlaytex->id);
@@ -406,12 +419,12 @@ struct gui : g3d_gui
         return layout(size+SHADOW, size+SHADOW);
     }
 
-    int prefabpreview(const char *prefab, const vec &color, float sizescale, bool overlaid)
+    int prefabpreview(const char *prefab, const vec &color, float sizescale, const char *overlaid, bool throttle)
     {
         autotab();
         if(sizescale==0) sizescale = 1;
         int size = (int)(sizescale*2*FONTH)-SHADOW;
-        if(visible())
+        if(prefab[0] && visible() && (!throttle || throttlepreview(prefabloaded(prefab))))
         {
             bool hit = ishit(size+SHADOW, size+SHADOW);
             float xs = size, ys = size, xi = curx, yi = cury;
@@ -442,6 +455,7 @@ struct gui : g3d_gui
                     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                     hudshader->set();
                 }
+                if(overlaid[0]) text_(overlaid, xi + FONTH/2, yi + FONTH/2, hit ? 0xFF0000 : 0xFFFFFF, hit, hit);
                 if(!overlaytex) overlaytex = textureload("data/guioverlay.png", 3);
                 gle::color(light);
                 glBindTexture(GL_TEXTURE_2D, overlaytex->id);
@@ -638,7 +652,7 @@ struct gui : g3d_gui
         hudshader->set();
     }
 
-    void icon_(Texture *t, bool overlaid, int x, int y, int size, bool hit)
+    void icon_(Texture *t, bool overlaid, int x, int y, int size, bool hit, const char *title = NULL)
     {
         float scale = float(size)/max(t->xs, t->ys); //scale and preserve aspect ratio
         float xs = t->xs*scale, ys = t->ys*scale;
@@ -660,6 +674,7 @@ struct gui : g3d_gui
             glBindTexture(GL_TEXTURE_2D, overlaytex->id);
             gle::color(light);
             rect_(x, y, xs, ys, 0);
+            if(title) text_(title, x + xs/12, y + ys - ys/12 - FONTH, hit ? 0xFF0000 : 0xFFFFFF, hit && actionon, hit);
         }
     }        
 

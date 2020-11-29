@@ -1252,6 +1252,11 @@ void pasteblock(block3 &b, selinfo &sel, bool local)
     sel.orient = o;
 }
 
+bool prefabloaded(const char *name)
+{
+    return prefabs.access(name) != NULL;
+}
+
 prefab *loadprefab(const char *name, bool msg = true)
 {
    prefab *b = prefabs.access(name);
@@ -2754,13 +2759,16 @@ COMMAND(editmat, "ss");
 
 extern int menudistance, menuautoclose;
 
-VARP(texguiwidth, 1, 16, 1000);
+VARP(texguiwidth, 1, 15, 1000);
 VARP(texguiheight, 1, 8, 1000);
+FVARP(texguiscale, 0.1f, 1.5f, 10.0f);
 VARP(texguitime, 0, 15, 1000);
+VARP(texguiname, 0, 1, 1);
 
 static int lastthumbnail = 0;
 
 VARP(texgui2d, 0, 1, 1);
+VAR(texguinum, 1, -1, 0);
 
 struct texturegui : g3d_callback
 {
@@ -2773,11 +2781,14 @@ struct texturegui : g3d_callback
     void gui(g3d_gui &g, bool firstpass)
     {
         int origtab = menutab, numtabs = max((slots.length() + texguiwidth*texguiheight - 1)/(texguiwidth*texguiheight), 1);
+        if(!firstpass) texguinum = -1;
         g.start(menustart, 0.04f, &menutab);
+        bool oldautotab = g.allowautotab(false);
         loopi(numtabs)
         {
-            g.tab(!i ? "Textures" : NULL, 0xAAFFAA);
+            g.tab(!i ? "Textures" : NULL, 0xFFDD88);
             if(i+1 != origtab) continue; //don't load textures on non-visible tabs!
+            Slot *rollover = NULL;
             loop(h, texguiheight)
             {
                 g.pushlist();
@@ -2794,13 +2805,15 @@ struct texturegui : g3d_callback
                         {
                             if(totalmillis-lastthumbnail<texguitime)
                             {
-                                g.texture(dummyvslot, 1.0, false); //create an empty space
+                                g.texture(dummyvslot, texguiscale, false); //create an empty space
                                 continue;
                             }
                             loadthumbnail(slot);
                             lastthumbnail = totalmillis;
                         }
-                        if(g.texture(vslot, 1.0f, true)&G3D_UP && (slot.loaded || slot.thumbnail!=notexture))
+                        int ret = g.texture(vslot, texguiscale, true);
+                        if(ret&G3D_ROLLOVER) { rollover = &slot; texguinum = ti; }
+                        if(ret&G3D_UP && (slot.loaded || slot.thumbnail!=notexture))
                         {
                             edittex(vslot.index);
                             hudshader->set();
@@ -2808,24 +2821,36 @@ struct texturegui : g3d_callback
                     }
                     else
                     {
-                        g.texture(dummyvslot, 1.0, false); //create an empty space
+                        g.texture(dummyvslot, texguiscale, false); //create an empty space
                     }
                 }
                 g.poplist();
             }
+            if(texguiname)
+            {
+                if(rollover)
+                {
+                    defformatstring(name, "%d \f7:\fc %s", texguinum, rollover->sts[0].name);
+                    g.title(name, 0xFFDD88);
+                }
+                else g.space(1);
+            }
         }
+        g.allowautotab(oldautotab);
         g.end();
     }
 
     void showtextures(bool on)
     {
-        if(on != menuon && (menuon = on))
+        if(on == menuon) return;
+        if((menuon = on))
         {
             if(menustart <= lasttexmillis)
                 menutab = 1+clamp(lookupvslot(lasttex, false).slot->index, 0, slots.length()-1)/(texguiwidth*texguiheight);
             menupos = menuinfrontofplayer();
             menustart = starttime();
         }
+        else texguinum = -1;
     }
 
     void show()
@@ -2833,7 +2858,7 @@ struct texturegui : g3d_callback
         if(!menuon) return;
         filltexlist();
         extern int usegui2d;
-        if(!editmode || ((!texgui2d || !usegui2d) && camera1->o.dist(menupos) > menuautoclose)) menuon = false;
+        if(!editmode || ((!texgui2d || !usegui2d) && camera1->o.dist(menupos) > menuautoclose)) { menuon = false; texguinum = -1; }
         else g3d_addgui(this, menupos, texgui2d ? GUI_2D : 0);
     }
 } gui;

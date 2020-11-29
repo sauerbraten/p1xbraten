@@ -407,6 +407,11 @@ void preloadusedmapmodels(bool msg, bool bih)
     loadprogress = 0;
 }
 
+bool modelloaded(const char *name)
+{
+    return models.find(name, NULL) != NULL;
+}
+
 model *loadmodel(const char *name, int i, bool msg)
 {
     if(!name)
