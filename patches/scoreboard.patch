@@ -1,0 +1,799 @@
+Index: src/Makefile
+===================================================================
+--- src/Makefile	(revision 6463)
++++ src/Makefile	(working copy)
+@@ -130,6 +130,7 @@
+ 	fpsgame/render.o \
+ 	fpsgame/scoreboard.o \
+ 	fpsgame/server.o \
++	fpsgame/weaponstats.o \
+ 	fpsgame/waypoint.o \
+ 	fpsgame/weapon.o
+
+@@ -476,6 +477,7 @@
+ fpsgame/client.o: shared/ents.h shared/command.h shared/glexts.h
+ fpsgame/client.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
+ fpsgame/client.o: fpsgame/capture.h fpsgame/ctf.h fpsgame/collect.h
++fpsgame/client.o: fpsgame/weaponstats.h
+ fpsgame/entities.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
+ fpsgame/entities.o: shared/ents.h shared/command.h shared/glexts.h
+ fpsgame/entities.o: shared/glemu.h shared/iengine.h shared/igame.h
+@@ -483,6 +485,7 @@
+ fpsgame/fps.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
+ fpsgame/fps.o: shared/ents.h shared/command.h shared/glexts.h shared/glemu.h
+ fpsgame/fps.o: shared/iengine.h shared/igame.h fpsgame/ai.h
++fpsgame/fps.o: fpsgame/weaponstats.h
+ fpsgame/monster.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
+ fpsgame/monster.o: shared/ents.h shared/command.h shared/glexts.h
+ fpsgame/monster.o: shared/glemu.h shared/iengine.h shared/igame.h
+@@ -498,6 +501,7 @@
+ fpsgame/scoreboard.o: shared/geom.h shared/ents.h shared/command.h
+ fpsgame/scoreboard.o: shared/glexts.h shared/glemu.h shared/iengine.h
+ fpsgame/scoreboard.o: shared/igame.h fpsgame/ai.h
++fpsgame/scoreboard.o: fpsgame/colors.h
+ fpsgame/server.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
+ fpsgame/server.o: shared/ents.h shared/command.h shared/glexts.h
+ fpsgame/server.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
+@@ -510,6 +514,8 @@
+ fpsgame/weapon.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
+ fpsgame/weapon.o: shared/ents.h shared/command.h shared/glexts.h
+ fpsgame/weapon.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
++fpsgame/weapon.o: fpsgame/weaponstats.h
++fpsgame/weaponstats.o: fpsgame/game.h
+
+ shared/cube.h.gch: shared/tools.h shared/geom.h shared/ents.h
+ shared/cube.h.gch: shared/command.h shared/glexts.h shared/glemu.h
+@@ -522,6 +528,7 @@
+ fpsgame/game.h.gch: shared/cube.h shared/tools.h shared/geom.h shared/ents.h
+ fpsgame/game.h.gch: shared/command.h shared/glexts.h shared/glemu.h
+ fpsgame/game.h.gch: shared/iengine.h shared/igame.h fpsgame/ai.h
++fpsgame/game.h.gch: fpsgame/weaponstats_type.h fpsgame/weaponstats.h
+
+ shared/crypto-standalone.o: shared/cube.h shared/tools.h shared/geom.h
+ shared/crypto-standalone.o: shared/ents.h shared/command.h shared/iengine.h
+Index: src/engine/rendertext.cpp
+===================================================================
+--- src/engine/rendertext.cpp	(revision 6463)
++++ src/engine/rendertext.cpp	(working copy)
+@@ -222,9 +222,9 @@
+         switch(c)
+         {
+             case '0': color = bvec( 64, 255, 128); break;   // green: player talk
+-            case '1': color = bvec( 96, 160, 255); break;   // blue: "echo" command
++            case '1': color = bvec( 46, 130, 255); break;   // blue: "echo" command
+             case '2': color = bvec(255, 192,  64); break;   // yellow: gameplay messages
+-            case '3': color = bvec(255,  64,  64); break;   // red: important errors
++            case '3': color = bvec(237,  43,  44); break;   // red: important errors
+             case '4': color = bvec(128, 128, 128); break;   // gray
+             case '5': color = bvec(192,  64, 192); break;   // magenta
+             case '6': color = bvec(255, 128,   0); break;   // orange
+Index: src/fpsgame/client.cpp
+===================================================================
+--- src/fpsgame/client.cpp	(revision 6463)
++++ src/fpsgame/client.cpp	(working copy)
+@@ -1,4 +1,5 @@
+ #include "game.h"
++#include "weaponstats.h"
+
+ namespace game
+ {
+@@ -1499,6 +1500,7 @@
+                 s->lastaction = lastmillis;
+                 s->lastattackgun = s->gunselect;
+                 shoteffects(s->gunselect, from, to, s, false, id, prevaction);
++                recordpotentialdamage(s);
+                 break;
+             }
+
+Index: src/fpsgame/colors.h
+===================================================================
+--- src/fpsgame/colors.h	(nonexistent)
++++ src/fpsgame/colors.h	(working copy)
+@@ -0,0 +1,14 @@
++#define COL_WHITE 0xFFFFDD
++#define COL_GRAY 0xA0A0A0
++#define COL_BACKGROUND 0x9A9A9A
++
++#define COL_RED 0xED2B2C
++#define COL_BLUE 0x2E82FF
++#define COL_YELLOW 0xFFC040
++#define COL_GREEN 0x40FF80
++#define COL_ORANGE 0xFF8000
++#define COL_MAGENTA 0xC040C0
++
++#define COL_MASTER COL_GREEN
++#define COL_AUTH COL_MAGENTA
++#define COL_ADMIN COL_ORANGE
+Index: src/fpsgame/fps.cpp
+===================================================================
+--- src/fpsgame/fps.cpp	(revision 6463)
++++ src/fpsgame/fps.cpp	(working copy)
+@@ -1,4 +1,5 @@
+ #include "game.h"
++#include "weaponstats.h"
+
+ namespace game
+ {
+@@ -397,6 +398,8 @@
+     {
+         if((d->state!=CS_ALIVE && d->state != CS_LAGGED && d->state != CS_SPAWNING) || intermission) return;
+
++        recorddamage(actor, d, damage);
++
+         if(local) damage = d->dodamage(damage);
+         else if(actor==player1) return;
+
+@@ -531,9 +534,8 @@
+     ICOMMAND(getfrags, "", (), intret(player1->frags));
+     ICOMMAND(getflags, "", (), intret(player1->flags));
+     ICOMMAND(getdeaths, "", (), intret(player1->deaths));
+-    ICOMMAND(getaccuracy, "", (), intret((player1->totaldamage*100)/max(player1->totalshots, 1)));
+-    ICOMMAND(gettotaldamage, "", (), intret(player1->totaldamage));
+-    ICOMMAND(gettotalshots, "", (), intret(player1->totalshots));
++    ICOMMAND(gettotaldamage, "", (), intret(playerdamage(player1, DMG_DEALT)));
++    ICOMMAND(gettotalshots, "", (), intret(playerdamage(player1, DMG_POTENTIAL)));
+
+     vector<fpsent *> clients;
+
+@@ -621,6 +623,7 @@
+             d->maxhealth = 100;
+             d->lifesequence = -1;
+             d->respawned = d->suicided = -2;
++            d->stats.reset();
+         }
+
+         setclientmode();
+Index: src/fpsgame/game.h
+===================================================================
+--- src/fpsgame/game.h	(revision 6463)
++++ src/fpsgame/game.h	(working copy)
+@@ -535,6 +535,8 @@
+     }
+ };
+
++#include "weaponstats_type.h"
++
+ struct fpsent : dynent, fpsstate
+ {
+     int weight;                         // affects the effectiveness of hitpush
+@@ -549,6 +551,7 @@
+     int lastpickup, lastpickupmillis, lastbase, lastrepammo, flagpickup, tokens;
+     vec lastcollect;
+     int frags, flags, deaths, totaldamage, totalshots;
++    weaponstats stats;
+     editinfo *edit;
+     float deltayaw, deltapitch, deltaroll, newyaw, newpitch, newroll;
+     int smoothmillis;
+@@ -846,6 +849,8 @@
+     extern vec hudgunorigin(int gun, const vec &from, const vec &to, fpsent *d);
+ }
+
++#include "weaponstats.h"
++
+ namespace server
+ {
+     extern const char *modename(int n, const char *unknown = "unknown");
+Index: src/fpsgame/scoreboard.cpp
+===================================================================
+--- src/fpsgame/scoreboard.cpp	(revision 6463)
++++ src/fpsgame/scoreboard.cpp	(working copy)
+@@ -1,5 +1,6 @@
+ // creation of scoreboard
+ #include "game.h"
++#include "colors.h"
+
+ namespace game
+ {
+@@ -7,7 +8,7 @@
+     VARP(showservinfo, 0, 1, 1);
+     VARP(showclientnum, 0, 0, 1);
+     VARP(showpj, 0, 0, 1);
+-    VARP(showping, 0, 1, 2);
++    VARP(showping, 0, 1, 1);
+     VARP(showspectators, 0, 1, 1);
+     VARP(showspectatorping, 0, 0, 1);
+     VARP(highlightscore, 0, 1, 1);
+@@ -14,6 +15,10 @@
+     VARP(showconnecting, 0, 0, 1);
+     VARP(hidefrags, 0, 1, 1);
+     VARP(showdeaths, 0, 0, 1);
++    VARP(showflags, 0, 0, 1);
++    VARP(showkpd, 0, 0, 1);
++    VARP(showaccuracy, 0, 0, 1);
++    VARP(showdamage, 0, 0, 2);
+
+     static hashset<teaminfo> teaminfos;
+
+@@ -140,15 +145,17 @@
+     {
+         if(d->privilege)
+         {
+-            color = d->privilege>=PRIV_ADMIN ? 0xFF8000 : (d->privilege>=PRIV_AUTH ? 0xC040C0 : 0x40FF80);
++            color = d->privilege>=PRIV_ADMIN ? COL_ADMIN : (d->privilege>=PRIV_AUTH ? COL_AUTH : COL_MASTER);
+             if(d->state==CS_DEAD) color = (color>>1)&0x7F7F7F;
+         }
+-        else if(d->state==CS_DEAD) color = 0x606060;
++        else if(d->state==CS_DEAD) color = (COL_WHITE>>1)&0x7F7F7F;
+         return color;
+     }
+
+     void renderscoreboard(g3d_gui &g, bool firstpass)
+     {
++        g.space(.25f);
++
+         const ENetAddress *address = connectedpeer();
+         if(showservinfo && address)
+         {
+@@ -155,23 +162,22 @@
+             string hostname;
+             if(enet_address_get_host_ip(address, hostname, sizeof(hostname)) >= 0)
+             {
+-                if(servinfo[0]) g.titlef("%.25s", 0xFFFF80, NULL, servinfo);
+-                else g.titlef("%s:%d", 0xFFFF80, NULL, hostname, address->port);
++                if(servinfo[0]) g.titlef("%.25s", COL_YELLOW, NULL, servinfo);
++                else g.titlef("%s:%d", COL_YELLOW, NULL, hostname, address->port);
+             }
+         }
+
+         g.pushlist();
+         g.spring();
+-        g.text(server::modename(gamemode), 0xFFFF80);
+-        g.separator();
++        g.text(server::modename(gamemode), COL_WHITE);
++        g.space(3);
+         const char *mname = getclientmap();
+-        g.text(mname[0] ? mname : "[new map]", 0xFFFF80);
++        g.text(mname[0] ? mname : "[new map]", COL_WHITE);
+         extern int gamespeed;
+-        if(gamespeed != 100) { g.separator(); g.textf("%d.%02dx", 0xFFFF80, NULL, gamespeed/100, gamespeed%100); }
+         if(m_timed && mname[0] && (maplimit >= 0 || intermission))
+         {
+-            g.separator();
+-            if(intermission) g.text("intermission", 0xFFFF80);
++            g.space(3);
++            if(intermission) g.text("intermission", COL_WHITE);
+             else
+             {
+                 int secs = max(maplimit-lastmillis+999, 0)/1000, mins = secs/60;
+@@ -178,15 +184,16 @@
+                 secs %= 60;
+                 g.pushlist();
+                 g.strut(mins >= 10 ? 4.5f : 3.5f);
+-                g.textf("%d:%02d", 0xFFFF80, NULL, mins, secs);
++                g.textf("%d:%02d", COL_WHITE, NULL, mins, secs);
+                 g.poplist();
+             }
+         }
+-        if(ispaused()) { g.separator(); g.text("paused", 0xFFFF80); }
++        if(gamespeed != 100) { g.space(3); g.textf("%d.%02dx", COL_GRAY, NULL, gamespeed/100, gamespeed%100); }
++        if(ispaused()) { g.space(3); g.text("paused", COL_GRAY); }
+         g.spring();
+         g.poplist();
+
+-        g.separator();
++        g.space(.75f);
+
+         int numgroups = groupplayers();
+         loopk(numgroups)
+@@ -194,8 +201,7 @@
+             if((k%2)==0) g.pushlist(); // horizontal
+
+             scoregroup &sg = *groups[k];
+-            int bgcolor = sg.team && m_teammode ? (isteam(player1->team, sg.team) ? 0x3030C0 : 0xC03030) : 0,
+-                fgcolor = 0xFFFF80;
++            int teamcolor = sg.team && m_teammode ? (isteam(player1->team, sg.team) ? COL_BLUE : COL_RED) : 0;
+
+             g.pushlist(); // vertical
+             g.pushlist(); // horizontal
+@@ -207,37 +213,36 @@
+                     b; \
+                 }
+
+-            g.pushlist();
+             if(sg.team && m_teammode)
+             {
+-                g.pushlist();
+-                g.background(bgcolor, numgroups>1 ? 3 : 5);
+-                g.strut(1);
+-                g.poplist();
++                g.pushlist(); // vertical
++                if(sg.score>=10000) g.textf("%s: WIN", teamcolor, NULL, sg.team);
++                else g.textf("%s: %d", teamcolor, NULL, sg.team, sg.score);
++                g.pushlist(); // horizontal
+             }
+-            g.text("", 0, " ");
++
++            g.pushlist();
++            g.text("name", COL_GRAY);
++            g.strut(12);
+             loopscoregroup(o,
+             {
+                 if(o==player1 && highlightscore && (multiplayer(false) || demoplayback || players.length() > 1))
+                 {
+                     g.pushlist();
+-                    g.background(0x808080, numgroups>1 ? 3 : 5);
++                    g.background(COL_BACKGROUND, numgroups>1 ? 3 : 5);
+                 }
+-                const playermodelinfo &mdl = getplayermodelinfo(o);
+-                const char *icon = sg.team && m_teammode ? (isteam(player1->team, sg.team) ? mdl.blueicon : mdl.redicon) : mdl.ffaicon;
+-                g.text("", 0, icon);
++                g.textf("%s ", statuscolor(o, COL_WHITE), NULL, colorname(o));
+                 if(o==player1 && highlightscore && (multiplayer(false) || demoplayback || players.length() > 1)) g.poplist();
+             });
+             g.poplist();
+
+-            if(sg.team && m_teammode)
++            if(m_ctf && showflags)
+             {
+-                g.pushlist(); // vertical
+-
+-                if(sg.score>=10000) g.textf("%s: WIN", fgcolor, NULL, sg.team);
+-                else g.textf("%s: %d", fgcolor, NULL, sg.team, sg.score);
+-
+-                g.pushlist(); // horizontal
++                g.pushlist();
++                g.strut(6);
++                g.text("flags", COL_GRAY);
++                loopscoregroup(o, g.textf("%d", COL_WHITE, NULL, o->flags));
++                g.poplist();
+             }
+
+             if(!cmode || !cmode->hidefrags() || !hidefrags)
+@@ -244,8 +249,8 @@
+             {
+                 g.pushlist();
+                 g.strut(6);
+-                g.text("frags", fgcolor);
+-                loopscoregroup(o, g.textf("%d", 0xFFFFDD, NULL, o->frags));
++                g.text("frags", COL_GRAY);
++                loopscoregroup(o, g.textf("%d", COL_WHITE, NULL, o->frags));
+                 g.poplist();
+             }
+
+@@ -252,82 +257,75 @@
+             if(showdeaths)
+             {
+                 g.pushlist();
+-                g.strut(6);
+-                g.text("deaths", fgcolor);
+-                loopscoregroup(o, g.textf("%d", 0xFFFFDD, NULL, o->deaths));
++                g.strut(7);
++                g.text("deaths", COL_GRAY);
++                loopscoregroup(o, g.textf("%d", COL_WHITE, NULL, o->deaths));
+                 g.poplist();
+             }
+
+-            g.pushlist();
+-            g.text("name", fgcolor);
+-            g.strut(12);
+-            loopscoregroup(o,
++            if(showkpd)
+             {
+-                g.textf("%s ", statuscolor(o, 0xFFFFDD), NULL, colorname(o));
+-            });
+-            g.poplist();
++                g.pushlist();
++                g.strut(5);
++                g.text("kpd", COL_GRAY);
++                loopscoregroup(o, g.textf("%.1f", COL_WHITE, NULL, (float)o->frags/max(1, o->deaths)));
++                g.poplist();
++            }
+
++            if(showaccuracy)
++            {
++                g.pushlist();
++                g.strut(5);
++                g.text("acc", COL_GRAY);
++                loopscoregroup(o, g.textf("%.0f%%", COL_WHITE, NULL, playeraccuracy(o)));
++                g.poplist();
++            }
++
++            if(!m_insta && showdamage)
++            {
++                g.pushlist();
++                g.strut(6);
++                g.text("dmg", COL_GRAY);
++                loopscoregroup(o, {
++                    float dmg = (float) showdamage == 1 ? playerdamage(o, DMG_DEALT) : playernetdamage(o);
++                    const char *fmt = "%.0f";
++                    if(fabs(dmg) > 1000.0f) { fmt = "%.1fk"; dmg = dmg/1000.0f; }
++                    g.textf(fmt, COL_WHITE, NULL, dmg);
++                });
++                g.poplist();
++            }
++
+             if(multiplayer(false) || demoplayback)
+             {
+                 if(showpj || showping) g.space(1);
+
+-                if(showpj && showping <= 1)
++                if(showpj)
+                 {
+                     g.pushlist();
+                     g.strut(6);
+-                    g.text("pj", fgcolor);
++                    g.text("pj", COL_GRAY);
+                     loopscoregroup(o,
+                     {
+-                        if(o->state==CS_LAGGED) g.text("LAG", 0xFFFFDD);
+-                        else g.textf("%d", 0xFFFFDD, NULL, o->plag);
++                        if(o->state==CS_LAGGED) g.text("LAG", COL_WHITE);
++                        else g.textf("%d", COL_WHITE, NULL, o->plag);
+                     });
+                     g.poplist();
+                 }
+
+-                if(showping > 1)
++                if(showping)
+                 {
+                     g.pushlist();
++                    g.text("ping", COL_GRAY);
+                     g.strut(6);
+-
+-                    g.pushlist();
+-                    g.text("ping", fgcolor);
+-                    g.space(1);
+-                    g.spring();
+-                    g.text("pj", fgcolor);
+-                    g.poplist();
+-
+                     loopscoregroup(o,
+                     {
+                         fpsent *p = o->ownernum >= 0 ? getclient(o->ownernum) : o;
+                         if(!p) p = o;
+-                        g.pushlist();
+-                        if(p->state==CS_LAGGED) g.text("LAG", 0xFFFFDD);
+-                        else
+-                        {
+-                            g.textf("%d", 0xFFFFDD, NULL, p->ping);
+-                            g.space(1);
+-                            g.spring();
+-                            g.textf("%d", 0xFFFFDD, NULL, o->plag);
+-                        }
+-                        g.poplist();
+-
++                        if(!showpj && p->state==CS_LAGGED) g.text("LAG", COL_WHITE);
++                        else g.textf("%d", COL_WHITE, NULL, p->ping);
+                     });
+                     g.poplist();
+                 }
+-                else if(showping)
+-                {
+-                    g.pushlist();
+-                    g.text("ping", fgcolor);
+-                    g.strut(6);
+-                    loopscoregroup(o,
+-                    {
+-                        fpsent *p = o->ownernum >= 0 ? getclient(o->ownernum) : o;
+-                        if(!p) p = o;
+-                        if(!showpj && p->state==CS_LAGGED) g.text("LAG", 0xFFFFDD);
+-                        else g.textf("%d", 0xFFFFDD, NULL, p->ping);
+-                    });
+-                    g.poplist();
+-                }
+             }
+
+             if(showclientnum || player1->privilege>=PRIV_MASTER)
+@@ -334,8 +332,8 @@
+             {
+                 g.space(1);
+                 g.pushlist();
+-                g.text("cn", fgcolor);
+-                loopscoregroup(o, g.textf("%d", 0xFFFFDD, NULL, o->clientnum));
++                g.text("cn", COL_GRAY);
++                loopscoregroup(o, g.textf("%d", COL_WHITE, NULL, o->clientnum));
+                 g.poplist();
+             }
+
+@@ -349,17 +347,23 @@
+             g.poplist(); // vertical
+
+             if(k+1<numgroups && (k+1)%2) g.space(2);
+-            else g.poplist(); // horizontal
++            else
++            {
++                g.poplist(); // horizontal
++                if(k+1<numgroups) g.space(.75f);
++            }
+         }
+
+         if(showspectators && spectators.length())
+         {
++            g.space(.75f);
++
+             if(showclientnum || player1->privilege>=PRIV_MASTER)
+             {
+                 g.pushlist();
+
+                 g.pushlist();
+-                g.text("spectator", 0xFFFF80, " ");
++                g.text("spectator", COL_GRAY);
+                 g.strut(12);
+                 loopv(spectators)
+                 {
+@@ -367,9 +371,9 @@
+                     if(o==player1 && highlightscore)
+                     {
+                         g.pushlist();
+-                        g.background(0x808080, 3);
++                        g.background(COL_BACKGROUND, 3);
+                     }
+-                    g.text(colorname(o), statuscolor(o, 0xFFFFDD), "spectator");
++                    g.text(colorname(o), statuscolor(o, COL_WHITE), 0);
+                     if(o==player1 && highlightscore) g.poplist();
+                 }
+                 g.poplist();
+@@ -378,7 +382,7 @@
+                 {
+                     g.space(1);
+                     g.pushlist();
+-                    g.text("ping", 0xFFFF80);
++                    g.text("ping", COL_GRAY);
+                     g.strut(6);
+                     loopv(spectators)
+                     {
+@@ -385,8 +389,8 @@
+                         fpsent *o = spectators[i];
+                         fpsent *p = o->ownernum >= 0 ? getclient(o->ownernum) : o;
+                         if(!p) p = o;
+-                        if(p->state==CS_LAGGED) g.text("LAG", 0xFFFFDD);
+-                        else g.textf("%d", 0xFFFFDD, NULL, p->ping);
++                        if(p->state==CS_LAGGED) g.text("LAG", COL_WHITE);
++                        else g.textf("%d", COL_WHITE, NULL, p->ping);
+                     }
+                     g.poplist();
+                 }
+@@ -393,8 +397,8 @@
+
+                 g.space(1);
+                 g.pushlist();
+-                g.text("cn", 0xFFFF80);
+-                loopv(spectators) g.textf("%d", 0xFFFFDD, NULL, spectators[i]->clientnum);
++                g.text("cn", COL_GRAY);
++                loopv(spectators) g.textf("%d", COL_WHITE, NULL, spectators[i]->clientnum);
+                 g.poplist();
+
+                 g.poplist();
+@@ -401,21 +405,21 @@
+             }
+             else
+             {
+-                g.textf("%d spectator%s", 0xFFFF80, " ", spectators.length(), spectators.length()!=1 ? "s" : "");
++                g.textf("%d spectator%s", COL_GRAY, NULL, spectators.length(), spectators.length()!=1 ? "s" : "");
+                 loopv(spectators)
+                 {
+                     if((i%3)==0)
+                     {
+                         g.pushlist();
+-                        g.text("", 0xFFFFDD, "spectator");
++                        g.text("", COL_WHITE, 0);
+                     }
+                     fpsent *o = spectators[i];
+                     if(o==player1 && highlightscore)
+                     {
+                         g.pushlist();
+-                        g.background(0x808080);
++                        g.background(COL_BACKGROUND);
+                     }
+-                    g.text(colorname(o), statuscolor(o, 0xFFFFDD));
++                    g.text(colorname(o), statuscolor(o, COL_WHITE));
+                     if(o==player1 && highlightscore) g.poplist();
+                     if(i+1<spectators.length() && (i+1)%3) g.space(1);
+                     else g.poplist();
+@@ -422,6 +426,8 @@
+                 }
+             }
+         }
++
++        g.space(.25f);
+     }
+
+     struct scoreboardgui : g3d_callback
+@@ -475,8 +481,8 @@
+     VARP(hudscorealign, -1, 0, 1);
+     FVARP(hudscorex, 0, 0.50f, 1);
+     FVARP(hudscorey, 0, 0.03f, 1);
+-    HVARP(hudscoreplayercolour, 0, 0x60A0FF, 0xFFFFFF);
+-    HVARP(hudscoreenemycolour, 0, 0xFF4040, 0xFFFFFF);
++    HVARP(hudscoreplayercolour, 0, COL_BLUE, 0xFFFFFF);
++    HVARP(hudscoreenemycolour, 0, COL_RED, 0xFFFFFF);
+     VARP(hudscorealpha, 0, 255, 255);
+     VARP(hudscoresep, 0, 200, 1000);
+
+Index: src/fpsgame/weapon.cpp
+===================================================================
+--- src/fpsgame/weapon.cpp	(revision 6463)
++++ src/fpsgame/weapon.cpp	(working copy)
+@@ -1,5 +1,6 @@
+ // weapon.cpp: all shooting and effects code, projectile management
+ #include "game.h"
++#include "weaponstats.h"
+
+ namespace game
+ {
+@@ -825,6 +826,7 @@
+ 		d->gunwait = guns[d->gunselect].attackdelay;
+ 		if(d->gunselect == GUN_PISTOL && d->ai) d->gunwait += int(d->gunwait*(((101-d->skill)+rnd(111-d->skill))/100.f));
+         d->totalshots += guns[d->gunselect].damage*(d->quadmillis ? 4 : 1)*guns[d->gunselect].rays;
++        recordpotentialdamage(d);
+     }
+
+     void adddynlights()
+Index: src/fpsgame/weaponstats.cpp
+===================================================================
+--- src/fpsgame/weaponstats.cpp	(nonexistent)
++++ src/fpsgame/weaponstats.cpp	(working copy)
+@@ -0,0 +1,65 @@
++#include "game.h"
++
++namespace game {
++    void recordpotentialdamage(fpsent *shooter)
++    {
++        if(!shooter) return;
++        int gun = shooter->gunselect;
++        int potentialdamage = guns[gun].damage * (shooter->quadmillis ? 4 : 1 ) * guns[gun].rays;
++        shooter->stats.add(DMG_POTENTIAL, gun, potentialdamage);
++    }
++
++    bool shouldcountdamage(fpsent *attacker, fpsent *target)
++    {
++        return (attacker != target) && !isteam(attacker->team, target->team);
++    }
++
++    void recorddamage(fpsent *attacker, fpsent *target, int damage)
++    {
++        if(!shouldcountdamage(attacker, target)) return;
++        int gun = attacker->gunselect;
++        // try to fix gun used to deal the damage
++        if(gun == GUN_RL || gun == GUN_GL || damage != guns[gun].damage * (attacker->quadmillis ? 4 : 1))
++        {
++            gun = attacker->stats.lastprojectile;
++        }
++        attacker->stats.add(DMG_DEALT, gun, damage);
++        target->stats.add(DMG_RECEIVED, gun, damage);
++    }
++
++    #define DMG_ICOMMAND(name,ret) ICOMMAND(name, "V", (tagval *args, int numargs), { \
++        int gun = numargs > 0 ? args[0].getint() : -1; \
++        fpsent *p = numargs > 1 ? getclient(args[1].getint()) : hudplayer(); \
++        return ret;\
++    })
++
++    int playerdamage(fpsent *p, int typ, int gun)
++    {
++        if(!p) p = hudplayer();
++        return p->stats.get(typ, gun);
++    }
++    DMG_ICOMMAND(getdamagepotential, intret(playerdamage(p, DMG_POTENTIAL, gun)))
++    DMG_ICOMMAND(getdamagedealt, intret(playerdamage(p, DMG_DEALT, gun)))
++    DMG_ICOMMAND(getdamagereceived, intret(playerdamage(p, DMG_RECEIVED, gun)))
++
++    int playerdamagewasted(fpsent *p, int gun)
++    {
++        if(!p) p = hudplayer();
++        return p->stats.wasted(gun);
++    }
++    DMG_ICOMMAND(getdamagewasted, intret(playerdamagewasted(p, gun)))
++
++    int playernetdamage(fpsent *p, int gun)
++    {
++        if(!p) p = hudplayer();
++        return p->stats.net(gun);
++    }
++    DMG_ICOMMAND(getnetdamage, intret(playernetdamage(p, gun)))
++
++    float playeraccuracy(fpsent *p, int gun)
++    {
++        if(!p) p = hudplayer();
++        return p->stats.accuracy(gun);
++    }
++    DMG_ICOMMAND(getaccuracy, floatret(playeraccuracy(p, gun)))
++}
+Index: src/fpsgame/weaponstats.h
+===================================================================
+--- src/fpsgame/weaponstats.h	(nonexistent)
++++ src/fpsgame/weaponstats.h	(working copy)
+@@ -0,0 +1,14 @@
++#ifndef __WEAPONSTATS_H__
++#define __WEAPONSTATS_H__
++
++namespace game {
++    extern void recordpotentialdamage(fpsent *shooter);
++    extern bool shouldcountdamage(fpsent *attacker, fpsent *target);
++    extern void recorddamage(fpsent *attacker, fpsent *target, int damage);
++    extern int playerdamage(fpsent *p, int typ, int gun = -1);
++    extern int playerdamagewasted(fpsent *p, int gun = -1);
++    extern int playernetdamage(fpsent *p, int gun = -1);
++    extern float playeraccuracy(fpsent *p, int gun = -1);
++}
++
++#endif
+Index: src/fpsgame/weaponstats_type.h
+===================================================================
+--- src/fpsgame/weaponstats_type.h	(nonexistent)
++++ src/fpsgame/weaponstats_type.h	(working copy)
+@@ -0,0 +1,59 @@
++#ifndef __WEAPONSTATS_TYPE_H__
++#define __WEAPONSTATS_TYPE_H__
++
++#define NUM_MP_GUNS (GUN_PISTOL+1 - GUN_FIST)
++#define guninrange(i) (i >= 0 && i < NUM_MP_GUNS)
++
++enum { DMG_POTENTIAL = 0, DMG_DEALT, DMG_RECEIVED, NUM_DMG_TYPES };
++#define dmgtypeinrange(i) (i >= 0 && i < NUM_DMG_TYPES)
++
++struct weaponstats {
++    int lastprojectile;
++
++    int damage[NUM_DMG_TYPES][NUM_MP_GUNS];
++
++    weaponstats()
++    {
++        reset();
++    }
++
++    void reset()
++    {
++        lastprojectile = -1;
++        loopi(NUM_DMG_TYPES) loopj(NUM_MP_GUNS) damage[i][j] = 0;
++    }
++
++    void add(int typ, int gun, int dmg)
++    {
++        if(!dmgtypeinrange(typ) || !guninrange(gun)) return;
++        damage[typ][gun] += dmg;
++        if(typ == DMG_POTENTIAL && (gun == GUN_RL || gun == GUN_GL)) lastprojectile = gun;
++    }
++
++    int get(int typ, int gun)
++    {
++        if(!dmgtypeinrange(typ)) return 0;
++        if(guninrange(gun)) return damage[typ][gun];
++        int total = 0;
++        loopi(NUM_MP_GUNS) total += damage[typ][i];
++        return total;
++    }
++
++    int wasted(int gun)
++    {
++        return get(DMG_POTENTIAL, gun) - get(DMG_DEALT, gun);
++    }
++
++    int net(int gun)
++    {
++        return get(DMG_DEALT, gun) - get(DMG_RECEIVED, gun);
++    }
++
++    float accuracy(int gun)
++    {
++        float nonzerototal = max(1.0f, (float)get(DMG_POTENTIAL, gun));
++        return min(100.0f, (float)get(DMG_DEALT, gun) / nonzerototal * 100.0f);
++    }
++};
++
++#endif
+Index: src/vcpp/sauerbraten.vcxproj
+===================================================================
+--- src/vcpp/sauerbraten.vcxproj	(revision 6463)
++++ src/vcpp/sauerbraten.vcxproj	(working copy)
+@@ -1208,6 +1208,20 @@
+       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
+       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
+     </ClCompile>
++    <ClCompile Include="..\fpsgame\weaponstats.cpp">
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++    </ClCompile>
+   </ItemGroup>
+   <ItemGroup>
+     <ResourceCompile Include="sauerbraten.rc" />

@@ -21,18 +21,16 @@ clean:
 
 apply-patches:
 	$(PATCH) < patches/moviehud.patch
-	$(PATCH) < patches/clean_scoreboard.patch
 	dos2unix src/vcpp/sauerbraten.vcxproj
-	$(PATCH) < patches/weaponstats.patch
+	$(PATCH) < patches/scoreboard.patch
 	unix2dos src/vcpp/sauerbraten.vcxproj
 	$(PATCH) < patches/macos_builds.patch
 
 undo-patches:
 	$(PATCH) --reverse < patches/macos_builds.patch
 	dos2unix src/vcpp/sauerbraten.vcxproj
-	$(PATCH) --reverse < patches/weaponstats.patch
+	$(PATCH) --reverse < patches/scoreboard.patch
 	unix2dos src/vcpp/sauerbraten.vcxproj
-	$(PATCH) --reverse < patches/clean_scoreboard.patch
 	$(PATCH) --reverse < patches/moviehud.patch
 
 clean-sauer: check-env

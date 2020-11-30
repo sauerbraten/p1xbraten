@@ -15,6 +15,7 @@ namespace game
     VARP(showconnecting, 0, 0, 1);
     VARP(hidefrags, 0, 1, 1);
     VARP(showdeaths, 0, 0, 1);
+    VARP(showflags, 0, 0, 1);
     VARP(showkpd, 0, 0, 1);
     VARP(showaccuracy, 0, 0, 1);
     VARP(showdamage, 0, 0, 2);
@@ -153,6 +154,8 @@ namespace game
 
     void renderscoreboard(g3d_gui &g, bool firstpass)
     {
+        g.space(.25f);
+
         const ENetAddress *address = connectedpeer();
         if(showservinfo && address)
         {
@@ -218,7 +221,7 @@ namespace game
                 g.pushlist(); // horizontal
             }
 
-                g.pushlist();
+            g.pushlist();
             g.text("name", COL_GRAY);
             g.strut(12);
             loopscoregroup(o,
@@ -232,6 +235,15 @@ namespace game
                 if(o==player1 && highlightscore && (multiplayer(false) || demoplayback || players.length() > 1)) g.poplist();
             });
             g.poplist();
+
+            if(m_ctf && showflags)
+            {
+                g.pushlist();
+                g.strut(6);
+                g.text("flags", COL_GRAY);
+                loopscoregroup(o, g.textf("%d", COL_WHITE, NULL, o->flags));
+                g.poplist();
+            }
 
             if(!cmode || !cmode->hidefrags() || !hidefrags)
             {
@@ -269,7 +281,7 @@ namespace game
                 g.poplist();
             }
 
-            if(showdamage)
+            if(!m_insta && showdamage)
             {
                 g.pushlist();
                 g.strut(6);
@@ -314,7 +326,7 @@ namespace game
                     });
                     g.poplist();
                 }
-                }
+            }
 
             if(showclientnum || player1->privilege>=PRIV_MASTER)
             {
@@ -339,7 +351,7 @@ namespace game
             {
                 g.poplist(); // horizontal
                 if(k+1<numgroups) g.space(.75f);
-        }
+            }
         }
 
         if(showspectators && spectators.length())
@@ -414,6 +426,8 @@ namespace game
                 }
             }
         }
+
+        g.space(.25f);
     }
 
     struct scoreboardgui : g3d_callback

@@ -43,9 +43,14 @@ make install
 - adds `hidespecfollow` toggle: when 1, hides the "SPECTATOR" and player name in the lower right of the screen when spectating)
 - adds `namesabovehead` toggle: when 0, hides the names above players' models (usually rendered as particle text), while keeping status icons for health boost, armor and quad
 
-### [weaponstats.patch](./patches/weaponstats.patch)
+### [scoreboard.patch](./patches/scoreboard.patch)
 
 - enables detailed per-weapon damage stats recording
+- adds scoreboard toggles:
+    - `showflags`: when 1, shows the number of flags scored by a player; always hidden in non-flag modes
+    - `showkpd`: when 1, shows the players' frags/death ratio
+    - `showaccuracy`: when 1, shows the players' overall accuracy
+    - `showdamage`: when 1, shows the players' overall damage dealt; when 2, shows the players' overall net damage (= dealt - received); always hidden in insta modes
 - adds damage-related cubescript commands:
     - `getdamagepotential`
     - `getdamagedealt`
@@ -54,16 +59,7 @@ make install
     - `getnetdamage` (= dealt - received)
 
     all of these commands (as well as `getaccuracy`) default to showing your own stats across all weapons. however, they all take two optional integer arguments to query by weapon and player: `/<cmd> [weapon] [cn]` (use -1 to query damage across all weapons)
-
-- adds scoreboard toggles:
-    - `showkpd`: when 1, shows the players' frags/death ratio
-    - `showaccuracy`: when 1, shows the players' overall accuracy
-    - `showdamage`: when 1, shows the players' overall damage dealt; when 2, shows the players' overall net damage (= dealt - received)
-
-### [clean_scoreboard.patch](./patches/clean_scoreboard.patch)
-
-- filename says it all:
-
+- cleaner look:
     ![ectf](https://i.imgur.com/6DXW4Pj.jpg)
     ![duel](https://i.imgur.com/cbGUTxk.jpg)
     ![multiple teams](https://i.imgur.com/aC8rHms.jpg)

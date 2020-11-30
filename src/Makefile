@@ -504,7 +504,7 @@ fpsgame/scoreboard.o: fpsgame/game.h shared/cube.h shared/tools.h
 fpsgame/scoreboard.o: shared/geom.h shared/ents.h shared/command.h
 fpsgame/scoreboard.o: shared/glexts.h shared/glemu.h shared/iengine.h
 fpsgame/scoreboard.o: shared/igame.h fpsgame/ai.h
-fpsgame/scoreboard.o: shared/colors.h
+fpsgame/scoreboard.o: fpsgame/colors.h
 fpsgame/server.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
 fpsgame/server.o: shared/ents.h shared/command.h shared/glexts.h
 fpsgame/server.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
