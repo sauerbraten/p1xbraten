@@ -34,7 +34,7 @@ ln -sf /Applications "$SAUERPKG/Applications"
 
 #finally make a disk image out of the stuff
 echo creating dmg
-hdiutil create -srcfolder "$SAUERPKG" -volname sauerbraten sauerbraten.dmg
+hdiutil create -fs HFS+ -srcfolder "$SAUERPKG" -volname sauerbraten sauerbraten.dmg
 
 echo cleaning up
 #cleanup

@@ -707,11 +707,11 @@ ICOMMAND(set, "rt", (ident *id, tagval *v),
         case ID_COMMAND:
             if(id->flags&IDF_EMUVAR)
             {
-                tagval arg;
-                arg.setint(execute(id, NULL, 0, true) ? 0 : 1);
-                execute(id, &arg, 1, false);
+                execute(id, v, 1);
+                v->type = VAL_NULL;
                 break;
             }
+            // fall through
         default:
             debugcode("cannot redefine builtin %s with an alias", id->name);
             break;
