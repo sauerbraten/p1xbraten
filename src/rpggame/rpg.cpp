@@ -236,7 +236,7 @@ namespace game
     {
     }
 
-    bool allowthirdperson()
+    bool allowthirdperson(bool msg)
     {
         return true;
     }

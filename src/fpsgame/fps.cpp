@@ -145,10 +145,11 @@ namespace game
         }
     }
 
-    bool allowthirdperson()
+    bool allowthirdperson(bool msg)
     {
-        return !multiplayer(false) || player1->state==CS_SPECTATOR || player1->state==CS_EDITING || m_edit;
+        return player1->state==CS_SPECTATOR || player1->state==CS_EDITING || m_edit || !multiplayer(msg);
     }
+    ICOMMAND(allowthirdperson, "b", (int *msg), intret(allowthirdperson(*msg!=0) ? 1 : 0));
 
     bool detachcamera()
     {
@@ -526,7 +527,7 @@ namespace game
             showscores(true);
             disablezoom();
 
-            if(identexists("intermission")) execute("intermission");
+            execident("intermission");
         }
     }
 
@@ -657,12 +658,12 @@ namespace game
         disablezoom();
         lasthit = 0;
 
-        if(identexists("mapstart")) execute("mapstart");
+        execident("mapstart");
     }
 
     void loadingmap(const char *name)
     {
-        if(identexists("playsong")) execute("playsong");
+        execident("playsong");
     }
 
     void startmap(const char *name)   // called just after a map load
@@ -1309,7 +1310,7 @@ namespace game
 
     void loadconfigs()
     {
-        if(identexists("playsong")) execute("playsong");
+        execident("playsong");
 
         execfile("auth.cfg", false);
     }

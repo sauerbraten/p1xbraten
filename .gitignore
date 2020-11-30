@@ -1,6 +1,7 @@
 src/**/*.a
 src/**/*.gch
 src/**/*.o
+src/**/*.orig
 src/sauer_client
 src/sauer_server
 patch_drafts

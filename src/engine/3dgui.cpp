@@ -335,7 +335,7 @@ struct gui : g3d_gui
             int x1 = int(floor(screenw*(xi*scale.x+origin.x))), y1 = int(floor(screenh*(1 - ((yi+ys)*scale.y+origin.y)))),
                 x2 = int(ceil(screenw*((xi+xs)*scale.x+origin.x))), y2 = int(ceil(screenh*(1 - (yi*scale.y+origin.y))));
             glDisable(GL_BLEND);
-            modelpreview::start(x1, y1, x2-x1, y2-y1, overlaid);
+            modelpreview::start(x1, y1, x2-x1, y2-y1, overlaid!=NULL);
             game::renderplayerpreview(model, team, weap);
             modelpreview::end();
             hudshader->set();
@@ -381,7 +381,7 @@ struct gui : g3d_gui
             int x1 = int(floor(screenw*(xi*scale.x+origin.x))), y1 = int(floor(screenh*(1 - ((yi+ys)*scale.y+origin.y)))),
                 x2 = int(ceil(screenw*((xi+xs)*scale.x+origin.x))), y2 = int(ceil(screenh*(1 - (yi*scale.y+origin.y))));
             glDisable(GL_BLEND);
-            modelpreview::start(x1, y1, x2-x1, y2-y1, overlaid);
+            modelpreview::start(x1, y1, x2-x1, y2-y1, overlaid!=NULL);
             model *m = loadmodel(name);
             if(m)
             {
@@ -438,7 +438,7 @@ struct gui : g3d_gui
             int x1 = int(floor(screenw*(xi*scale.x+origin.x))), y1 = int(floor(screenh*(1 - ((yi+ys)*scale.y+origin.y)))),
                 x2 = int(ceil(screenw*((xi+xs)*scale.x+origin.x))), y2 = int(ceil(screenh*(1 - (yi*scale.y+origin.y))));
             glDisable(GL_BLEND);
-            modelpreview::start(x1, y1, x2-x1, y2-y1, overlaid);
+            modelpreview::start(x1, y1, x2-x1, y2-y1, overlaid!=NULL);
             previewprefab(prefab, color);
             modelpreview::end();
             hudshader->set();

@@ -257,7 +257,7 @@ namespace game
                 gibeffect(max(-health, 0), vel, this);
 
                 defformatstring(id, "monster_dead_%d", tag);
-                if(identexists(id)) execute(id);
+                execident(id);
             }
             else
             {

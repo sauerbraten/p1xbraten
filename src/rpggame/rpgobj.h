@@ -72,7 +72,7 @@ struct rpgobj : g3d_callback, stats
     {
         DELETEP(inventory);
         defformatstring(aliasname, "spawn_%s", name);
-        if(identexists(aliasname)) execute(aliasname);
+        execident(aliasname);
     }
 
     void decontain() 

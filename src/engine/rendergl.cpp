@@ -2066,6 +2066,12 @@ void drawdamagescreen(int w, int h)
     hudquad(0, 0, w, h);
 }
 
+void cleardamagescreen()
+{
+    damageblendmillis = 0;
+    loopi(8) damagedirs[i] = 0;
+}
+
 VAR(hidestats, 0, 0, 1);
 VAR(hidehud, 0, 0, 1);
 
@@ -2306,8 +2312,7 @@ void gl_drawhud()
                 abovehud -= FONTH;
                 draw_textf("cube %s%d%s", FONTH/2, abovehud, selchildcount<0 ? "1/" : "", abs(selchildcount), showmat && selchildmat > 0 ? getmaterialdesc(selchildmat, ": ") : "");
 
-                char *editinfo = executestr("edithud");
-                if(editinfo)
+                if(char *editinfo = execidentstr("edithud"))
                 {
                     if(editinfo[0])
                     {
@@ -2320,23 +2325,19 @@ void gl_drawhud()
                     DELETEA(editinfo);
                 }
             }
-            else if(identexists("gamehud"))
+            else if(char *gameinfo = execidentstr("gamehud"))
             {
-                char *gameinfo = executestr("gamehud");
-                if(gameinfo)
+                if(gameinfo[0])
                 {
-                    if(gameinfo[0])
-                    {
-                        int tw, th;
-                        text_bounds(gameinfo, tw, th);
-                        th += FONTH-1; th -= th%FONTH;
-                        roffset += max(th, FONTH);    
-                        draw_text(gameinfo, conw-max(5*FONTH, 2*FONTH+tw), conh-FONTH/2-roffset);
-                    }
-                    DELETEA(gameinfo);
+                    int tw, th;
+                    text_bounds(gameinfo, tw, th);
+                    th += FONTH-1; th -= th%FONTH;
+                    roffset += max(th, FONTH);
+                    draw_text(gameinfo, conw-max(5*FONTH, 2*FONTH+tw), conh-FONTH/2-roffset);
                 }
-            } 
-            
+                DELETEA(gameinfo);
+            }
+
             pophudmatrix();
         }
 

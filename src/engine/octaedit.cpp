@@ -2877,6 +2877,14 @@ void showtexgui(int *n)
 // 0/noargs = toggle, 1 = on, other = off - will autoclose if too far away or exit editmode
 COMMAND(showtexgui, "i");
 
+bool cleartexgui()
+{
+    if(!gui.menuon) return false;
+    gui.showtextures(false);
+    return true;
+}
+ICOMMAND(cleartexgui, "", (), intret(cleartexgui() ? 1 : 0));
+
 void rendertexturepanel(int w, int h)
 {
     if((texpaneltimer -= curtime)>0 && editmode)
