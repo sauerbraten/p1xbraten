@@ -31,35 +31,20 @@ a.k.a. Features
 
     All of these commands (as well as `getaccuracy`) default to showing your own stats across all weapons. However, they all take two optional integer arguments to query by weapon and player: `/<cmd> [weapon] [cn]` (use -1 to query damage across all weapons)
 
-    To use these new commands to show comed-like statistics in the game hud in the lower right corner, put the following into your autoexec.cfg:
-
-    ```
-    gamehud = [
-        format "^f7SG: ^f1%1%% ^f7CG: ^f1%2%% ^f7RL: ^f1%3%% ^f7RI: ^f1%4%% ^f7GL: ^f1%5%% ^n^t^f7frags: ^f0%6 ^f7deaths: ^f3%7 ^f7acc: ^f2%8%% ^f7kpd: ^f5%9" (
-            round (getaccuracy 1) 0.1   )(
-            round (getaccuracy 2) 0.1   )(
-            round (getaccuracy 3) 0.1   )(
-            round (getaccuracy 4) 0.1   )(
-            round (getaccuracy 5) 0.1   )(
-            getfrags                    )(
-            getdeaths                   )(
-            round (getaccuracy) 0.1     )(
-            round (divf (getfrags) (max (getdeaths) 1)) 0.1
-        )
-    ]
-    ```
+    To use these new commands to show comed-like statistics in the game hud in the lower right corner, put the gamehud definition from [this file](./data/once.cfg) into your autoexec.cfg.
 
 ### [hudfragmessages.patch](./patches/scoreboard.patch)
 
 - enables frag messages showing the weapon used to complete the frag (on by default)
+
     ![fragmessages](https://i.imgur.com/K4GL6oB.png)
 
 - adds the following variables:
     - `hudfragmessages`: when 0, no frag messages are shown
-    - `hudfragmessageduration`: how long each message will be shown, in milliseconds, between 100 (= 0.1s) and 10,000 (= 10s)
+    - `hudfragmessageduration`: how long each message will be shown, in milliseconds, between 100 (= 0.1s) and 10000 (= 10s)
     - `maxhudfragmessages`: how many messages to show at most (between 1 and 10)
-    - `hudfragmessagex`: horizontal position (between 0 and 1) where messages will appear
-    - `hudfragmessagey`: vertical position (between 0 and 1) where the newest message will appear
+    - `hudfragmessagex`: horizontal position (between 0.0 and 1.0) where messages will appear
+    - `hudfragmessagey`: vertical position (between 0.0 and 1.0) where the newest message will appear
         when hudfragmessagey<=0.5 (new messages appearing in the upper half of the screen), older messages will be stacked above newer ones, otherwise (new messages appear in the lower half), older messages are shown below newer ones
     - `hudfragmessagescale`: size of the messages, between 0.0 and 1.0
 
