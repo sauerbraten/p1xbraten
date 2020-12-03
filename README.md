@@ -28,7 +28,7 @@ a.k.a. Features
 
     all of these commands (as well as `getaccuracy`) default to showing your own stats across all weapons. however, they all take two optional integer arguments to query by weapon and player: `/<cmd> [weapon] [cn]` (use -1 to query damage across all weapons)
 
-![ectf, duel, multiple teams](https://i.imgur.com/tDql3dW.gif)
+![ectf, duel, multiple teams](https://i.imgur.com/tS9FK1I.gif)
 
 ### [hudfragmessages.patch](./patches/scoreboard.patch)
 
