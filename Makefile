@@ -20,20 +20,20 @@ clean:
 	cd src/enet && make clean
 
 apply-patches:
-	$(PATCH) < patches/moviehud.patch
 	dos2unix src/vcpp/sauerbraten.vcxproj
+	$(PATCH) < patches/moviehud.patch
 	$(PATCH) < patches/scoreboard.patch
-	unix2dos src/vcpp/sauerbraten.vcxproj
 	$(PATCH) < patches/macos_builds.patch
 	$(PATCH) < patches/hudfragmessages.patch
+	unix2dos src/vcpp/sauerbraten.vcxproj
 
 undo-patches:
-	$(PATCH) --reverse < patches/macos_builds.patch
 	dos2unix src/vcpp/sauerbraten.vcxproj
+	$(PATCH) --reverse < patches/macos_builds.patch
 	$(PATCH) --reverse < patches/scoreboard.patch
-	unix2dos src/vcpp/sauerbraten.vcxproj
 	$(PATCH) --reverse < patches/moviehud.patch
 	$(PATCH) < patches/hudfragmessages.patch
+	unix2dos src/vcpp/sauerbraten.vcxproj
 
 clean-sauer: check-env
 	cd $(SAUER_DIR)/src/enet && make clean
