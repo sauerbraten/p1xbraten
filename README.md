@@ -2,41 +2,9 @@
 
 This repository contains the source for my client mod, as well as the patches applied to the vanilla source to get there.
 
-## Installation
-
-The latest builds are always at https://github.com/sauerbraten/p1xbraten/releases/latest.
-
-### Windows
-
-Put sauerbraten.exe into bin64/ of your Sauerbraten installation.
-
-### macOS
-
-Put sauerbraten_universal into sauerbraten.app/Contents/MacOS/, then `chmod +x sauerbraten.app/Contents/MacOS/sauerbraten_universal`.
-
-### Linux
-
-Put linux_64_client into bin_unix/, then `chmod +x bin_unix/linux_64_client`.
-
-## Building your own binary
-
-On Linux and macOS, just run `make && make install` **inside the src/ directory** (given you installed the usual Sauerbraten dependencies). On Linux, the [./start.sh](./start.sh) script will launch the new binary using the Sauerbraten files in $SAUER_DIR and `~/.p1xbraten` as user data directory.
-
-On Windows, open src/vcpp/sauerbraten.vcxproj with Visual Studio and build in there.
-
-### Fresh build
-
-On Linux and macOS, you can easily build my client using fresh vanilla sources. Set $SAUER_DIR to the path of your Sauerbraten directory (currently, an SVN checkout is required), then use `make` and `make install` in the repository root:
-
-```
-export SAUER_DIR=~/sauerbraten-code
-make
-make install
-```
-
-`make` will copy the src/ directory from $SAUER_DIR, apply all patches and run `make` inside src/; `make install` will put the compiled binary into the usual place (depending on your OS).
-
 ## Patches
+
+a.k.a. Features
 
 ### [moviehud.patch](./patches/moviehud.patch)
 
@@ -45,7 +13,7 @@ make install
 
 ### [scoreboard.patch](./patches/scoreboard.patch)
 
-- enables detailed per-weapon damage stats recording
+- enables detailed per-weapon damage stats recording and cleans up the scoreboard look
 - adds scoreboard toggles:
     - `showflags`: when 1, shows the number of flags scored by a player; always hidden in non-flag modes
     - `showkpd`: when 1, shows the players' frags/death ratio
@@ -59,7 +27,53 @@ make install
     - `getnetdamage` (= dealt - received)
 
     all of these commands (as well as `getaccuracy`) default to showing your own stats across all weapons. however, they all take two optional integer arguments to query by weapon and player: `/<cmd> [weapon] [cn]` (use -1 to query damage across all weapons)
-- cleaner look:
-    ![ectf](https://i.imgur.com/6DXW4Pj.jpg)
-    ![duel](https://i.imgur.com/cbGUTxk.jpg)
-    ![multiple teams](https://i.imgur.com/aC8rHms.jpg)
+
+![ectf, duel, multiple teams](https://i.imgur.com/tDql3dW.gif)
+
+### [hudfragmessages.patch](./patches/scoreboard.patch)
+
+- enables frag messages showing the weapon used to complete the frag (on by default)
+- adds the following variables:
+    - `hudfragmessages`: when 0, no frag messages are shown
+    - `hudfragmessageduration`: how long each message will be shown, in milliseconds, between 100 (= 0.1s) and 10,000 (= 10s)
+    - `hudfragmessagey`: vertical position (between 0 and 1) where the newest message will appear
+        when hudfragmessagey<=0.5 (new messages appearing in the upper half of the screen), older messages will be stacked above newer ones, otherwise (new messages appear in the lower half), older messages are shown below newer ones
+    - `hudfragmessagescale`: size of the messages, between 0.0 and 1.0
+
+![fragmessages](https://i.imgur.com/K4GL6oB.png)
+
+## Installation
+
+The latest builds are always at https://github.com/sauerbraten/p1xbraten/releases/latest. *You do not need to download anything but the correct executable in order to run this client mod!*
+
+### Windows
+
+Download sauerbraten.exe from the link above and put it into bin64/ of your Sauerbraten installation.
+
+### macOS
+
+Download sauerbraten_universal from the link above and put it into /Applications/sauerbraten.app/Contents/MacOS/, then `chmod +x sauerbraten.app/Contents/MacOS/sauerbraten_universal`.
+
+### Linux
+
+Download linux_64_client from the link above and put it into bin_unix/ inside of your Sauerbraten directory, then `chmod +x bin_unix/linux_64_client`.
+
+## Building your own binary
+
+*You don't have to do this if you already followed the installation instructions above and just want to play!*
+
+On Linux and macOS, just run `make && make install` **inside the src/ directory** (given you installed the usual Sauerbraten dependencies). On Linux, the [./start.sh](./start.sh) script will launch the new binary using the Sauerbraten files in $SAUER_DIR and `~/.p1xbraten` as user data directory.
+
+On Windows, open src/vcpp/sauerbraten.vcxproj with Visual Studio and build in there.
+
+### Fresh upstream sources
+
+On Linux and macOS, you can build my client using fresh vanilla sources. Set $SAUER_DIR to the path of your Sauerbraten directory (currently, an SVN checkout is required), then use `make` and `make install` in the repository root:
+
+```
+export SAUER_DIR=~/sauerbraten-code
+make
+make install
+```
+
+`make` will copy the src/ directory from $SAUER_DIR, apply all patches and run `make` inside src/; `make install` will put the compiled binary into the usual place (depending on your OS).

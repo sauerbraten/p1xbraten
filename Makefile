@@ -25,6 +25,7 @@ apply-patches:
 	$(PATCH) < patches/scoreboard.patch
 	unix2dos src/vcpp/sauerbraten.vcxproj
 	$(PATCH) < patches/macos_builds.patch
+	$(PATCH) < patches/hudfragmessages.patch
 
 undo-patches:
 	$(PATCH) --reverse < patches/macos_builds.patch
@@ -32,6 +33,7 @@ undo-patches:
 	$(PATCH) --reverse < patches/scoreboard.patch
 	unix2dos src/vcpp/sauerbraten.vcxproj
 	$(PATCH) --reverse < patches/moviehud.patch
+	$(PATCH) < patches/hudfragmessages.patch
 
 clean-sauer: check-env
 	cd $(SAUER_DIR)/src/enet && make clean
