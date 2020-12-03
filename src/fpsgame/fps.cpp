@@ -533,11 +533,11 @@ namespace game
         }
     }
 
-    ICOMMAND(getfrags, "", (), intret(player1->frags));
-    ICOMMAND(getflags, "", (), intret(player1->flags));
-    ICOMMAND(getdeaths, "", (), intret(player1->deaths));
-    ICOMMAND(gettotaldamage, "", (), intret(playerdamage(player1, DMG_DEALT)));
-    ICOMMAND(gettotalshots, "", (), intret(playerdamage(player1, DMG_POTENTIAL)));
+    ICOMMAND(getfrags, "", (), intret(hudplayer()->frags));
+    ICOMMAND(getflags, "", (), intret(hudplayer()->flags));
+    ICOMMAND(getdeaths, "", (), intret(hudplayer()->deaths));
+    ICOMMAND(gettotaldamage, "", (), intret(playerdamage(NULL, DMG_DEALT)));
+    ICOMMAND(gettotalshots, "", (), intret(playerdamage(NULL, DMG_POTENTIAL)));
 
     vector<fpsent *> clients;
 

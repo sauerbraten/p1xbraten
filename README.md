@@ -19,6 +19,9 @@ a.k.a. Features
     - `showkpd`: when 1, shows the players' frags/death ratio
     - `showaccuracy`: when 1, shows the players' overall accuracy
     - `showdamage`: when 1, shows the players' overall damage dealt; when 2, shows the players' overall net damage (= dealt - received); always hidden in insta modes
+
+    ![ectf, duel, multiple teams](https://i.imgur.com/tS9FK1I.gif)
+
 - adds damage-related cubescript commands:
     - `getdamagepotential`
     - `getdamagedealt`
@@ -26,13 +29,31 @@ a.k.a. Features
     - `getdamagewasted` (= potential - dealt)
     - `getnetdamage` (= dealt - received)
 
-    all of these commands (as well as `getaccuracy`) default to showing your own stats across all weapons. however, they all take two optional integer arguments to query by weapon and player: `/<cmd> [weapon] [cn]` (use -1 to query damage across all weapons)
+    All of these commands (as well as `getaccuracy`) default to showing your own stats across all weapons. However, they all take two optional integer arguments to query by weapon and player: `/<cmd> [weapon] [cn]` (use -1 to query damage across all weapons)
 
-![ectf, duel, multiple teams](https://i.imgur.com/tS9FK1I.gif)
+    To use these new commands to show comed-like statistics in the game hud in the lower right corner, put the following into your autoexec.cfg:
+
+    ```
+    gamehud = [
+        format "^f7SG: ^f1%1%% ^f7CG: ^f1%2%% ^f7RL: ^f1%3%% ^f7RI: ^f1%4%% ^f7GL: ^f1%5%% ^n^t^f7frags: ^f0%6 ^f7deaths: ^f3%7 ^f7acc: ^f2%8%% ^f7kpd: ^f5%9" (
+            round (getaccuracy 1) 0.1   )(
+            round (getaccuracy 2) 0.1   )(
+            round (getaccuracy 3) 0.1   )(
+            round (getaccuracy 4) 0.1   )(
+            round (getaccuracy 5) 0.1   )(
+            getfrags                    )(
+            getdeaths                   )(
+            round (getaccuracy) 0.1     )(
+            round (divf (getfrags) (max (getdeaths) 1)) 0.1
+        )
+    ]
+    ```
 
 ### [hudfragmessages.patch](./patches/scoreboard.patch)
 
 - enables frag messages showing the weapon used to complete the frag (on by default)
+    ![fragmessages](https://i.imgur.com/K4GL6oB.png)
+
 - adds the following variables:
     - `hudfragmessages`: when 0, no frag messages are shown
     - `hudfragmessageduration`: how long each message will be shown, in milliseconds, between 100 (= 0.1s) and 10,000 (= 10s)
@@ -41,8 +62,6 @@ a.k.a. Features
     - `hudfragmessagey`: vertical position (between 0 and 1) where the newest message will appear
         when hudfragmessagey<=0.5 (new messages appearing in the upper half of the screen), older messages will be stacked above newer ones, otherwise (new messages appear in the lower half), older messages are shown below newer ones
     - `hudfragmessagescale`: size of the messages, between 0.0 and 1.0
-
-![fragmessages](https://i.imgur.com/K4GL6oB.png)
 
 ## Installation
 
