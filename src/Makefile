@@ -164,16 +164,6 @@ MASTER_OBJS= \
 
 SERVER_MASTER_OBJS= $(SERVER_OBJS) $(filter-out $(SERVER_OBJS),$(MASTER_OBJS))
 
-ifneq (,$(findstring DARWIN,$(PLATFORM)))
-CLIENT_OBJS+= xcode/macutils.o
-
-%.o: %.mm
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
-
-%.o: %.m
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
-endif
-
 default: all
 
 all: client server

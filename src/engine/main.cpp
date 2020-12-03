@@ -573,8 +573,14 @@ void screenres(int w, int h)
         {
             if(fullscreendesktop) gl_resize();
             else resetfullscreen();
+            initwindowpos = true;
         } 
-        else SDL_SetWindowSize(screen, scr_w, scr_h);
+        else
+        {
+            SDL_SetWindowSize(screen, scr_w, scr_h);
+            SDL_SetWindowPosition(screen, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+            initwindowpos = false;
+        }
     }
     else
     {
@@ -665,6 +671,11 @@ void setupscreen()
 
     SDL_GL_ResetAttributes();
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    #if !defined(WIN32) && !defined(__APPLE__)
+    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+    #endif
     static const int configs[] =
     {
         0x3, /* try everything */
