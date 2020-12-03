@@ -33,7 +33,7 @@ a.k.a. Features
 
     To use these new commands to show comed-like statistics in the game hud in the lower right corner, put the gamehud definition from [this file](./data/once.cfg) into your autoexec.cfg.
 
-### [hudfragmessages.patch](./patches/scoreboard.patch)
+### [hudfragmessages.patch](./patches/hudfragmessages.patch)
 
 - enables frag messages showing the weapon used to complete the frag (on by default)
 
