@@ -498,8 +498,8 @@ namespace game
         {
             if(d==player1) conoutf(contype, "\f2%s got fragged by %s", dname, aname);
             else conoutf(contype, "\f2%s fragged %s", aname, dname);
-            actor->fragmessages->add(fragmessage(aname, dname, d->lasthitpushgun));
-            d->fragmessages->add(fragmessage(aname, dname, d->lasthitpushgun));
+            addfragmessage(actor, aname, dname, d->lasthitpushgun);
+            addfragmessage(d, aname, dname, d->lasthitpushgun);
         }
         deathstate(d);
 		ai::killed(d, actor);

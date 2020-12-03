@@ -4,8 +4,16 @@
 namespace game {
     VARP(hudfragmessages, 0, 1, 1);
     VARP(hudfragmessageduration, 0, 1000, 10000);
+    VARP(maxhudfragmessages, 1, 3, 10);
+    FVARP(hudfragmessagex, 0, 0.5f, 1.0f);
     FVARP(hudfragmessagey, 0, 0.25f, 1.0f);
     FVARP(hudfragmessagescale, 0.1f, 0.5f, 1.0f);
+
+    void addfragmessage(fpsent *c, const char *aname, const char *vname, int gun)
+    {
+        if(c->fragmessages->length()>=maxhudfragmessages) c->fragmessages->remove(0);
+        c->fragmessages->add(fragmessage(aname, vname, gun));
+    }
 
     void drawfragmessages(fpsent *d, int w, int h)
     {
@@ -13,7 +21,7 @@ namespace game {
 
         float stepsize = (3*HICON_SIZE)/2;
         float stepdir = hudfragmessagey>0.5 ? 1 : -1;
-        vec2 origin = vec2(.5f, hudfragmessagey).mul(vec2(w, h).div(hudfragmessagescale));
+        vec2 origin = vec2(hudfragmessagex, hudfragmessagey).mul(vec2(w, h).div(hudfragmessagescale));
 
         pushhudmatrix();
         hudmatrix.scale(hudfragmessagescale, hudfragmessagescale, 1);

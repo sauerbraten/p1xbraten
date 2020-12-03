@@ -32,7 +32,7 @@ undo-patches:
 	$(PATCH) --reverse < patches/macos_builds.patch
 	$(PATCH) --reverse < patches/scoreboard.patch
 	$(PATCH) --reverse < patches/moviehud.patch
-	$(PATCH) < patches/hudfragmessages.patch
+	$(PATCH) --reverse < patches/hudfragmessages.patch
 	unix2dos src/vcpp/sauerbraten.vcxproj
 
 clean-sauer: check-env

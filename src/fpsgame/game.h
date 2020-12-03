@@ -548,7 +548,7 @@ struct fpsent : dynent, fpsstate
     int lastpain;
     int lastaction, lastattackgun;
     int lasthitpushgun;
-    vector<fragmessage> *fragmessages;
+    vector<fragmessage> *fragmessages; // oldest first, newest at the end
     bool attacking;
     int attacksound, attackchan, idlesound, idlechan;
     int lasttaunt;

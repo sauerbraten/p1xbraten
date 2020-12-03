@@ -36,6 +36,8 @@ a.k.a. Features
 - adds the following variables:
     - `hudfragmessages`: when 0, no frag messages are shown
     - `hudfragmessageduration`: how long each message will be shown, in milliseconds, between 100 (= 0.1s) and 10,000 (= 10s)
+    - `maxhudfragmessages`: how many messages to show at most (between 1 and 10)
+    - `hudfragmessagex`: horizontal position (between 0 and 1) where messages will appear
     - `hudfragmessagey`: vertical position (between 0 and 1) where the newest message will appear
         when hudfragmessagey<=0.5 (new messages appearing in the upper half of the screen), older messages will be stacked above newer ones, otherwise (new messages appear in the lower half), older messages are shown below newer ones
     - `hudfragmessagescale`: size of the messages, between 0.0 and 1.0
