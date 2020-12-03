@@ -1,6 +1,6 @@
 Index: src/Makefile
 ===================================================================
---- src/Makefile	(revision 6463)
+--- src/Makefile	(revision 6471)
 +++ src/Makefile	(working copy)
 @@ -130,6 +130,7 @@
  	fpsgame/render.o \
@@ -10,7 +10,7 @@ Index: src/Makefile
  	fpsgame/waypoint.o \
  	fpsgame/weapon.o
 
-@@ -476,6 +477,7 @@
+@@ -466,6 +467,7 @@
  fpsgame/client.o: shared/ents.h shared/command.h shared/glexts.h
  fpsgame/client.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
  fpsgame/client.o: fpsgame/capture.h fpsgame/ctf.h fpsgame/collect.h
@@ -18,7 +18,7 @@ Index: src/Makefile
  fpsgame/entities.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
  fpsgame/entities.o: shared/ents.h shared/command.h shared/glexts.h
  fpsgame/entities.o: shared/glemu.h shared/iengine.h shared/igame.h
-@@ -483,6 +485,7 @@
+@@ -473,6 +475,7 @@
  fpsgame/fps.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
  fpsgame/fps.o: shared/ents.h shared/command.h shared/glexts.h shared/glemu.h
  fpsgame/fps.o: shared/iengine.h shared/igame.h fpsgame/ai.h
@@ -26,7 +26,7 @@ Index: src/Makefile
  fpsgame/monster.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
  fpsgame/monster.o: shared/ents.h shared/command.h shared/glexts.h
  fpsgame/monster.o: shared/glemu.h shared/iengine.h shared/igame.h
-@@ -498,6 +501,7 @@
+@@ -488,6 +491,7 @@
  fpsgame/scoreboard.o: shared/geom.h shared/ents.h shared/command.h
  fpsgame/scoreboard.o: shared/glexts.h shared/glemu.h shared/iengine.h
  fpsgame/scoreboard.o: shared/igame.h fpsgame/ai.h
@@ -34,7 +34,7 @@ Index: src/Makefile
  fpsgame/server.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
  fpsgame/server.o: shared/ents.h shared/command.h shared/glexts.h
  fpsgame/server.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
-@@ -510,6 +514,8 @@
+@@ -500,6 +504,8 @@
  fpsgame/weapon.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
  fpsgame/weapon.o: shared/ents.h shared/command.h shared/glexts.h
  fpsgame/weapon.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
@@ -43,7 +43,7 @@ Index: src/Makefile
 
  shared/cube.h.gch: shared/tools.h shared/geom.h shared/ents.h
  shared/cube.h.gch: shared/command.h shared/glexts.h shared/glemu.h
-@@ -522,6 +528,7 @@
+@@ -512,6 +518,7 @@
  fpsgame/game.h.gch: shared/cube.h shared/tools.h shared/geom.h shared/ents.h
  fpsgame/game.h.gch: shared/command.h shared/glexts.h shared/glemu.h
  fpsgame/game.h.gch: shared/iengine.h shared/igame.h fpsgame/ai.h
@@ -53,7 +53,7 @@ Index: src/Makefile
  shared/crypto-standalone.o: shared/ents.h shared/command.h shared/iengine.h
 Index: src/engine/rendertext.cpp
 ===================================================================
---- src/engine/rendertext.cpp	(revision 6463)
+--- src/engine/rendertext.cpp	(revision 6471)
 +++ src/engine/rendertext.cpp	(working copy)
 @@ -222,9 +222,9 @@
          switch(c)
@@ -69,7 +69,7 @@ Index: src/engine/rendertext.cpp
              case '6': color = bvec(255, 128,   0); break;   // orange
 Index: src/fpsgame/client.cpp
 ===================================================================
---- src/fpsgame/client.cpp	(revision 6463)
+--- src/fpsgame/client.cpp	(revision 6471)
 +++ src/fpsgame/client.cpp	(working copy)
 @@ -1,4 +1,5 @@
  #include "game.h"
@@ -106,7 +106,7 @@ Index: src/fpsgame/colors.h
 +#define COL_ADMIN COL_ORANGE
 Index: src/fpsgame/fps.cpp
 ===================================================================
---- src/fpsgame/fps.cpp	(revision 6463)
+--- src/fpsgame/fps.cpp	(revision 6471)
 +++ src/fpsgame/fps.cpp	(working copy)
 @@ -1,4 +1,5 @@
  #include "game.h"
@@ -145,7 +145,7 @@ Index: src/fpsgame/fps.cpp
          setclientmode();
 Index: src/fpsgame/game.h
 ===================================================================
---- src/fpsgame/game.h	(revision 6463)
+--- src/fpsgame/game.h	(revision 6471)
 +++ src/fpsgame/game.h	(working copy)
 @@ -535,6 +535,8 @@
      }
@@ -175,7 +175,7 @@ Index: src/fpsgame/game.h
      extern const char *modename(int n, const char *unknown = "unknown");
 Index: src/fpsgame/scoreboard.cpp
 ===================================================================
---- src/fpsgame/scoreboard.cpp	(revision 6463)
+--- src/fpsgame/scoreboard.cpp	(revision 6471)
 +++ src/fpsgame/scoreboard.cpp	(working copy)
 @@ -1,5 +1,6 @@
  // creation of scoreboard
@@ -204,16 +204,17 @@ Index: src/fpsgame/scoreboard.cpp
 
      static hashset<teaminfo> teaminfos;
 
-@@ -140,15 +145,17 @@
+@@ -138,17 +143,15 @@
+
+     int statuscolor(fpsent *d, int color)
      {
-         if(d->privilege)
-         {
+-        if(d->privilege)
+-        {
 -            color = d->privilege>=PRIV_ADMIN ? 0xFF8000 : (d->privilege>=PRIV_AUTH ? 0xC040C0 : 0x40FF80);
-+            color = d->privilege>=PRIV_ADMIN ? COL_ADMIN : (d->privilege>=PRIV_AUTH ? COL_AUTH : COL_MASTER);
++        if(d->privilege) color = d->privilege>=PRIV_ADMIN ? COL_ADMIN : (d->privilege>=PRIV_AUTH ? COL_AUTH : COL_MASTER);
              if(d->state==CS_DEAD) color = (color>>1)&0x7F7F7F;
-         }
+-        }
 -        else if(d->state==CS_DEAD) color = 0x606060;
-+        else if(d->state==CS_DEAD) color = (COL_WHITE>>1)&0x7F7F7F;
          return color;
      }
 
@@ -224,7 +225,7 @@ Index: src/fpsgame/scoreboard.cpp
          const ENetAddress *address = connectedpeer();
          if(showservinfo && address)
          {
-@@ -155,23 +162,22 @@
+@@ -155,23 +158,22 @@
              string hostname;
              if(enet_address_get_host_ip(address, hostname, sizeof(hostname)) >= 0)
              {
@@ -255,7 +256,7 @@ Index: src/fpsgame/scoreboard.cpp
              else
              {
                  int secs = max(maplimit-lastmillis+999, 0)/1000, mins = secs/60;
-@@ -178,15 +184,16 @@
+@@ -178,15 +180,16 @@
                  secs %= 60;
                  g.pushlist();
                  g.strut(mins >= 10 ? 4.5f : 3.5f);
@@ -275,7 +276,7 @@ Index: src/fpsgame/scoreboard.cpp
 
          int numgroups = groupplayers();
          loopk(numgroups)
-@@ -194,8 +201,7 @@
+@@ -194,8 +197,7 @@
              if((k%2)==0) g.pushlist(); // horizontal
 
              scoregroup &sg = *groups[k];
@@ -285,150 +286,140 @@ Index: src/fpsgame/scoreboard.cpp
 
              g.pushlist(); // vertical
              g.pushlist(); // horizontal
-@@ -207,37 +213,36 @@
+@@ -207,124 +209,113 @@
                      b; \
                  }
 
 -            g.pushlist();
++            #define fgcolor (o==player1 && highlightscore && (multiplayer(false) || demoplayback || players.length() > 1) ? COL_YELLOW : COL_WHITE)
++
              if(sg.team && m_teammode)
              {
--                g.pushlist();
--                g.background(bgcolor, numgroups>1 ? 3 : 5);
--                g.strut(1);
--                g.poplist();
 +                g.pushlist(); // vertical
 +                if(sg.score>=10000) g.textf("%s: WIN", teamcolor, NULL, sg.team);
 +                else g.textf("%s: %d", teamcolor, NULL, sg.team, sg.score);
 +                g.pushlist(); // horizontal
-             }
--            g.text("", 0, " ");
++            }
 +
-+            g.pushlist();
+                 g.pushlist();
+-                g.background(bgcolor, numgroups>1 ? 3 : 5);
+-                g.strut(1);
 +            g.text("name", COL_GRAY);
-+            g.strut(12);
-             loopscoregroup(o,
++            loopscoregroup(o, g.text(colorname(o), statuscolor(o, fgcolor)););
+                 g.poplist();
+-            }
+-            g.text("", 0, " ");
+-            loopscoregroup(o,
++
++            if(m_ctf && showflags)
              {
-                 if(o==player1 && highlightscore && (multiplayer(false) || demoplayback || players.length() > 1))
-                 {
+-                if(o==player1 && highlightscore && (multiplayer(false) || demoplayback || players.length() > 1))
+-                {
++                g.space(2);
                      g.pushlist();
 -                    g.background(0x808080, numgroups>1 ? 3 : 5);
-+                    g.background(COL_BACKGROUND, numgroups>1 ? 3 : 5);
-                 }
+-                }
 -                const playermodelinfo &mdl = getplayermodelinfo(o);
 -                const char *icon = sg.team && m_teammode ? (isteam(player1->team, sg.team) ? mdl.blueicon : mdl.redicon) : mdl.ffaicon;
 -                g.text("", 0, icon);
-+                g.textf("%s ", statuscolor(o, COL_WHITE), NULL, colorname(o));
-                 if(o==player1 && highlightscore && (multiplayer(false) || demoplayback || players.length() > 1)) g.poplist();
-             });
+-                if(o==player1 && highlightscore && (multiplayer(false) || demoplayback || players.length() > 1)) g.poplist();
+-            });
++                g.text("flags", COL_GRAY);
++                loopscoregroup(o, g.textf("%d", fgcolor, NULL, o->flags));
              g.poplist();
-
+-
 -            if(sg.team && m_teammode)
-+            if(m_ctf && showflags)
-             {
+-            {
 -                g.pushlist(); // vertical
 -
 -                if(sg.score>=10000) g.textf("%s: WIN", fgcolor, NULL, sg.team);
 -                else g.textf("%s: %d", fgcolor, NULL, sg.team, sg.score);
 -
 -                g.pushlist(); // horizontal
-+                g.pushlist();
-+                g.strut(6);
-+                g.text("flags", COL_GRAY);
-+                loopscoregroup(o, g.textf("%d", COL_WHITE, NULL, o->flags));
-+                g.poplist();
              }
 
              if(!cmode || !cmode->hidefrags() || !hidefrags)
-@@ -244,8 +249,8 @@
              {
++                g.space(2);
                  g.pushlist();
-                 g.strut(6);
+-                g.strut(6);
 -                g.text("frags", fgcolor);
 -                loopscoregroup(o, g.textf("%d", 0xFFFFDD, NULL, o->frags));
 +                g.text("frags", COL_GRAY);
-+                loopscoregroup(o, g.textf("%d", COL_WHITE, NULL, o->frags));
++                loopscoregroup(o, g.textf("%d", fgcolor, NULL, o->frags));
                  g.poplist();
              }
 
-@@ -252,82 +257,75 @@
              if(showdeaths)
              {
++                g.space(2);
                  g.pushlist();
 -                g.strut(6);
 -                g.text("deaths", fgcolor);
 -                loopscoregroup(o, g.textf("%d", 0xFFFFDD, NULL, o->deaths));
-+                g.strut(7);
 +                g.text("deaths", COL_GRAY);
-+                loopscoregroup(o, g.textf("%d", COL_WHITE, NULL, o->deaths));
++                loopscoregroup(o, g.textf("%d", fgcolor, NULL, o->deaths));
                  g.poplist();
              }
 
--            g.pushlist();
++            if(showkpd)
++            {
++                g.space(2);
+             g.pushlist();
 -            g.text("name", fgcolor);
 -            g.strut(12);
 -            loopscoregroup(o,
-+            if(showkpd)
-             {
+-            {
 -                g.textf("%s ", statuscolor(o, 0xFFFFDD), NULL, colorname(o));
 -            });
--            g.poplist();
-+                g.pushlist();
-+                g.strut(5);
++                g.strut(3);
 +                g.text("kpd", COL_GRAY);
-+                loopscoregroup(o, g.textf("%.1f", COL_WHITE, NULL, (float)o->frags/max(1, o->deaths)));
++                loopscoregroup(o, g.textf("%.1f", fgcolor, NULL, (float)o->frags/max(1, o->deaths)));
+             g.poplist();
++            }
+
+-            if(multiplayer(false) || demoplayback)
++            if(showaccuracy)
+             {
+-                if(showpj || showping) g.space(1);
++                g.space(2);
++                g.pushlist();
++                g.strut(4);
++                g.text("acc", COL_GRAY);
++                loopscoregroup(o, g.textf("%.0f%%", fgcolor, NULL, playeraccuracy(o)));
 +                g.poplist();
 +            }
 
-+            if(showaccuracy)
-+            {
-+                g.pushlist();
-+                g.strut(5);
-+                g.text("acc", COL_GRAY);
-+                loopscoregroup(o, g.textf("%.0f%%", COL_WHITE, NULL, playeraccuracy(o)));
-+                g.poplist();
-+            }
-+
+-                if(showpj && showping <= 1)
 +            if(!m_insta && showdamage)
-+            {
-+                g.pushlist();
-+                g.strut(6);
+                 {
++                g.space(2);
+                     g.pushlist();
+-                    g.strut(6);
+-                    g.text("pj", fgcolor);
+-                    loopscoregroup(o,
+-                    {
+-                        if(o->state==CS_LAGGED) g.text("LAG", 0xFFFFDD);
+-                        else g.textf("%d", 0xFFFFDD, NULL, o->plag);
++                g.strut(4);
 +                g.text("dmg", COL_GRAY);
 +                loopscoregroup(o, {
 +                    float dmg = (float) showdamage == 1 ? playerdamage(o, DMG_DEALT) : playernetdamage(o);
 +                    const char *fmt = "%.0f";
 +                    if(fabs(dmg) > 1000.0f) { fmt = "%.1fk"; dmg = dmg/1000.0f; }
-+                    g.textf(fmt, COL_WHITE, NULL, dmg);
-+                });
-+                g.poplist();
-+            }
-+
-             if(multiplayer(false) || demoplayback)
-             {
-                 if(showpj || showping) g.space(1);
-
--                if(showpj && showping <= 1)
-+                if(showpj)
-                 {
-                     g.pushlist();
-                     g.strut(6);
--                    g.text("pj", fgcolor);
-+                    g.text("pj", COL_GRAY);
-                     loopscoregroup(o,
-                     {
--                        if(o->state==CS_LAGGED) g.text("LAG", 0xFFFFDD);
--                        else g.textf("%d", 0xFFFFDD, NULL, o->plag);
-+                        if(o->state==CS_LAGGED) g.text("LAG", COL_WHITE);
-+                        else g.textf("%d", COL_WHITE, NULL, o->plag);
++                    g.textf(fmt, fgcolor, NULL, dmg);
                      });
                      g.poplist();
                  }
 
 -                if(showping > 1)
-+                if(showping)
++            if(multiplayer(false) || demoplayback)
                  {
++                if(showping)
++                {
++                    g.space(2);
                      g.pushlist();
-+                    g.text("ping", COL_GRAY);
-                     g.strut(6);
+-                    g.strut(6);
 -
 -                    g.pushlist();
 -                    g.text("ping", fgcolor);
@@ -437,9 +428,11 @@ Index: src/fpsgame/scoreboard.cpp
 -                    g.text("pj", fgcolor);
 -                    g.poplist();
 -
++                    g.text("ping", COL_GRAY);
                      loopscoregroup(o,
                      {
-                         fpsent *p = o->ownernum >= 0 ? getclient(o->ownernum) : o;
+-                        fpsent *p = o->ownernum >= 0 ? getclient(o->ownernum) : o;
++                        fpsent *p = getclient(o->ownernum);
                          if(!p) p = o;
 -                        g.pushlist();
 -                        if(p->state==CS_LAGGED) g.text("LAG", 0xFFFFDD);
@@ -452,144 +445,169 @@ Index: src/fpsgame/scoreboard.cpp
 -                        }
 -                        g.poplist();
 -
-+                        if(!showpj && p->state==CS_LAGGED) g.text("LAG", COL_WHITE);
-+                        else g.textf("%d", COL_WHITE, NULL, p->ping);
++                        if(!showpj && p->state==CS_LAGGED) g.text("LAG", fgcolor);
++                        else g.textf("%d", fgcolor, NULL, p->ping);
                      });
                      g.poplist();
                  }
 -                else if(showping)
--                {
--                    g.pushlist();
++
++                if(showpj)
+                 {
++                    g.space(2);
+                     g.pushlist();
 -                    g.text("ping", fgcolor);
 -                    g.strut(6);
--                    loopscoregroup(o,
--                    {
++                    g.strut(2);
++                    g.text("pj", COL_GRAY);
+                     loopscoregroup(o,
+                     {
 -                        fpsent *p = o->ownernum >= 0 ? getclient(o->ownernum) : o;
--                        if(!p) p = o;
++                        fpsent *p = getclient(o->ownernum);
+                         if(!p) p = o;
 -                        if(!showpj && p->state==CS_LAGGED) g.text("LAG", 0xFFFFDD);
 -                        else g.textf("%d", 0xFFFFDD, NULL, p->ping);
--                    });
--                    g.poplist();
--                }
-             }
++                        if(p==player1) g.text("", fgcolor);
++                        else if(p->state==CS_LAGGED) g.text("LAG", fgcolor);
++                        else g.textf("%d", fgcolor, NULL, abs(30-p->plag));
+                     });
+                     g.poplist();
+                 }
+@@ -332,10 +323,10 @@
 
              if(showclientnum || player1->privilege>=PRIV_MASTER)
-@@ -334,8 +332,8 @@
              {
-                 g.space(1);
+-                g.space(1);
++                g.space(2);
                  g.pushlist();
 -                g.text("cn", fgcolor);
 -                loopscoregroup(o, g.textf("%d", 0xFFFFDD, NULL, o->clientnum));
 +                g.text("cn", COL_GRAY);
-+                loopscoregroup(o, g.textf("%d", COL_WHITE, NULL, o->clientnum));
++                loopscoregroup(o, g.textf("%d", fgcolor, NULL, o->clientnum));
                  g.poplist();
              }
 
-@@ -349,17 +347,23 @@
+@@ -348,81 +339,79 @@
+             g.poplist(); // horizontal
              g.poplist(); // vertical
 
-             if(k+1<numgroups && (k+1)%2) g.space(2);
+-            if(k+1<numgroups && (k+1)%2) g.space(2);
 -            else g.poplist(); // horizontal
++            if(k+1<numgroups && (k+1)%2) g.space(3);
 +            else
 +            {
 +                g.poplist(); // horizontal
 +                if(k+1<numgroups) g.space(.75f);
-+            }
          }
++        }
 
          if(showspectators && spectators.length())
          {
+-            if(showclientnum || player1->privilege>=PRIV_MASTER)
++            #define loopspectators(o, b) \
++                loopv(spectators) \
++                { \
++                    fpsent *o = spectators[i]; \
++                    b; \
++                }
++
 +            g.space(.75f);
 +
-             if(showclientnum || player1->privilege>=PRIV_MASTER)
++            if(showclientnum || showspectatorping || player1->privilege>=PRIV_MASTER)
              {
                  g.pushlist();
 
                  g.pushlist();
 -                g.text("spectator", 0xFFFF80, " ");
-+                g.text("spectator", COL_GRAY);
-                 g.strut(12);
-                 loopv(spectators)
-                 {
-@@ -367,9 +371,9 @@
-                     if(o==player1 && highlightscore)
-                     {
-                         g.pushlist();
+-                g.strut(12);
+-                loopv(spectators)
+-                {
+-                    fpsent *o = spectators[i];
+-                    if(o==player1 && highlightscore)
+-                    {
+-                        g.pushlist();
 -                        g.background(0x808080, 3);
-+                        g.background(COL_BACKGROUND, 3);
-                     }
+-                    }
 -                    g.text(colorname(o), statuscolor(o, 0xFFFFDD), "spectator");
-+                    g.text(colorname(o), statuscolor(o, COL_WHITE), 0);
-                     if(o==player1 && highlightscore) g.poplist();
-                 }
+-                    if(o==player1 && highlightscore) g.poplist();
+-                }
++                g.text("spectator", COL_GRAY);
++                loopspectators(o, g.text(colorname(o), statuscolor(o, fgcolor)));
                  g.poplist();
-@@ -378,7 +382,7 @@
+
+                 if((multiplayer(false) || demoplayback) && showspectatorping)
                  {
-                     g.space(1);
+-                    g.space(1);
++                    g.space(2);
                      g.pushlist();
 -                    g.text("ping", 0xFFFF80);
+-                    g.strut(6);
+-                    loopv(spectators)
 +                    g.text("ping", COL_GRAY);
-                     g.strut(6);
-                     loopv(spectators)
++                    loopspectators(o,
                      {
-@@ -385,8 +389,8 @@
-                         fpsent *o = spectators[i];
-                         fpsent *p = o->ownernum >= 0 ? getclient(o->ownernum) : o;
+-                        fpsent *o = spectators[i];
+-                        fpsent *p = o->ownernum >= 0 ? getclient(o->ownernum) : o;
++                        fpsent *p = getclient(o->ownernum);
                          if(!p) p = o;
 -                        if(p->state==CS_LAGGED) g.text("LAG", 0xFFFFDD);
 -                        else g.textf("%d", 0xFFFFDD, NULL, p->ping);
-+                        if(p->state==CS_LAGGED) g.text("LAG", COL_WHITE);
-+                        else g.textf("%d", COL_WHITE, NULL, p->ping);
-                     }
+-                    }
++                        if(p->state==CS_LAGGED) g.text("LAG", fgcolor);
++                        else g.textf("%d", fgcolor, NULL, p->ping);
++                    });
                      g.poplist();
                  }
-@@ -393,8 +397,8 @@
 
-                 g.space(1);
+-                g.space(1);
++                if(showclientnum || player1->privilege>=PRIV_MASTER)
++                {
++                    g.space(2);
                  g.pushlist();
 -                g.text("cn", 0xFFFF80);
 -                loopv(spectators) g.textf("%d", 0xFFFFDD, NULL, spectators[i]->clientnum);
-+                g.text("cn", COL_GRAY);
-+                loopv(spectators) g.textf("%d", COL_WHITE, NULL, spectators[i]->clientnum);
++                    g.text("cn", COL_GRAY);
++                    loopspectators(o, g.textf("%d", fgcolor, NULL, o->clientnum));
                  g.poplist();
++                }
 
                  g.poplist();
-@@ -401,21 +405,21 @@
              }
              else
              {
 -                g.textf("%d spectator%s", 0xFFFF80, " ", spectators.length(), spectators.length()!=1 ? "s" : "");
+-                loopv(spectators)
 +                g.textf("%d spectator%s", COL_GRAY, NULL, spectators.length(), spectators.length()!=1 ? "s" : "");
-                 loopv(spectators)
++                loopspectators(o,
                  {
                      if((i%3)==0)
                      {
                          g.pushlist();
 -                        g.text("", 0xFFFFDD, "spectator");
-+                        g.text("", COL_WHITE, 0);
++                        g.text("", fgcolor, 0);
                      }
-                     fpsent *o = spectators[i];
-                     if(o==player1 && highlightscore)
-                     {
-                         g.pushlist();
+-                    fpsent *o = spectators[i];
+-                    if(o==player1 && highlightscore)
+-                    {
+-                        g.pushlist();
 -                        g.background(0x808080);
-+                        g.background(COL_BACKGROUND);
-                     }
+-                    }
 -                    g.text(colorname(o), statuscolor(o, 0xFFFFDD));
-+                    g.text(colorname(o), statuscolor(o, COL_WHITE));
-                     if(o==player1 && highlightscore) g.poplist();
+-                    if(o==player1 && highlightscore) g.poplist();
++                    g.text(colorname(o), statuscolor(o, fgcolor));
                      if(i+1<spectators.length() && (i+1)%3) g.space(1);
                      else g.poplist();
-@@ -422,6 +426,8 @@
++                });
                  }
              }
-         }
 +
 +        g.space(.25f);
-     }
+         }
+-    }
 
      struct scoreboardgui : g3d_callback
-@@ -475,8 +481,8 @@
+     {
+@@ -475,8 +464,8 @@
      VARP(hudscorealign, -1, 0, 1);
      FVARP(hudscorex, 0, 0.50f, 1);
      FVARP(hudscorey, 0, 0.03f, 1);
@@ -602,7 +620,7 @@ Index: src/fpsgame/scoreboard.cpp
 
 Index: src/fpsgame/weapon.cpp
 ===================================================================
---- src/fpsgame/weapon.cpp	(revision 6463)
+--- src/fpsgame/weapon.cpp	(revision 6471)
 +++ src/fpsgame/weapon.cpp	(working copy)
 @@ -1,5 +1,6 @@
  // weapon.cpp: all shooting and effects code, projectile management
@@ -774,7 +792,7 @@ Index: src/fpsgame/weaponstats_type.h
 +#endif
 Index: src/vcpp/sauerbraten.vcxproj
 ===================================================================
---- src/vcpp/sauerbraten.vcxproj	(revision 6463)
+--- src/vcpp/sauerbraten.vcxproj	(revision 6471)
 +++ src/vcpp/sauerbraten.vcxproj	(working copy)
 @@ -1208,6 +1208,20 @@
        <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
