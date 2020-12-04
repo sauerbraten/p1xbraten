@@ -237,8 +237,8 @@ Index: src/fpsgame/scoreboard.cpp
              {
 -                if(servinfo[0]) g.titlef("%.25s", 0xFFFF80, NULL, servinfo);
 -                else g.titlef("%s:%d", 0xFFFF80, NULL, hostname, address->port);
-+                if(servinfo[0]) g.titlef("%.25s", COL_YELLOW, NULL, servinfo);
-+                else g.titlef("%s:%d", COL_YELLOW, NULL, hostname, address->port);
++                if(servinfo[0]) g.titlef("%.25s", COL_WHITE, NULL, servinfo);
++                else g.titlef("%s:%d", COL_WHITE, NULL, hostname, address->port);
              }
          }
 

@@ -158,8 +158,8 @@ namespace game
             string hostname;
             if(enet_address_get_host_ip(address, hostname, sizeof(hostname)) >= 0)
             {
-                if(servinfo[0]) g.titlef("%.25s", COL_YELLOW, NULL, servinfo);
-                else g.titlef("%s:%d", COL_YELLOW, NULL, hostname, address->port);
+                if(servinfo[0]) g.titlef("%.25s", COL_WHITE, NULL, servinfo);
+                else g.titlef("%s:%d", COL_WHITE, NULL, hostname, address->port);
             }
         }
 
