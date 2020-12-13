@@ -59,7 +59,7 @@ Download sauerbraten.exe from the link above and put it into bin64/ of your Saue
 
 ### macOS
 
-Download sauerbraten_universal from the link above and put it into /Applications/sauerbraten.app/Contents/MacOS/, then `chmod +x sauerbraten.app/Contents/MacOS/sauerbraten_universal`.
+Download sauerbraten_universal from the link above and put it into /Applications/sauerbraten.app/Contents/MacOS/, then `chmod +x /Applications/sauerbraten.app/Contents/MacOS/sauerbraten_universal`.
 
 ### Linux
 
@@ -69,9 +69,9 @@ Download linux_64_client from the link above and put it into bin_unix/ inside of
 
 *You don't have to do this if you already followed the installation instructions above and just want to play!*
 
-On Linux and macOS, just run `make && make install` **inside the src/ directory** (given you installed the usual Sauerbraten dependencies). On Linux, the [./start.sh](./start.sh) script will launch the new binary using the Sauerbraten files in $SAUER_DIR and `~/.p1xbraten` as user data directory.
+On Linux and macOS, just run `make && make install` **inside the src/ directory** (given you installed the usual Sauerbraten dependencies). On Windows, open src/vcpp/sauerbraten.vcxproj with Visual Studio and build in there.
 
-On Windows, open src/vcpp/sauerbraten.vcxproj with Visual Studio and build in there.
+This will put the resulting binary into the usual place inside this repo. To use it, you have to copy it over to the same place in your actual Sauerbraten installation. On Linux, the [./start.sh](./start.sh) script will launch the new binary from inside this repository, using the Sauerbraten files in $SAUER_DIR and `~/.p1xbraten` as user data directory.
 
 ### Fresh upstream sources
 
@@ -83,4 +83,4 @@ make
 make install
 ```
 
-`make` will copy the src/ directory from $SAUER_DIR, apply all patches and run `make` inside src/; `make install` will put the compiled binary into the usual place (depending on your OS).
+`make` will copy the src/ directory from $SAUER_DIR, apply all patches and run `make` inside src/; `make install` will run `make install` inside src/ and copy the contents of data/ to ~/.p1xbraten/data/.

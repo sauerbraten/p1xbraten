@@ -8,6 +8,5 @@ patch_drafts
 bin/*
 bin64/*
 bin_unix/*
-sauerbraten.app/*
-!sauerbraten.app/Contents/Frameworks
+sauerbraten.app/Contents/MacOS/*
 !/**/.gitkeep
