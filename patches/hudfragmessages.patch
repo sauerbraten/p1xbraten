@@ -22,17 +22,17 @@ Index: src/Makefile
  shared/crypto-standalone.o: shared/ents.h shared/command.h shared/iengine.h
 Index: src/fpsgame/fps.cpp
 ===================================================================
---- src/fpsgame/fps.cpp	(revision 6471)
+--- src/fpsgame/fps.cpp	(revision 6479)
 +++ src/fpsgame/fps.cpp	(working copy)
-@@ -495,6 +495,8 @@
-         {
+@@ -496,6 +496,8 @@
              if(d==player1) conoutf(contype, "\f2%s got fragged by %s", dname, aname);
              else conoutf(contype, "\f2%s fragged %s", aname, dname);
-+            addfragmessage(actor, aname, dname, d->lasthitpushgun);
-+            addfragmessage(d, aname, dname, d->lasthitpushgun);
          }
++        if(d==actor) addfragmessage(contype, NULL, dname, HICON_TOKEN-HICON_FIST);
++        else addfragmessage(contype, aname, dname, d->lasthitpushgun);
          deathstate(d);
  		ai::killed(d, actor);
+     }
 @@ -1091,6 +1093,7 @@
          {
              if(gameclock) drawgameclock(w, h);
@@ -58,7 +58,7 @@ Index: src/fpsgame/fragmessage_type.h
 +
 +    fragmessage(const char *aname, const char *vname, int fragweapon)
 +    {
-+        copystring(attackername, aname);
++        copystring(attackername, aname ? aname : "");
 +        copystring(victimname, vname);
 +        weapon = fragweapon;
 +        millis = lastmillis;
@@ -70,7 +70,7 @@ Index: src/fpsgame/fragmessages.cpp
 ===================================================================
 --- src/fpsgame/fragmessages.cpp	(nonexistent)
 +++ src/fpsgame/fragmessages.cpp	(working copy)
-@@ -0,0 +1,62 @@
+@@ -0,0 +1,69 @@
 +#include "game.h"
 +#include "fragmessage_type.h"
 +
@@ -81,11 +81,14 @@ Index: src/fpsgame/fragmessages.cpp
 +    FVARP(hudfragmessagex, 0, 0.5f, 1.0f);
 +    FVARP(hudfragmessagey, 0, 0.25f, 1.0f);
 +    FVARP(hudfragmessagescale, 0.1f, 0.5f, 1.0f);
++    HVARP(hudfragmessagefilter, 0, 0x7FFFFFF, 0x7FFFFFF); // todo: good default
 +
-+    void addfragmessage(fpsent *c, const char *aname, const char *vname, int gun)
++    void addfragmessage(int contype, const char *aname, const char *vname, int gun)
 +    {
-+        if(c->fragmessages->length()>=maxhudfragmessages) c->fragmessages->remove(0);
-+        c->fragmessages->add(fragmessage(aname, vname, gun));
++        if(!(contype&hudfragmessagefilter)) return;
++        fpsent *h = hudplayer();
++        if(h->fragmessages->length()>=maxhudfragmessages) h->fragmessages->remove(0);
++        h->fragmessages->add(fragmessage(aname, vname, gun));
 +    }
 +
 +    void drawfragmessages(fpsent *d, int w, int h)
@@ -117,9 +120,13 @@ Index: src/fpsgame/fragmessages.cpp
 +
 +            vec2 drawposcenter = vec2(0, (d->fragmessages->length()-1-i)*stepdir*stepsize).add(origin);
 +
-+            int tw, th; text_bounds(m.attackername, tw, th);
-+            vec2 drawpos = vec2(-2*(tw+HICON_SIZE), -th).div(2).add(drawposcenter);
-+            draw_text(m.attackername, drawpos.x, drawpos.y, 0xFF, 0xFF, 0xFF, alpha);
++            int tw, th; vec2 drawpos;
++            if(m.attackername[0])
++            {
++                text_bounds(m.attackername, tw, th);
++                drawpos = vec2(-2*(tw+HICON_SIZE), -th).div(2).add(drawposcenter);
++                draw_text(m.attackername, drawpos.x, drawpos.y, 0xFF, 0xFF, 0xFF, alpha);
++            }
 +
 +            drawpos = vec2(drawposcenter).sub(HICON_SIZE / 2);
 +            gle::color(bvec(0xFF, 0xFF, 0xFF), alpha);
@@ -147,7 +154,7 @@ Index: src/fpsgame/fragmessages.h
 +namespace game {
 +    extern vector<fragmessage> fragmessages;
 +    extern int hudfragmessages;
-+    extern void addfragmessage(fpsent *c, const char *aname, const char *vname, int gun);
++    extern void addfragmessage(int contype, const char *aname, const char *vname, int gun);
 +    extern void drawfragmessages(fpsent *d, int w, int h);
 +}
 +
@@ -155,7 +162,7 @@ Index: src/fpsgame/fragmessages.h
 \ No newline at end of file
 Index: src/fpsgame/game.h
 ===================================================================
---- src/fpsgame/game.h	(revision 6471)
+--- src/fpsgame/game.h	(revision 6479)
 +++ src/fpsgame/game.h	(working copy)
 @@ -535,6 +535,8 @@
      }
@@ -210,7 +217,7 @@ Index: src/fpsgame/game.h
      extern const char *modename(int n, const char *unknown = "unknown");
 Index: src/vcpp/sauerbraten.vcxproj
 ===================================================================
---- src/vcpp/sauerbraten.vcxproj	(revision 6471)
+--- src/vcpp/sauerbraten.vcxproj	(revision 6479)
 +++ src/vcpp/sauerbraten.vcxproj	(working copy)
 @@ -1078,6 +1078,20 @@
        <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>

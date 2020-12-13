@@ -6,7 +6,7 @@
 namespace game {
     extern vector<fragmessage> fragmessages;
     extern int hudfragmessages;
-    extern void addfragmessage(fpsent *c, const char *aname, const char *vname, int gun);
+    extern void addfragmessage(int contype, const char *aname, const char *vname, int gun);
     extern void drawfragmessages(fpsent *d, int w, int h);
 }
 

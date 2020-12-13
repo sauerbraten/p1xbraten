@@ -10,7 +10,7 @@ struct fragmessage {
 
     fragmessage(const char *aname, const char *vname, int fragweapon)
     {
-        copystring(attackername, aname);
+        copystring(attackername, aname ? aname : "");
         copystring(victimname, vname);
         weapon = fragweapon;
         millis = lastmillis;

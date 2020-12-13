@@ -8,11 +8,14 @@ namespace game {
     FVARP(hudfragmessagex, 0, 0.5f, 1.0f);
     FVARP(hudfragmessagey, 0, 0.25f, 1.0f);
     FVARP(hudfragmessagescale, 0.1f, 0.5f, 1.0f);
+    HVARP(hudfragmessagefilter, 0, 0x7FFFFFF, 0x7FFFFFF); // todo: good default
 
-    void addfragmessage(fpsent *c, const char *aname, const char *vname, int gun)
+    void addfragmessage(int contype, const char *aname, const char *vname, int gun)
     {
-        if(c->fragmessages->length()>=maxhudfragmessages) c->fragmessages->remove(0);
-        c->fragmessages->add(fragmessage(aname, vname, gun));
+        if(!(contype&hudfragmessagefilter)) return;
+        fpsent *h = hudplayer();
+        if(h->fragmessages->length()>=maxhudfragmessages) h->fragmessages->remove(0);
+        h->fragmessages->add(fragmessage(aname, vname, gun));
     }
 
     void drawfragmessages(fpsent *d, int w, int h)
@@ -44,9 +47,13 @@ namespace game {
 
             vec2 drawposcenter = vec2(0, (d->fragmessages->length()-1-i)*stepdir*stepsize).add(origin);
 
-            int tw, th; text_bounds(m.attackername, tw, th);
-            vec2 drawpos = vec2(-2*(tw+HICON_SIZE), -th).div(2).add(drawposcenter);
-            draw_text(m.attackername, drawpos.x, drawpos.y, 0xFF, 0xFF, 0xFF, alpha);
+            int tw, th; vec2 drawpos;
+            if(m.attackername[0])
+            {
+                text_bounds(m.attackername, tw, th);
+                drawpos = vec2(-2*(tw+HICON_SIZE), -th).div(2).add(drawposcenter);
+                draw_text(m.attackername, drawpos.x, drawpos.y, 0xFF, 0xFF, 0xFF, alpha);
+            }
 
             drawpos = vec2(drawposcenter).sub(HICON_SIZE / 2);
             gle::color(bvec(0xFF, 0xFF, 0xFF), alpha);

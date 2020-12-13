@@ -46,7 +46,9 @@ a.k.a. Features
     - `hudfragmessagex`: horizontal position (between 0.0 and 1.0) where messages will appear
     - `hudfragmessagey`: vertical position (between 0.0 and 1.0) where the newest message will appear; older messages will move outwards
     - `hudfragmessagescale`: size of the messages, between 0.0 and 1.0
+    - `hudfragmessagefilter`: bitfield filter var (like confilter), e.g. 0x3800 shows all players' frags, suicides, and teamkills
 
+        Until a GUI menu for hud frag messages exists, configure your normal console to show the frags you want to see as hud messages, then execute `/hudfragmessagefilter $confilter` to copy those settings for hud frag messages. You can then change your normal console filter back.
 ## Installation
 
 The latest builds are always at https://github.com/sauerbraten/p1xbraten/releases/latest. *You do not need to download anything but the correct executable in order to run this client mod!*
