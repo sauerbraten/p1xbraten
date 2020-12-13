@@ -1098,7 +1098,7 @@ namespace game
         {
             if(gameclock) drawgameclock(w, h);
             if(hudscore) drawhudscore(w, h);
-            if(hudfragmessages) drawfragmessages(d, w, h);
+            if(hudfragmessages==1 || (hudfragmessages==2 && !m_insta)) drawfragmessages(d, w, h);
         }
     }
 

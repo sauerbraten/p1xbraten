@@ -2,7 +2,7 @@
 #include "fragmessage_type.h"
 
 namespace game {
-    VARP(hudfragmessages, 0, 1, 1);
+    VARP(hudfragmessages, 0, 1, 2);
     VARP(hudfragmessageduration, 0, 2000, 10000);
     VARP(maxhudfragmessages, 1, 3, 10);
     FVARP(hudfragmessagex, 0, 0.5f, 1.0f);

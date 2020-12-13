@@ -29,10 +29,10 @@ apply-patches:
 
 undo-patches:
 	dos2unix src/vcpp/sauerbraten.vcxproj
+	$(PATCH) --reverse < patches/hudfragmessages.patch
 	$(PATCH) --reverse < patches/macos_builds.patch
 	$(PATCH) --reverse < patches/scoreboard.patch
 	$(PATCH) --reverse < patches/moviehud.patch
-	$(PATCH) --reverse < patches/hudfragmessages.patch
 	unix2dos src/vcpp/sauerbraten.vcxproj
 
 clean-sauer: check-env
