@@ -52,7 +52,7 @@ a.k.a. Features
 
 ### [fullconsole.patch](./patches/fullconsole.patch)
 
-- removes the guiskin background of fullconsole
+- removes the guiskin background of fullconsole in favor of a gradient background on the left
 - improves interplay of scoreboard and fullconsole
 - `fullconsize` is deprecated and unused, instead the console always takes up all available space
 

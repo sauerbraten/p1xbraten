@@ -57,16 +57,51 @@ Index: src/engine/rendergl.cpp
 ===================================================================
 --- src/engine/rendergl.cpp	(revision 6479)
 +++ src/engine/rendergl.cpp	(working copy)
-@@ -2364,7 +2364,7 @@
+@@ -2072,6 +2072,24 @@
+     loopi(8) damagedirs[i] = 0;
+ }
+
++void drawfullconsoleshade(int w, int h)
++{
++    hudnotextureshader->set();
++
++    w = min(w/2, 25*FONTW);
++    float fromalpha = 0.5, toalpha = 0.0;
++
++    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
++    gle::defvertex(2);
++    gle::defcolor(4);
++    gle::begin(GL_TRIANGLE_STRIP);
++    gle::attribf(w, 0); gle::attribf(0, 0, 0, toalpha);
++    gle::attribf(0, 0); gle::attribf(0, 0, 0, fromalpha);
++    gle::attribf(w, h); gle::attribf(0, 0, 0, toalpha);
++    gle::attribf(0, h); gle::attribf(0, 0, 0, fromalpha);
++    gle::end();
++}
++
+ VAR(hidestats, 0, 0, 1);
+ VAR(hidehud, 0, 0, 1);
+
+@@ -2233,6 +2251,8 @@
+         drawdamagecompass(w, h);
+     }
+
++    if(fullconsole) drawfullconsoleshade(w, h);
++
+     hudshader->set();
+
+     int conw = int(w/conscale), conh = int(h/conscale), abovehud = conh - FONTH, limitgui = abovehud;
+@@ -2364,8 +2384,8 @@
      pushhudmatrix();
      hudmatrix.scale(conscale, conscale, 1);
      flushhudmatrix();
 -    abovehud -= rendercommand(FONTH/2, abovehud - FONTH/2, conw-FONTH);
+-    extern int fullconsole;
 +    int commandheight = rendercommand(FONTH/2, abovehud - FONTH/2, conw-FONTH);
 +    abovehud -= max(fullconsole ? FONTH : 0, commandheight);
--    extern int fullconsole;
      if(!hidehud || fullconsole) renderconsole(conw, conh, abovehud - FONTH/2);
      pophudmatrix();
+
 Index: src/fpsgame/scoreboard.cpp
 ===================================================================
 --- src/fpsgame/scoreboard.cpp	(revision 6479)

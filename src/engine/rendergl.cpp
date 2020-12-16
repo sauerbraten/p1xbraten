@@ -2072,6 +2072,24 @@ void cleardamagescreen()
     loopi(8) damagedirs[i] = 0;
 }
 
+void drawfullconsoleshade(int w, int h)
+{
+    hudnotextureshader->set();
+
+    w = min(w/2, 25*FONTW);
+    float fromalpha = 0.5, toalpha = 0.0;
+
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    gle::defvertex(2);
+    gle::defcolor(4);
+    gle::begin(GL_TRIANGLE_STRIP);
+    gle::attribf(w, 0); gle::attribf(0, 0, 0, toalpha);
+    gle::attribf(0, 0); gle::attribf(0, 0, 0, fromalpha);
+    gle::attribf(w, h); gle::attribf(0, 0, 0, toalpha);
+    gle::attribf(0, h); gle::attribf(0, 0, 0, fromalpha);
+    gle::end();
+}
+
 VAR(hidestats, 0, 0, 1);
 VAR(hidehud, 0, 0, 1);
 
@@ -2232,6 +2250,8 @@ void gl_drawhud()
         drawdamagescreen(w, h);
         drawdamagecompass(w, h);
     }
+
+    if(fullconsole) drawfullconsoleshade(w, h);
 
     hudshader->set();
 
