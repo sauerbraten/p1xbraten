@@ -80,6 +80,7 @@ namespace game
     extern void readgamedata(vector<char> &extras);
     extern int clipconsole(int w, int h);
     extern void g3d_gamemenus();
+    extern void showscores(bool on);
     extern const char *defaultcrosshair(int index);
     extern int selectcrosshair(vec &color);
     extern void lighteffects(dynent *d, vec &color, vec &dir);

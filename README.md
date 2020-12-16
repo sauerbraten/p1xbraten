@@ -49,6 +49,13 @@ a.k.a. Features
     - `hudfragmessagefilter`: bitfield filter var (like confilter), e.g. 0x3800 shows all players' frags, suicides, and teamkills
 
     Until a GUI menu for configuring hud frag messages exists, configure your normal console to show the frags you want to see as hud messages, then execute `/hudfragmessagefilter $confilter` to copy those settings for hud frag messages. You can then change your normal console filter back.
+
+### [fullconsole.patch](./patches/fullconsole.patch)
+
+    - removes the guiskin background of fullconsole
+    - improves interplay of scoreboard and fullconsole
+    - `fullconsize` is deprecated and unused, instead the console always takes up all available space
+
 ## Installation
 
 The latest builds are always at https://github.com/sauerbraten/p1xbraten/releases/latest. *You do not need to download anything but the correct executable in order to run this client mod!*

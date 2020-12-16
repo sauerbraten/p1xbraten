@@ -199,6 +199,8 @@ enum
     CON_TAG_MASK = (0x7FFF << CON_TAG_SHIFT)
 };
 
+extern int fullconsole;
+
 extern void conoutf(const char *s, ...) PRINTFARGS(1, 2);
 extern void conoutf(int type, const char *s, ...) PRINTFARGS(2, 3);
 extern void conoutf(int type, int tag, const char *s, ...) PRINTFARGS(3, 4);

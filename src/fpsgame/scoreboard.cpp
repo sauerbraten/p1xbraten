@@ -450,14 +450,25 @@ namespace game
         scoreboard.render();
     }
 
-    VARFN(scoreboard, showscoreboard, 0, 0, 1, scoreboard.show(showscoreboard!=0));
-
+    int wasfullconsole = 0;
     void showscores(bool on)
     {
+        if(on && !wasfullconsole)
+        {
+            wasfullconsole = fullconsole;
+            fullconsole = 0;
+        }
+        if(!on)
+        {
+           if(!fullconsole && wasfullconsole) fullconsole = 1;
+            wasfullconsole = 0;
+        }
+        extern int showscoreboard;
         showscoreboard = on ? 1 : 0;
         scoreboard.show(on);
     }
     ICOMMAND(showscores, "D", (int *down), showscores(*down!=0));
+    VARFN(scoreboard, showscoreboard, 0, 0, 1, showscores(showscoreboard!=0));
 
     VARP(hudscore, 0, 0, 1);
     FVARP(hudscorescale, 1e-3f, 1.0f, 1e3f);
@@ -472,7 +483,7 @@ namespace game
     void drawhudscore(int w, int h)
     {
         int numgroups = groupplayers();
-        if(!numgroups) return;
+        if(numgroups<2) return;
 
         scoregroup *g = groups[0];
         int score = INT_MIN, score2 = INT_MIN;

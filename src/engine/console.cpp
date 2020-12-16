@@ -48,7 +48,10 @@ void conoutfv(int type, const char *fmt, va_list args)
 }
 
 VAR(fullconsole, 0, 0, 1);
-ICOMMAND(toggleconsole, "", (), { fullconsole ^= 1; });
+ICOMMAND(toggleconsole, "", (), {
+    fullconsole ^= 1;
+    if(fullconsole) game::showscores(false);
+});
 
 int rendercommand(int x, int y, int w)
 {
@@ -67,7 +70,7 @@ VARP(miniconsize, 0, 5, 100);
 VARP(miniconwidth, 0, 40, 100);
 VARP(confade, 0, 30, 60);
 VARP(miniconfade, 0, 30, 60);
-VARP(fullconsize, 0, 75, 100);
+VARP(fullconsize, 0, 75, 100); // unused
 HVARP(confilter, 0, 0x7FFFFFF, 0x7FFFFFF);
 HVARP(fullconfilter, 0, 0x7FFFFFF, 0x7FFFFFF);
 HVARP(miniconfilter, 0, 0, 0x7FFFFFF);
@@ -140,18 +143,20 @@ int drawconlines(int conskip, int confade, int conwidth, int conheight, int cono
 
 int renderconsole(int w, int h, int abovehud)                   // render buffer taking into account time & scrolling
 {
-    int conpad = fullconsole ? 0 : FONTH/4,
-        conoff = fullconsole ? FONTH : FONTH/3,
-        conheight = min(fullconsole ? ((h*fullconsize/100)/FONTH)*FONTH : FONTH*consize, h - 2*(conpad + conoff)),
+    int conpad = FONTH/4,
+        conoff = FONTH/3,
         conwidth = w - 2*(conpad + conoff) - (fullconsole ? 0 : game::clipconsole(w, h));
     
-    extern void consolebox(int x1, int y1, int x2, int y2);
-    if(fullconsole) consolebox(conpad, conpad, conwidth+conpad+2*conoff, conheight+conpad+2*conoff);
+    if(fullconsole)
+    {
+        drawconlines(conskip, 0, conwidth, abovehud, conpad+conoff, fullconfilter);
+        return abovehud;
+    }
     
-    int y = drawconlines(conskip, fullconsole ? 0 : confade, conwidth, conheight, conpad+conoff, fullconsole ? fullconfilter : confilter);
-    if(!fullconsole && (miniconsize && miniconwidth))
-        drawconlines(miniconskip, miniconfade, (miniconwidth*(w - 2*(conpad + conoff)))/100, min(FONTH*miniconsize, abovehud - y), conpad+conoff, miniconfilter, abovehud, -1);
-    return fullconsole ? conheight + 2*(conpad + conoff) : y;
+    int conheight = min(FONTH*consize, h - 2*(conpad + conoff));
+    int y = drawconlines(conskip, confade, conwidth, conheight, conpad+conoff, confilter);
+    if(miniconsize && miniconwidth) drawconlines(miniconskip, miniconfade, (miniconwidth*(w - 2*(conpad + conoff)))/100, min(FONTH*miniconsize, abovehud - y), conpad+conoff, miniconfilter, abovehud, -1);
+    return y;
 }
 
 // keymap is defined externally in keymap.cfg
