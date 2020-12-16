@@ -56,6 +56,10 @@ a.k.a. Features
 - improves interplay of scoreboard and fullconsole
 - `fullconsize` is deprecated and unused, instead the console always takes up all available space
 
+### [hudscore.patch](./patches/hudscore.patch)
+
+- hides hudscore when there is just one team/player
+
 ## Installation
 
 The latest builds are always at https://github.com/sauerbraten/p1xbraten/releases/latest. *You do not need to download anything but the correct executable in order to run this client mod!*

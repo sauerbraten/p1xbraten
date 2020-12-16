@@ -26,10 +26,12 @@ apply-patches:
 	$(PATCH) < patches/macos_builds.patch
 	$(PATCH) < patches/hudfragmessages.patch
 	$(PATCH) < patches/fullconsole.patch
+	$(PATCH) < patches/hudscore.patch
 	unix2dos src/vcpp/sauerbraten.vcxproj
 
 undo-patches:
 	dos2unix src/vcpp/sauerbraten.vcxproj
+	$(PATCH) --reverse < patches/hudscore.patch
 	$(PATCH) --reverse < patches/fullconsole.patch
 	$(PATCH) --reverse < patches/hudfragmessages.patch
 	$(PATCH) --reverse < patches/macos_builds.patch
