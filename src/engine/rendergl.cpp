@@ -2364,8 +2364,8 @@ void gl_drawhud()
     pushhudmatrix();
     hudmatrix.scale(conscale, conscale, 1);
     flushhudmatrix();
-    abovehud -= rendercommand(FONTH/2, abovehud - FONTH/2, conw-FONTH);
-    extern int fullconsole;
+    int commandheight = rendercommand(FONTH/2, abovehud - FONTH/2, conw-FONTH);
+    abovehud -= max(fullconsole ? FONTH : 0, commandheight);
     if(!hidehud || fullconsole) renderconsole(conw, conh, abovehud - FONTH/2);
     pophudmatrix();
 

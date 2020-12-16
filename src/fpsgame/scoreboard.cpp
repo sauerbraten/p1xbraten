@@ -483,7 +483,7 @@ namespace game
     void drawhudscore(int w, int h)
     {
         int numgroups = groupplayers();
-        if(numgroups<2) return;
+        if(!numgroups) return;
 
         scoregroup *g = groups[0];
         int score = INT_MIN, score2 = INT_MIN;

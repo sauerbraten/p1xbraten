@@ -149,7 +149,7 @@ int renderconsole(int w, int h, int abovehud)                   // render buffer
     
     if(fullconsole)
     {
-        drawconlines(conskip, 0, conwidth, abovehud, conpad+conoff, fullconfilter);
+        drawconlines(conskip, 0, conwidth, abovehud-(conpad+conoff), conpad+conoff, fullconfilter);
         return abovehud;
     }
     

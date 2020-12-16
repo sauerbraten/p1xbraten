@@ -4,14 +4,14 @@ Index: src/engine/console.cpp
 +++ src/engine/console.cpp	(working copy)
 @@ -48,7 +48,10 @@
  }
- 
+
  VAR(fullconsole, 0, 0, 1);
 -ICOMMAND(toggleconsole, "", (), { fullconsole ^= 1; });
 +ICOMMAND(toggleconsole, "", (), {
 +    fullconsole ^= 1;
 +    if(fullconsole) game::showscores(false);
 +});
- 
+
  int rendercommand(int x, int y, int w)
  {
 @@ -67,7 +70,7 @@
@@ -24,7 +24,7 @@ Index: src/engine/console.cpp
  HVARP(fullconfilter, 0, 0x7FFFFFF, 0x7FFFFFF);
  HVARP(miniconfilter, 0, 0, 0x7FFFFFF);
 @@ -140,18 +143,20 @@
- 
+
  int renderconsole(int w, int h, int abovehud)                   // render buffer taking into account time & scrolling
  {
 -    int conpad = fullconsole ? 0 : FONTH/4,
@@ -33,15 +33,15 @@ Index: src/engine/console.cpp
 +    int conpad = FONTH/4,
 +        conoff = FONTH/3,
          conwidth = w - 2*(conpad + conoff) - (fullconsole ? 0 : game::clipconsole(w, h));
-     
+
 -    extern void consolebox(int x1, int y1, int x2, int y2);
 -    if(fullconsole) consolebox(conpad, conpad, conwidth+conpad+2*conoff, conheight+conpad+2*conoff);
 +    if(fullconsole)
 +    {
-+        drawconlines(conskip, 0, conwidth, abovehud, conpad+conoff, fullconfilter);
++        drawconlines(conskip, 0, conwidth, abovehud-(conpad+conoff), conpad+conoff, fullconfilter);
 +        return abovehud;
 +    }
-     
+
 -    int y = drawconlines(conskip, fullconsole ? 0 : confade, conwidth, conheight, conpad+conoff, fullconsole ? fullconfilter : confilter);
 -    if(!fullconsole && (miniconsize && miniconwidth))
 -        drawconlines(miniconskip, miniconfade, (miniconwidth*(w - 2*(conpad + conoff)))/100, min(FONTH*miniconsize, abovehud - y), conpad+conoff, miniconfilter, abovehud, -1);
@@ -51,8 +51,22 @@ Index: src/engine/console.cpp
 +    if(miniconsize && miniconwidth) drawconlines(miniconskip, miniconfade, (miniconwidth*(w - 2*(conpad + conoff)))/100, min(FONTH*miniconsize, abovehud - y), conpad+conoff, miniconfilter, abovehud, -1);
 +    return y;
  }
- 
+
  // keymap is defined externally in keymap.cfg
+Index: src/engine/rendergl.cpp
+===================================================================
+--- src/engine/rendergl.cpp	(revision 6479)
++++ src/engine/rendergl.cpp	(working copy)
+@@ -2364,7 +2364,7 @@
+     pushhudmatrix();
+     hudmatrix.scale(conscale, conscale, 1);
+     flushhudmatrix();
+-    abovehud -= rendercommand(FONTH/2, abovehud - FONTH/2, conw-FONTH);
++    int commandheight = rendercommand(FONTH/2, abovehud - FONTH/2, conw-FONTH);
++    abovehud -= max(fullconsole ? FONTH : 0, commandheight);
+-    extern int fullconsole;
+     if(!hidehud || fullconsole) renderconsole(conw, conh, abovehud - FONTH/2);
+     pophudmatrix();
 Index: src/fpsgame/scoreboard.cpp
 ===================================================================
 --- src/fpsgame/scoreboard.cpp	(revision 6479)
@@ -60,7 +74,7 @@ Index: src/fpsgame/scoreboard.cpp
 @@ -461,14 +461,25 @@
          scoreboard.render();
      }
- 
+
 -    VARFN(scoreboard, showscoreboard, 0, 0, 1, scoreboard.show(showscoreboard!=0));
 -
 +    int wasfullconsole = 0;
@@ -82,7 +96,7 @@ Index: src/fpsgame/scoreboard.cpp
      }
      ICOMMAND(showscores, "D", (int *down), showscores(*down!=0));
 +    VARFN(scoreboard, showscoreboard, 0, 0, 1, showscores(showscoreboard!=0));
- 
+
      VARP(hudscore, 0, 0, 1);
      FVARP(hudscorescale, 1e-3f, 1.0f, 1e3f);
 Index: src/shared/iengine.h
@@ -92,7 +106,7 @@ Index: src/shared/iengine.h
 @@ -199,6 +199,8 @@
      CON_TAG_MASK = (0x7FFF << CON_TAG_SHIFT)
  };
- 
+
 +extern int fullconsole;
 +
  extern void conoutf(const char *s, ...) PRINTFARGS(1, 2);
