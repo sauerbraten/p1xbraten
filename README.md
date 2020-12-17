@@ -46,7 +46,7 @@ a.k.a. Features
 
 - adds the following variables:
     - `hudfragmessages`: 0 disables all frag messages, 1 enables them for all modes, 2 enables them for non-insta modes only
-    - `hudfragmessageduration`: how long each message will be shown, in milliseconds, between 100 (= 0.1s) and 10000 (= 10s)
+    - `hudfragmessageduration`: how long each message will be shown, in milliseconds, between 100 (= 0.1s) and 9999 (~ 10s)
     - `maxhudfragmessages`: how many messages to show at most (between 1 and 10)
     - `hudfragmessagex`: horizontal position (between 0.0 and 1.0) where messages will appear
     - `hudfragmessagey`: vertical position (between 0.0 and 1.0) where the newest message will appear; older messages will move outwards
@@ -64,6 +64,16 @@ a.k.a. Features
 ### [hudscore.patch](./patches/hudscore.patch)
 
 - hides hudscore when there is just one team/player
+
+## Menu
+
+For easy configuration of the new features, use [menus.cfg](./data/menus.cfg). Just download the file and place it in data/ inside you user data directory. The correct filepaths are:
+
+- Windows: $HOME\My Games\Sauerbraten\data\menus.cfg
+- macOS: ~/Library/Application Support/Sauerbraten/data/menus.cfg
+- Linux: ~/.sauerbraten/data/menus.cfg
+
+The menu file also includes various cleanups of the vanilla GUI.
 
 ## Installation
 
