@@ -1,6 +1,6 @@
 Index: src/Makefile
 ===================================================================
---- src/Makefile	(revision 6471)
+--- src/Makefile	(revision 6479)
 +++ src/Makefile	(working copy)
 @@ -130,6 +130,7 @@
  	fpsgame/render.o \
@@ -53,7 +53,7 @@ Index: src/Makefile
  shared/crypto-standalone.o: shared/ents.h shared/command.h shared/iengine.h
 Index: src/engine/rendertext.cpp
 ===================================================================
---- src/engine/rendertext.cpp	(revision 6471)
+--- src/engine/rendertext.cpp	(revision 6479)
 +++ src/engine/rendertext.cpp	(working copy)
 @@ -222,9 +222,9 @@
          switch(c)
@@ -69,7 +69,7 @@ Index: src/engine/rendertext.cpp
              case '6': color = bvec(255, 128,   0); break;   // orange
 Index: src/fpsgame/client.cpp
 ===================================================================
---- src/fpsgame/client.cpp	(revision 6471)
+--- src/fpsgame/client.cpp	(revision 6479)
 +++ src/fpsgame/client.cpp	(working copy)
 @@ -1,4 +1,5 @@
  #include "game.h"
@@ -77,7 +77,15 @@ Index: src/fpsgame/client.cpp
 
  namespace game
  {
-@@ -1499,6 +1500,7 @@
+@@ -1221,6 +1222,7 @@
+             if(d==player1) getint(p);
+             else d->state = getint(p);
+             d->frags = getint(p);
++            if(-(d->frags)>d->suicides) d->suicides = -(d->frags); // best effort suicides initialization when joining a running game
+             d->flags = getint(p);
+             d->deaths = getint(p);
+             if(d==player1) getint(p);
+@@ -1499,6 +1501,7 @@
                  s->lastaction = lastmillis;
                  s->lastattackgun = s->gunselect;
                  shoteffects(s->gunselect, from, to, s, false, id, prevaction);
@@ -106,7 +114,7 @@ Index: src/fpsgame/colors.h
 +#define COL_ADMIN COL_ORANGE
 Index: src/fpsgame/fps.cpp
 ===================================================================
---- src/fpsgame/fps.cpp	(revision 6471)
+--- src/fpsgame/fps.cpp	(revision 6479)
 +++ src/fpsgame/fps.cpp	(working copy)
 @@ -1,4 +1,5 @@
  #include "game.h"
@@ -123,7 +131,18 @@ Index: src/fpsgame/fps.cpp
          if(local) damage = d->dodamage(damage);
          else if(actor==player1) return;
 
-@@ -528,12 +533,11 @@
+@@ -483,7 +486,10 @@
+         if(actor->type==ENT_AI)
+             conoutf(contype, "\f2%s got killed by %s!", dname, aname);
+         else if(d==actor || actor->type==ENT_INANIMATE)
++        {
++            d->suicides++;
+             conoutf(contype, "\f2%s suicided%s", dname, d==player1 ? "!" : "");
++        }
+         else if(isteam(d->team, actor->team))
+         {
+             contype |= CON_TEAMKILL;
+@@ -528,12 +534,11 @@
          }
      }
 
@@ -141,7 +160,7 @@ Index: src/fpsgame/fps.cpp
 
      vector<fpsent *> clients;
 
-@@ -621,6 +623,7 @@
+@@ -621,6 +626,7 @@
              d->maxhealth = 100;
              d->lifesequence = -1;
              d->respawned = d->suicided = -2;
@@ -151,7 +170,7 @@ Index: src/fpsgame/fps.cpp
          setclientmode();
 Index: src/fpsgame/game.h
 ===================================================================
---- src/fpsgame/game.h	(revision 6471)
+--- src/fpsgame/game.h	(revision 6479)
 +++ src/fpsgame/game.h	(working copy)
 @@ -535,6 +535,8 @@
      }
@@ -162,15 +181,25 @@ Index: src/fpsgame/game.h
  struct fpsent : dynent, fpsstate
  {
      int weight;                         // affects the effectiveness of hitpush
-@@ -549,6 +551,7 @@
+@@ -549,6 +551,8 @@
      int lastpickup, lastpickupmillis, lastbase, lastrepammo, flagpickup, tokens;
      vec lastcollect;
      int frags, flags, deaths, totaldamage, totalshots;
++    int suicides;
 +    weaponstats stats;
      editinfo *edit;
      float deltayaw, deltapitch, deltaroll, newyaw, newpitch, newroll;
      int smoothmillis;
-@@ -846,6 +849,8 @@
+@@ -560,7 +564,7 @@
+
+     vec muzzle;
+
+-    fpsent() : weight(100), clientnum(-1), privilege(PRIV_NONE), lastupdate(0), plag(0), ping(0), lifesequence(0), respawned(-1), suicided(-1), lastpain(0), attacksound(-1), attackchan(-1), idlesound(-1), idlechan(-1), frags(0), flags(0), deaths(0), totaldamage(0), totalshots(0), edit(NULL), smoothmillis(-1), playermodel(-1), ai(NULL), ownernum(-1), muzzle(-1, -1, -1)
++    fpsent() : weight(100), clientnum(-1), privilege(PRIV_NONE), lastupdate(0), plag(0), ping(0), lifesequence(0), respawned(-1), suicided(-1), lastpain(0), attacksound(-1), attackchan(-1), idlesound(-1), idlechan(-1), frags(0), flags(0), deaths(0), totaldamage(0), totalshots(0), suicides(0), edit(NULL), smoothmillis(-1), playermodel(-1), ai(NULL), ownernum(-1), muzzle(-1, -1, -1)
+     {
+         name[0] = team[0] = info[0] = 0;
+         respawn();
+@@ -846,6 +850,8 @@
      extern vec hudgunorigin(int gun, const vec &from, const vec &to, fpsent *d);
  }
 
@@ -181,7 +210,7 @@ Index: src/fpsgame/game.h
      extern const char *modename(int n, const char *unknown = "unknown");
 Index: src/fpsgame/scoreboard.cpp
 ===================================================================
---- src/fpsgame/scoreboard.cpp	(revision 6471)
+--- src/fpsgame/scoreboard.cpp	(revision 6479)
 +++ src/fpsgame/scoreboard.cpp	(working copy)
 @@ -1,5 +1,6 @@
  // creation of scoreboard
@@ -199,18 +228,20 @@ Index: src/fpsgame/scoreboard.cpp
      VARP(showspectators, 0, 1, 1);
      VARP(showspectatorping, 0, 0, 1);
      VARP(highlightscore, 0, 1, 1);
-@@ -14,6 +15,10 @@
+@@ -14,6 +15,12 @@
      VARP(showconnecting, 0, 0, 1);
      VARP(hidefrags, 0, 1, 1);
      VARP(showdeaths, 0, 0, 1);
++    VARP(showsuicides, 0, 0, 1);
 +    VARP(showflags, 0, 0, 1);
 +    VARP(showkpd, 0, 0, 1);
 +    VARP(showaccuracy, 0, 0, 1);
 +    VARP(showdamage, 0, 0, 2);
++    VARP(showdamagereceived, 0, 0, 1);
 
      static hashset<teaminfo> teaminfos;
 
-@@ -138,17 +143,15 @@
+@@ -138,17 +145,15 @@
 
      int statuscolor(fpsent *d, int color)
      {
@@ -231,7 +262,7 @@ Index: src/fpsgame/scoreboard.cpp
          const ENetAddress *address = connectedpeer();
          if(showservinfo && address)
          {
-@@ -155,23 +158,22 @@
+@@ -155,23 +160,22 @@
              string hostname;
              if(enet_address_get_host_ip(address, hostname, sizeof(hostname)) >= 0)
              {
@@ -262,7 +293,7 @@ Index: src/fpsgame/scoreboard.cpp
              else
              {
                  int secs = max(maplimit-lastmillis+999, 0)/1000, mins = secs/60;
-@@ -178,15 +180,16 @@
+@@ -178,15 +182,16 @@
                  secs %= 60;
                  g.pushlist();
                  g.strut(mins >= 10 ? 4.5f : 3.5f);
@@ -282,7 +313,7 @@ Index: src/fpsgame/scoreboard.cpp
 
          int numgroups = groupplayers();
          loopk(numgroups)
-@@ -194,8 +197,7 @@
+@@ -194,8 +199,7 @@
              if((k%2)==0) g.pushlist(); // horizontal
 
              scoregroup &sg = *groups[k];
@@ -292,7 +323,7 @@ Index: src/fpsgame/scoreboard.cpp
 
              g.pushlist(); // vertical
              g.pushlist(); // horizontal
-@@ -207,124 +209,113 @@
+@@ -207,124 +211,140 @@
                      b; \
                  }
 
@@ -310,7 +341,7 @@ Index: src/fpsgame/scoreboard.cpp
                  g.pushlist();
 -                g.background(bgcolor, numgroups>1 ? 3 : 5);
 -                g.strut(1);
-+            g.text("name", COL_GRAY);
++                g.text("name", COL_GRAY);
 +            loopscoregroup(o, g.text(colorname(o), statuscolor(o, fgcolor)););
                  g.poplist();
 -            }
@@ -330,64 +361,72 @@ Index: src/fpsgame/scoreboard.cpp
 -                g.text("", 0, icon);
 -                if(o==player1 && highlightscore && (multiplayer(false) || demoplayback || players.length() > 1)) g.poplist();
 -            });
+-            g.poplist();
 +                g.text("flags", COL_GRAY);
 +                loopscoregroup(o, g.textf("%d", fgcolor, NULL, o->flags));
-             g.poplist();
--
++                g.poplist();
++            }
+
 -            if(sg.team && m_teammode)
--            {
++            if(!cmode || !cmode->hidefrags() || !hidefrags)
+             {
 -                g.pushlist(); // vertical
--
++                g.space(2);
++                g.pushlist();
++                g.text("frags", COL_GRAY);
++                loopscoregroup(o, g.textf("%d", fgcolor, NULL, o->frags));
++                g.poplist();
++            }
+
 -                if(sg.score>=10000) g.textf("%s: WIN", fgcolor, NULL, sg.team);
 -                else g.textf("%s: %d", fgcolor, NULL, sg.team, sg.score);
 -
 -                g.pushlist(); // horizontal
++            if(showdeaths)
++            {
++                g.space(2);
++                g.pushlist();
++                g.text("deaths", COL_GRAY);
++                loopscoregroup(o, g.textf("%d", fgcolor, NULL, o->deaths));
++                g.poplist();
              }
 
-             if(!cmode || !cmode->hidefrags() || !hidefrags)
+-            if(!cmode || !cmode->hidefrags() || !hidefrags)
++            if(showsuicides)
              {
 +                g.space(2);
                  g.pushlist();
 -                g.strut(6);
 -                g.text("frags", fgcolor);
 -                loopscoregroup(o, g.textf("%d", 0xFFFFDD, NULL, o->frags));
-+                g.text("frags", COL_GRAY);
-+                loopscoregroup(o, g.textf("%d", fgcolor, NULL, o->frags));
++                g.text("suis", COL_GRAY);
++                loopscoregroup(o, g.textf("%d", fgcolor, NULL, o->suicides));
                  g.poplist();
              }
 
-             if(showdeaths)
+-            if(showdeaths)
++            if(showkpd)
              {
 +                g.space(2);
                  g.pushlist();
 -                g.strut(6);
 -                g.text("deaths", fgcolor);
 -                loopscoregroup(o, g.textf("%d", 0xFFFFDD, NULL, o->deaths));
-+                g.text("deaths", COL_GRAY);
-+                loopscoregroup(o, g.textf("%d", fgcolor, NULL, o->deaths));
-                 g.poplist();
-             }
-
-+            if(showkpd)
-+            {
-+                g.space(2);
-             g.pushlist();
--            g.text("name", fgcolor);
--            g.strut(12);
--            loopscoregroup(o,
--            {
--                g.textf("%s ", statuscolor(o, 0xFFFFDD), NULL, colorname(o));
--            });
 +                g.strut(3);
 +                g.text("kpd", COL_GRAY);
 +                loopscoregroup(o, g.textf("%.1f", fgcolor, NULL, (float)o->frags/max(1, o->deaths)));
-             g.poplist();
-+            }
+                 g.poplist();
+             }
 
--            if(multiplayer(false) || demoplayback)
+-            g.pushlist();
+-            g.text("name", fgcolor);
+-            g.strut(12);
+-            loopscoregroup(o,
 +            if(showaccuracy)
              {
--                if(showpj || showping) g.space(1);
+-                g.textf("%s ", statuscolor(o, 0xFFFFDD), NULL, colorname(o));
+-            });
+-            g.poplist();
 +                g.space(2);
 +                g.pushlist();
 +                g.strut(4);
@@ -396,10 +435,15 @@ Index: src/fpsgame/scoreboard.cpp
 +                g.poplist();
 +            }
 
+-            if(multiplayer(false) || demoplayback)
++            if(!m_insta)
+             {
+-                if(showpj || showping) g.space(1);
+-
 -                if(showpj && showping <= 1)
-+            if(!m_insta && showdamage)
++                if(showdamage)
                  {
-+                g.space(2);
++                    g.space(2);
                      g.pushlist();
 -                    g.strut(6);
 -                    g.text("pj", fgcolor);
@@ -407,27 +451,41 @@ Index: src/fpsgame/scoreboard.cpp
 -                    {
 -                        if(o->state==CS_LAGGED) g.text("LAG", 0xFFFFDD);
 -                        else g.textf("%d", 0xFFFFDD, NULL, o->plag);
-+                g.strut(4);
-+                g.text("dmg", COL_GRAY);
-+                loopscoregroup(o, {
-+                    float dmg = (float) showdamage == 1 ? playerdamage(o, DMG_DEALT) : playernetdamage(o);
-+                    const char *fmt = "%.0f";
-+                    if(fabs(dmg) > 1000.0f) { fmt = "%.1fk"; dmg = dmg/1000.0f; }
-+                    g.textf(fmt, fgcolor, NULL, dmg);
++                    g.strut(4);
++                    g.text("dmg", COL_GRAY);
++                    loopscoregroup(o, {
++                        float dmg = (float) showdamage == 1 ? playerdamage(o, DMG_DEALT) : playernetdamage(o);
++                        const char *fmt = "%.0f";
++                        if(fabs(dmg) > 1000.0f) { fmt = "%.1fk"; dmg = dmg/1000.0f; }
++                        g.textf(fmt, fgcolor, NULL, dmg);
                      });
                      g.poplist();
                  }
 
 -                if(showping > 1)
-+            if(multiplayer(false) || demoplayback)
++                if(showdamagereceived)
                  {
++                    g.space(2);
+                     g.pushlist();
+-                    g.strut(6);
++                    g.strut(4);
++                    g.text("dr", COL_GRAY);
++                    loopscoregroup(o, {
++                        float dmg = (float) playerdamage(o, DMG_RECEIVED);
++                        const char *fmt = "%.0f";
++                        if(fabs(dmg) > 1000.0f) { fmt = "%.1fk"; dmg = dmg/1000.0f; }
++                        g.textf(fmt, fgcolor, NULL, dmg);
++                    });
++                    g.poplist();
++                }
++            }
+
++            if(multiplayer(false) || demoplayback)
++                {
 +                if(showping)
 +                {
 +                    g.space(2);
                      g.pushlist();
--                    g.strut(6);
--
--                    g.pushlist();
 -                    g.text("ping", fgcolor);
 -                    g.space(1);
 -                    g.spring();
@@ -479,7 +537,7 @@ Index: src/fpsgame/scoreboard.cpp
                      });
                      g.poplist();
                  }
-@@ -332,10 +323,10 @@
+@@ -332,10 +352,10 @@
 
              if(showclientnum || player1->privilege>=PRIV_MASTER)
              {
@@ -493,7 +551,7 @@ Index: src/fpsgame/scoreboard.cpp
                  g.poplist();
              }
 
-@@ -348,81 +339,79 @@
+@@ -348,81 +368,79 @@
              g.poplist(); // horizontal
              g.poplist(); // vertical
 
@@ -504,8 +562,8 @@ Index: src/fpsgame/scoreboard.cpp
 +            {
 +                g.poplist(); // horizontal
 +                if(k+1<numgroups) g.space(.75f);
++            }
          }
-+        }
 
          if(showspectators && spectators.length())
          {
@@ -566,15 +624,17 @@ Index: src/fpsgame/scoreboard.cpp
                  }
 
 -                g.space(1);
+-                g.pushlist();
+-                g.text("cn", 0xFFFF80);
+-                loopv(spectators) g.textf("%d", 0xFFFFDD, NULL, spectators[i]->clientnum);
+-                g.poplist();
 +                if(showclientnum || player1->privilege>=PRIV_MASTER)
 +                {
 +                    g.space(2);
-                 g.pushlist();
--                g.text("cn", 0xFFFF80);
--                loopv(spectators) g.textf("%d", 0xFFFFDD, NULL, spectators[i]->clientnum);
++                    g.pushlist();
 +                    g.text("cn", COL_GRAY);
 +                    loopspectators(o, g.textf("%d", fgcolor, NULL, o->clientnum));
-                 g.poplist();
++                    g.poplist();
 +                }
 
                  g.poplist();
@@ -607,13 +667,13 @@ Index: src/fpsgame/scoreboard.cpp
                  }
              }
 +
-+        g.space(.25f);
++            g.space(.25f);
          }
 -    }
 
      struct scoreboardgui : g3d_callback
      {
-@@ -475,8 +464,8 @@
+@@ -475,8 +493,8 @@
      VARP(hudscorealign, -1, 0, 1);
      FVARP(hudscorex, 0, 0.50f, 1);
      FVARP(hudscorey, 0, 0.03f, 1);
@@ -626,7 +686,7 @@ Index: src/fpsgame/scoreboard.cpp
 
 Index: src/fpsgame/weapon.cpp
 ===================================================================
---- src/fpsgame/weapon.cpp	(revision 6471)
+--- src/fpsgame/weapon.cpp	(revision 6479)
 +++ src/fpsgame/weapon.cpp	(working copy)
 @@ -1,5 +1,6 @@
  // weapon.cpp: all shooting and effects code, projectile management
@@ -798,7 +858,7 @@ Index: src/fpsgame/weaponstats_type.h
 +#endif
 Index: src/vcpp/sauerbraten.vcxproj
 ===================================================================
---- src/vcpp/sauerbraten.vcxproj	(revision 6471)
+--- src/vcpp/sauerbraten.vcxproj	(revision 6479)
 +++ src/vcpp/sauerbraten.vcxproj	(working copy)
 @@ -1208,6 +1208,20 @@
        <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>

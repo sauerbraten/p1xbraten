@@ -15,10 +15,12 @@ namespace game
     VARP(showconnecting, 0, 0, 1);
     VARP(hidefrags, 0, 1, 1);
     VARP(showdeaths, 0, 0, 1);
+    VARP(showsuicides, 0, 0, 1);
     VARP(showflags, 0, 0, 1);
     VARP(showkpd, 0, 0, 1);
     VARP(showaccuracy, 0, 0, 1);
     VARP(showdamage, 0, 0, 2);
+    VARP(showdamagereceived, 0, 0, 1);
 
     static hashset<teaminfo> teaminfos;
 
@@ -220,7 +222,7 @@ namespace game
             }
 
                 g.pushlist();
-            g.text("name", COL_GRAY);
+                g.text("name", COL_GRAY);
             loopscoregroup(o, g.text(colorname(o), statuscolor(o, fgcolor)););
                 g.poplist();
 
@@ -230,7 +232,7 @@ namespace game
                     g.pushlist();
                 g.text("flags", COL_GRAY);
                 loopscoregroup(o, g.textf("%d", fgcolor, NULL, o->flags));
-            g.poplist();
+                g.poplist();
             }
 
             if(!cmode || !cmode->hidefrags() || !hidefrags)
@@ -251,14 +253,23 @@ namespace game
                 g.poplist();
             }
 
+            if(showsuicides)
+            {
+                g.space(2);
+                g.pushlist();
+                g.text("suis", COL_GRAY);
+                loopscoregroup(o, g.textf("%d", fgcolor, NULL, o->suicides));
+                g.poplist();
+            }
+
             if(showkpd)
             {
                 g.space(2);
-            g.pushlist();
+                g.pushlist();
                 g.strut(3);
                 g.text("kpd", COL_GRAY);
                 loopscoregroup(o, g.textf("%.1f", fgcolor, NULL, (float)o->frags/max(1, o->deaths)));
-            g.poplist();
+                g.poplist();
             }
 
             if(showaccuracy)
@@ -271,20 +282,38 @@ namespace game
                 g.poplist();
             }
 
-            if(!m_insta && showdamage)
+            if(!m_insta)
+            {
+                if(showdamage)
                 {
-                g.space(2);
+                    g.space(2);
                     g.pushlist();
-                g.strut(4);
-                g.text("dmg", COL_GRAY);
-                loopscoregroup(o, {
-                    float dmg = (float) showdamage == 1 ? playerdamage(o, DMG_DEALT) : playernetdamage(o);
-                    const char *fmt = "%.0f";
-                    if(fabs(dmg) > 1000.0f) { fmt = "%.1fk"; dmg = dmg/1000.0f; }
-                    g.textf(fmt, fgcolor, NULL, dmg);
+                    g.strut(4);
+                    g.text("dmg", COL_GRAY);
+                    loopscoregroup(o, {
+                        float dmg = (float) showdamage == 1 ? playerdamage(o, DMG_DEALT) : playernetdamage(o);
+                        const char *fmt = "%.0f";
+                        if(fabs(dmg) > 1000.0f) { fmt = "%.1fk"; dmg = dmg/1000.0f; }
+                        g.textf(fmt, fgcolor, NULL, dmg);
                     });
                     g.poplist();
                 }
+
+                if(showdamagereceived)
+                {
+                    g.space(2);
+                    g.pushlist();
+                    g.strut(4);
+                    g.text("dr", COL_GRAY);
+                    loopscoregroup(o, {
+                        float dmg = (float) playerdamage(o, DMG_RECEIVED);
+                        const char *fmt = "%.0f";
+                        if(fabs(dmg) > 1000.0f) { fmt = "%.1fk"; dmg = dmg/1000.0f; }
+                        g.textf(fmt, fgcolor, NULL, dmg);
+                    });
+                    g.poplist();
+                }
+            }
 
             if(multiplayer(false) || demoplayback)
                 {
@@ -344,7 +373,7 @@ namespace game
             {
                 g.poplist(); // horizontal
                 if(k+1<numgroups) g.space(.75f);
-        }
+            }
         }
 
         if(showspectators && spectators.length())
@@ -385,10 +414,10 @@ namespace game
                 if(showclientnum || player1->privilege>=PRIV_MASTER)
                 {
                     g.space(2);
-                g.pushlist();
+                    g.pushlist();
                     g.text("cn", COL_GRAY);
                     loopspectators(o, g.textf("%d", fgcolor, NULL, o->clientnum));
-                g.poplist();
+                    g.poplist();
                 }
 
                 g.poplist();
@@ -410,7 +439,7 @@ namespace game
                 }
             }
 
-        g.space(.25f);
+            g.space(.25f);
         }
 
     struct scoreboardgui : g3d_callback

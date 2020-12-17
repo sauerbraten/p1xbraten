@@ -486,7 +486,10 @@ namespace game
         if(actor->type==ENT_AI)
             conoutf(contype, "\f2%s got killed by %s!", dname, aname);
         else if(d==actor || actor->type==ENT_INANIMATE)
+        {
+            d->suicides++;
             conoutf(contype, "\f2%s suicided%s", dname, d==player1 ? "!" : "");
+        }
         else if(isteam(d->team, actor->team))
         {
             contype |= CON_TEAMKILL;

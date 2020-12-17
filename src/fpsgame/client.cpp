@@ -1222,6 +1222,7 @@ namespace game
             if(d==player1) getint(p);
             else d->state = getint(p);
             d->frags = getint(p);
+            if(-(d->frags)>d->suicides) d->suicides = -(d->frags); // best effort suicides initialization when joining a running game
             d->flags = getint(p);
             d->deaths = getint(p);
             if(d==player1) getint(p);

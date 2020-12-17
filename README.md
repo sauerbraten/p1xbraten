@@ -13,12 +13,17 @@ a.k.a. Features
 
 ### [scoreboard.patch](./patches/scoreboard.patch)
 
-- enables detailed per-weapon damage stats recording and cleans up the scoreboard look
+- enables suicide and detailed, per-weapon damage recording and cleans up the scoreboard look
+
+    Note that suicide and damage recording is only accurate in games you observed from the beginning. When you join a running game, all previous damage is unknown, and suicides are only initialized from negative frag counts.
+
 - adds scoreboard toggles:
     - `showflags`: when 1, shows the number of flags scored by a player; always hidden in non-flag modes
-    - `showkpd`: when 1, shows the players' frags/death ratio
-    - `showaccuracy`: when 1, shows the players' overall accuracy
-    - `showdamage`: when 1, shows the players' overall damage dealt; when 2, shows the players' overall net damage (= dealt - received); always hidden in insta modes
+    - `showsuicides`: when 1, shows how often each player suicided
+    - `showkpd`: when 1, shows each player's frags/death ratio
+    - `showaccuracy`: when 1, shows each player's overall accuracy
+    - `showdamage`: when 1, shows each player's overall damage dealt; when 2, shows each player's overall net damage (= dealt - received); always hidden in insta modes
+    - `showdamagereceived`: when 1, shows each player's damage received
 
     ![ectf, duel, multiple teams](https://i.imgur.com/tS9FK1I.gif)
 
@@ -80,13 +85,13 @@ Download linux_64_client from the link above and put it into bin_unix/ inside of
 
 *You don't have to do this if you already followed the installation instructions above and just want to play!*
 
-On Linux and macOS, just run `make && make install` **inside the src/ directory** (given you installed the usual Sauerbraten dependencies). On Windows, open src/vcpp/sauerbraten.vcxproj with Visual Studio and build in there.
+On Linux and macOS, just run `make install` **inside the src/ directory** (given you installed the usual Sauerbraten dependencies). On Windows, open src/vcpp/sauerbraten.vcxproj with Visual Studio and build in there.
 
 This will put the resulting binary into the usual place inside this repo. To use it, you have to copy it over to the same place in your actual Sauerbraten installation. On Linux, the [./start.sh](./start.sh) script will launch the new binary from inside this repository, using the Sauerbraten files in $SAUER_DIR and `~/.p1xbraten` as user data directory.
 
 ### Fresh upstream sources
 
-On Linux and macOS, you can build my client using fresh vanilla sources. Set $SAUER_DIR to the path of your Sauerbraten directory (currently, an SVN checkout is required), then use `make` and `make install` in the repository root:
+On Linux and macOS, you can build my client using fresh vanilla sources. Set $SAUER_DIR to the path of your Sauerbraten directory (currently, an SVN checkout is required), then use `make` and `make install` **in the repository root**:
 
 ```
 export SAUER_DIR=~/sauerbraten-code
