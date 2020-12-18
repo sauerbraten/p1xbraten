@@ -1325,6 +1325,8 @@ int main(int argc, char **argv)
 
     identflags |= IDF_PERSIST;
 
+    conoutf("p1xbraten version: <git-dev>");
+
     logoutf("init: mainloop");
 
     if(execfile("once.cfg", false)) remove(findfile("once.cfg", "rb"));

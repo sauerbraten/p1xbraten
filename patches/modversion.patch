@@ -1,0 +1,13 @@
+Index: src/engine/main.cpp
+===================================================================
+--- src/engine/main.cpp	(revision 6479)
++++ src/engine/main.cpp	(working copy)
+@@ -1325,6 +1325,8 @@
+
+     identflags |= IDF_PERSIST;
+
++    conoutf("p1xbraten version: <git-dev>");
++
+     logoutf("init: mainloop");
+
+     if(execfile("once.cfg", false)) remove(findfile("once.cfg", "rb"));

@@ -9,6 +9,8 @@ for:
   matrix:
     only:
       - image: Visual Studio 2019
+  before_build:
+    - (Get-Content src/engine/main.cpp) -replace '<git-dev>', (git describe) | Set-Content src/engine/main.cpp
   build:
     project: src/vcpp/sauerbraten.vcxproj
     verbosity: minimal
@@ -20,6 +22,7 @@ for:
       - image: macOS
   before_build:
     - cd src
+    - sed -i "s/<git-dev>/$(git describe)/" engine/main.cpp
   build_script:
     - make client
   after_build:

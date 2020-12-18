@@ -21,6 +21,7 @@ clean:
 
 apply-patches:
 	dos2unix src/vcpp/sauerbraten.vcxproj
+	$(PATCH) < patches/modversion.patch
 	$(PATCH) < patches/moviehud.patch
 	$(PATCH) < patches/scoreboard.patch
 	$(PATCH) < patches/macos_builds.patch
@@ -39,6 +40,7 @@ undo-patches:
 	$(PATCH) --reverse < patches/macos_builds.patch
 	$(PATCH) --reverse < patches/scoreboard.patch
 	$(PATCH) --reverse < patches/moviehud.patch
+	$(PATCH) --reverse < patches/modversion.patch
 	unix2dos src/vcpp/sauerbraten.vcxproj
 
 clean-sauer: check-env
