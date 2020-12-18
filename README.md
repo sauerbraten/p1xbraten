@@ -36,7 +36,7 @@ a.k.a. Features
 
     All of these commands (as well as `getaccuracy`) default to showing your own stats across all weapons. However, they all take two optional integer arguments to query by weapon and player: `/<cmd> [weapon] [cn]` (use -1 to query damage across all weapons)
 
-    To use these new commands to show comed-like statistics in the game hud in the lower right corner, put the gamehud definition from [this file](./data/once.cfg) into your autoexec.cfg.
+    To use these new commands to show comed-like statistics in the game hud in the lower right corner, put the gamehud definition from [this file](./data/gamehud.cfg) into your autoexec.cfg.
 
 ### [hudfragmessages.patch](./patches/hudfragmessages.patch)
 
@@ -65,23 +65,15 @@ a.k.a. Features
 
 - hides hudscore when there is just one team/player
 
-## Menu
-
-For easy configuration of the new features, use [menus.cfg](./data/menus.cfg). Just download the file and place it in data/ inside you user data directory. The correct filepaths are:
-
-- Windows: $HOME\My Games\Sauerbraten\data\menus.cfg
-- macOS: ~/Library/Application Support/Sauerbraten/data/menus.cfg
-- Linux: ~/.sauerbraten/data/menus.cfg
-
-The menu file also includes various cleanups of the vanilla GUI.
-
 ## Installation
 
-The latest builds are always at https://github.com/sauerbraten/p1xbraten/releases/latest. *You do not need to download anything but the correct executable in order to run this client mod!*
+The latest builds are always at https://github.com/sauerbraten/p1xbraten/releases/latest.
+
+You do not need to download anything but the correct executable in order to run this client mod! However you might want to install the [updated menus.cfg](#menu).
 
 ### Windows
 
-Download sauerbraten.exe from the link above and put it into bin64/ of your Sauerbraten installation.
+Download sauerbraten.exe from the link above and put it into C:\Program Files (x86)\Sauerbraten\bin64\ (your Sauerbraten installation folder).
 
 ### macOS
 
@@ -90,6 +82,16 @@ Download sauerbraten_universal from the link above and put it into /Applications
 ### Linux
 
 Download linux_64_client from the link above and put it into bin_unix/ inside of your Sauerbraten directory, then `chmod +x bin_unix/linux_64_client`.
+
+## Menu
+
+For easy configuration of the new features, download [data/menus.cfg](https://github.com/sauerbraten/p1xbraten/raw/main/data/menus.cfg) and place it in data/ inside you user data directory. The correct filepaths are:
+
+- Windows: `%USERPROFILE%\Documents\My Games\Sauerbraten\data\menus.cfg`
+- macOS: `$HOME/Library/Application Support/Sauerbraten/data/menus.cfg`
+- Linux: `$HOME/.sauerbraten/data/menus.cfg`
+
+The menu file also includes various cleanups of the vanilla GUI.
 
 ## Building your own binary
 
