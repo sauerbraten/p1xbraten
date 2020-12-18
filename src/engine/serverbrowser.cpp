@@ -575,7 +575,7 @@ const char *showservers(g3d_gui *cgui, uint *header, int pagemin, int pagemax)
         if(header) execute(header);
         int end = servers.length();
         cgui->pushlist();
-        loopi(10)
+        loopi(11)
         {
             if(!game::serverinfostartcolumn(cgui, i)) break;
             for(int j = start; j < end; j++)

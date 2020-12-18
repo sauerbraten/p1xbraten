@@ -65,6 +65,12 @@ a.k.a. Features
 
 - hides hudscore when there is just one team/player
 
+### [serverbrowser.patch](./patches/serverbrowser.patch)
+
+- styles the serverbrowser to be consistent with the cleaned up scoreboard
+- divides 'players' column into 'players' and 'slots'
+- right-justifies ping, players, slots, and port columns
+
 ## Installation
 
 The latest builds are always at https://github.com/sauerbraten/p1xbraten/releases/latest.
