@@ -57,32 +57,33 @@ Index: src/engine/rendergl.cpp
 ===================================================================
 --- src/engine/rendergl.cpp	(revision 6479)
 +++ src/engine/rendergl.cpp	(working copy)
-@@ -2072,6 +2072,24 @@
+@@ -2072,6 +2072,25 @@
      loopi(8) damagedirs[i] = 0;
  }
 
++VARP(fullconalpha, 1, 50, 100);
++
 +void drawfullconsoleshade(int w, int h)
 +{
 +    hudnotextureshader->set();
 +
 +    w = min(w/2, 25*FONTW);
-+    float fromalpha = 0.5, toalpha = 0.0;
 +
 +    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 +    gle::defvertex(2);
 +    gle::defcolor(4);
 +    gle::begin(GL_TRIANGLE_STRIP);
-+    gle::attribf(w, 0); gle::attribf(0, 0, 0, toalpha);
-+    gle::attribf(0, 0); gle::attribf(0, 0, 0, fromalpha);
-+    gle::attribf(w, h); gle::attribf(0, 0, 0, toalpha);
-+    gle::attribf(0, h); gle::attribf(0, 0, 0, fromalpha);
++    gle::attribf(w, 0); gle::attribf(0, 0, 0, 0.0f);
++    gle::attribf(0, 0); gle::attribf(0, 0, 0, fullconalpha/100.0f);
++    gle::attribf(w, h); gle::attribf(0, 0, 0, 0.0f);
++    gle::attribf(0, h); gle::attribf(0, 0, 0, fullconalpha/100.0f);
 +    gle::end();
 +}
 +
  VAR(hidestats, 0, 0, 1);
  VAR(hidehud, 0, 0, 1);
 
-@@ -2233,6 +2251,8 @@
+@@ -2233,6 +2252,8 @@
          drawdamagecompass(w, h);
      }
 
@@ -91,7 +92,7 @@ Index: src/engine/rendergl.cpp
      hudshader->set();
 
      int conw = int(w/conscale), conh = int(h/conscale), abovehud = conh - FONTH, limitgui = abovehud;
-@@ -2364,8 +2384,8 @@
+@@ -2364,8 +2385,8 @@
      pushhudmatrix();
      hudmatrix.scale(conscale, conscale, 1);
      flushhudmatrix();

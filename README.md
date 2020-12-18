@@ -60,6 +60,7 @@ a.k.a. Features
 - removes the guiskin background of fullconsole in favor of a gradient background on the left
 - improves interplay of scoreboard and fullconsole
 - `fullconsize` is deprecated and unused, instead the console always takes up all available space
+- adds `fullconalpha` var: sets the opacity of fullconsole's left edge in percent (from 1 to 100)
 
 ### [hudscore.patch](./patches/hudscore.patch)
 
