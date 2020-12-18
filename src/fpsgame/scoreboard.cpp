@@ -211,6 +211,14 @@ namespace game
                     b; \
                 }
 
+            #define rightjustified(b) \
+                { \
+                    g.pushlist(); \
+                    g.spring(); \
+                    b; \
+                    g.poplist(); \
+                }
+
             #define fgcolor (o==player1 && highlightscore && (multiplayer(false) || demoplayback || players.length() > 1) ? COL_YELLOW : COL_WHITE)
 
             if(sg.team && m_teammode)
@@ -223,15 +231,15 @@ namespace game
 
                 g.pushlist();
                 g.text("name", COL_GRAY);
-            loopscoregroup(o, g.text(colorname(o), statuscolor(o, fgcolor)););
+                loopscoregroup(o, g.text(colorname(o), statuscolor(o, fgcolor)););
                 g.poplist();
 
             if(m_ctf && showflags)
             {
                 g.space(2);
-                    g.pushlist();
-                g.text("flags", COL_GRAY);
-                loopscoregroup(o, g.textf("%d", fgcolor, NULL, o->flags));
+                g.pushlist();
+                rightjustified(g.text("flags", COL_GRAY))
+                loopscoregroup(o, rightjustified(g.textf("%d", fgcolor, NULL, o->flags)));
                 g.poplist();
             }
 
@@ -239,8 +247,8 @@ namespace game
             {
                 g.space(2);
                 g.pushlist();
-                g.text("frags", COL_GRAY);
-                loopscoregroup(o, g.textf("%d", fgcolor, NULL, o->frags));
+                rightjustified(g.text("frags", COL_GRAY))
+                loopscoregroup(o, rightjustified(g.textf("%d", fgcolor, NULL, o->frags)));
                 g.poplist();
             }
 
@@ -248,8 +256,8 @@ namespace game
             {
                 g.space(2);
                 g.pushlist();
-                g.text("deaths", COL_GRAY);
-                loopscoregroup(o, g.textf("%d", fgcolor, NULL, o->deaths));
+                rightjustified(g.text("deaths", COL_GRAY))
+                loopscoregroup(o, rightjustified(g.textf("%d", fgcolor, NULL, o->deaths)));
                 g.poplist();
             }
 
@@ -257,8 +265,8 @@ namespace game
             {
                 g.space(2);
                 g.pushlist();
-                g.text("suis", COL_GRAY);
-                loopscoregroup(o, g.textf("%d", fgcolor, NULL, o->suicides));
+                rightjustified(g.text("suis", COL_GRAY))
+                loopscoregroup(o, rightjustified(g.textf("%d", fgcolor, NULL, o->suicides)));
                 g.poplist();
             }
 
@@ -267,8 +275,8 @@ namespace game
                 g.space(2);
                 g.pushlist();
                 g.strut(3);
-                g.text("kpd", COL_GRAY);
-                loopscoregroup(o, g.textf("%.1f", fgcolor, NULL, (float)o->frags/max(1, o->deaths)));
+                rightjustified(g.text("kpd", COL_GRAY))
+                loopscoregroup(o, rightjustified(g.textf("%.1f", fgcolor, NULL, (float)o->frags/max(1, o->deaths))));
                 g.poplist();
             }
 
@@ -277,8 +285,8 @@ namespace game
                 g.space(2);
                 g.pushlist();
                 g.strut(4);
-                g.text("acc", COL_GRAY);
-                loopscoregroup(o, g.textf("%.0f%%", fgcolor, NULL, playeraccuracy(o)));
+                rightjustified(g.text("acc", COL_GRAY))
+                loopscoregroup(o, rightjustified(g.textf("%.0f%%", fgcolor, NULL, playeraccuracy(o))));
                 g.poplist();
             }
 
@@ -289,12 +297,12 @@ namespace game
                     g.space(2);
                     g.pushlist();
                     g.strut(4);
-                    g.text("dmg", COL_GRAY);
+                    rightjustified(g.text("dmg", COL_GRAY))
                     loopscoregroup(o, {
                         float dmg = (float) showdamage == 1 ? playerdamage(o, DMG_DEALT) : playernetdamage(o);
                         const char *fmt = "%.0f";
                         if(fabs(dmg) > 1000.0f) { fmt = "%.1fk"; dmg = dmg/1000.0f; }
-                        g.textf(fmt, fgcolor, NULL, dmg);
+                        rightjustified(g.textf(fmt, fgcolor, NULL, dmg));
                     });
                     g.poplist();
                 }
@@ -304,12 +312,12 @@ namespace game
                     g.space(2);
                     g.pushlist();
                     g.strut(4);
-                    g.text("dr", COL_GRAY);
+                    rightjustified(g.text("dr", COL_GRAY))
                     loopscoregroup(o, {
                         float dmg = (float) playerdamage(o, DMG_RECEIVED);
                         const char *fmt = "%.0f";
                         if(fabs(dmg) > 1000.0f) { fmt = "%.1fk"; dmg = dmg/1000.0f; }
-                        g.textf(fmt, fgcolor, NULL, dmg);
+                        rightjustified(g.textf(fmt, fgcolor, NULL, dmg));
                     });
                     g.poplist();
                 }
@@ -321,13 +329,13 @@ namespace game
                 {
                     g.space(2);
                     g.pushlist();
-                    g.text("ping", COL_GRAY);
+                    rightjustified(g.text("ping", COL_GRAY))
                     loopscoregroup(o,
                     {
                         fpsent *p = getclient(o->ownernum);
                         if(!p) p = o;
-                        if(!showpj && p->state==CS_LAGGED) g.text("LAG", fgcolor);
-                        else g.textf("%d", fgcolor, NULL, p->ping);
+                        if(!showpj && p->state==CS_LAGGED) rightjustified(g.text("LAG", fgcolor))
+                        else rightjustified(g.textf("%d", fgcolor, NULL, p->ping))
                     });
                     g.poplist();
                 }
@@ -337,14 +345,14 @@ namespace game
                     g.space(2);
                     g.pushlist();
                     g.strut(2);
-                    g.text("pj", COL_GRAY);
+                    rightjustified(g.text("pj", COL_GRAY))
                     loopscoregroup(o,
                     {
                         fpsent *p = getclient(o->ownernum);
                         if(!p) p = o;
-                        if(p==player1) g.text("0", fgcolor);
-                        else if(p->state==CS_LAGGED) g.text("LAG", fgcolor);
-                        else g.textf("%d", fgcolor, NULL, abs(33-p->plag));
+                        if(p==player1) rightjustified(g.text("0", fgcolor))
+                        else if(p->state==CS_LAGGED) rightjustified(g.text("LAG", fgcolor))
+                        else rightjustified(g.textf("%d", fgcolor, NULL, abs(33-p->plag)))
                     });
                     g.poplist();
                 }
@@ -354,8 +362,8 @@ namespace game
             {
                 g.space(2);
                 g.pushlist();
-                g.text("cn", COL_GRAY);
-                loopscoregroup(o, g.textf("%d", fgcolor, NULL, o->clientnum));
+                rightjustified(g.text("cn", COL_GRAY))
+                loopscoregroup(o, rightjustified(g.textf("%d", fgcolor, NULL, o->clientnum)));
                 g.poplist();
             }
 
@@ -400,13 +408,13 @@ namespace game
                 {
                     g.space(2);
                     g.pushlist();
-                    g.text("ping", COL_GRAY);
+                    rightjustified(g.text("ping", COL_GRAY))
                     loopspectators(o,
                     {
                         fpsent *p = getclient(o->ownernum);
                         if(!p) p = o;
-                        if(p->state==CS_LAGGED) g.text("LAG", fgcolor);
-                        else g.textf("%d", fgcolor, NULL, p->ping);
+                        if(p->state==CS_LAGGED) rightjustified(g.text("LAG", fgcolor))
+                        else rightjustified(g.textf("%d", fgcolor, NULL, p->ping))
                     });
                     g.poplist();
                 }
@@ -415,8 +423,8 @@ namespace game
                 {
                     g.space(2);
                     g.pushlist();
-                    g.text("cn", COL_GRAY);
-                    loopspectators(o, g.textf("%d", fgcolor, NULL, o->clientnum));
+                    rightjustified(g.text("cn", COL_GRAY))
+                    loopspectators(o, rightjustified(g.textf("%d", fgcolor, NULL, o->clientnum)));
                     g.poplist();
                 }
 

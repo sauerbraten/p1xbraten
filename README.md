@@ -13,9 +13,11 @@ a.k.a. Features
 
 ### [scoreboard.patch](./patches/scoreboard.patch)
 
-- enables suicide and detailed, per-weapon damage recording and cleans up the scoreboard look
+- enables suicide and detailed, per-weapon damage recording
 
     Note that suicide and damage recording is only accurate in games you observed from the beginning. When you join a running game, all previous damage is unknown, and suicides are only initialized from negative frag counts.
+
+- cleans up the scoreboard look (for example, right-justifies numeric scoreboard columns)
 
 - adds scoreboard toggles:
     - `showflags`: when 1, shows the number of flags scored by a player; always hidden in non-flag modes
@@ -25,7 +27,7 @@ a.k.a. Features
     - `showdamage`: when 1, shows each player's overall damage dealt; when 2, shows each player's overall net damage (= dealt - received); always hidden in insta modes
     - `showdamagereceived`: when 1, shows each player's damage received
 
-    ![ectf, duel, multiple teams](https://i.imgur.com/tS9FK1I.gif)
+    ![example screenshots](https://i.imgur.com/hsCY56E.gif)
 
 - adds damage-related cubescript commands:
     - `getdamagepotential`
