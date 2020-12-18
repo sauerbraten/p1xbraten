@@ -625,6 +625,7 @@ namespace game
             d->deaths = 0;
             d->totaldamage = 0;
             d->totalshots = 0;
+            d->suicides = 0;
             d->maxhealth = 100;
             d->lifesequence = -1;
             d->respawned = d->suicided = -2;

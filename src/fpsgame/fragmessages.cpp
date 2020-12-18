@@ -3,7 +3,7 @@
 
 namespace game {
     VARP(hudfragmessages, 0, 1, 2);
-    VARP(hudfragmessageduration, 0, 2000, 10000);
+    VARP(hudfragmessageduration, 0, 2000, 9999);
     VARP(maxhudfragmessages, 1, 3, 10);
     FVARP(hudfragmessagex, 0, 0.5f, 1.0f);
     FVARP(hudfragmessagey, 0, 0.25f, 1.0f);

@@ -160,7 +160,11 @@ Index: src/fpsgame/fps.cpp
 
      vector<fpsent *> clients;
 
-@@ -621,6 +626,7 @@
+@@ -618,9 +623,11 @@
+             d->deaths = 0;
+             d->totaldamage = 0;
+             d->totalshots = 0;
++            d->suicides = 0;
              d->maxhealth = 100;
              d->lifesequence = -1;
              d->respawned = d->suicided = -2;
@@ -531,7 +535,7 @@ Index: src/fpsgame/scoreboard.cpp
                          if(!p) p = o;
 -                        if(!showpj && p->state==CS_LAGGED) g.text("LAG", 0xFFFFDD);
 -                        else g.textf("%d", 0xFFFFDD, NULL, p->ping);
-+                        if(p==player1) g.text("–", fgcolor);
++                        if(p==player1) g.text("0", fgcolor);
 +                        else if(p->state==CS_LAGGED) g.text("LAG", fgcolor);
 +                        else g.textf("%d", fgcolor, NULL, abs(33-p->plag));
                      });

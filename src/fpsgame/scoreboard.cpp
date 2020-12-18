@@ -342,7 +342,7 @@ namespace game
                     {
                         fpsent *p = getclient(o->ownernum);
                         if(!p) p = o;
-                        if(p==player1) g.text("–", fgcolor);
+                        if(p==player1) g.text("0", fgcolor);
                         else if(p->state==CS_LAGGED) g.text("LAG", fgcolor);
                         else g.textf("%d", fgcolor, NULL, abs(33-p->plag));
                     });
