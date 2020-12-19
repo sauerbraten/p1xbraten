@@ -2,6 +2,21 @@
 
 This repository contains the source for my client mod, as well as the patches applied to the vanilla source to get there.
 
+- [Patches](#patches)
+  - [moviehud.patch](#moviehudpatch)
+  - [scoreboard.patch](#scoreboardpatch)
+  - [hudfragmessages.patch](#hudfragmessagespatch)
+  - [fullconsole.patch](#fullconsolepatch)
+  - [hudscore.patch](#hudscorepatch)
+  - [serverbrowser.patch](#serverbrowserpatch)
+- [Installation](#installation)
+  - [Windows](#windows)
+  - [macOS](#macos)
+  - [Linux](#linux)
+- [Menu](#menu)
+- [Building your own binary](#building-your-own-binary)
+  - [Using fresh upstream sources](#using-fresh-upstream-sources)
+
 ## Patches
 
 a.k.a. Features
@@ -112,9 +127,9 @@ On Linux and macOS, just run `make install` **inside the src/ directory** (given
 
 This will put the resulting binary into the usual place inside this repo. To use it, you have to copy it over to the same place in your actual Sauerbraten installation. On Linux, the [./start.sh](./start.sh) script will launch the new binary from inside this repository, using the Sauerbraten files in $SAUER_DIR and `~/.p1xbraten` as user data directory.
 
-### Fresh upstream sources
+### Using fresh upstream sources
 
-On Linux and macOS, you can build my client using fresh vanilla sources. Set $SAUER_DIR to the path of your Sauerbraten directory (currently, an SVN checkout is required), then use `make` and `make install` **in the repository root**:
+On Linux and macOS, you can build my client using fresh vanilla sources. Set $SAUER_DIR to the path of your Sauerbraten directory, then use `make` and `make install` **in the repository root**:
 
 ```
 export SAUER_DIR=~/sauerbraten-code
