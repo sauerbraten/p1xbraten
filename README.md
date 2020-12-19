@@ -48,11 +48,13 @@ a.k.a. Features
 
 - adds the following variables:
     - `hudfragmessages`: 0 disables all frag messages, 1 enables them for all modes, 2 enables them for non-insta modes only
-    - `hudfragmessageduration`: how long each message will be shown, in milliseconds, between 100 (= 0.1s) and 9999 (~ 10s)
     - `maxhudfragmessages`: how many messages to show at most (between 1 and 10)
+    - `hudfragmessageduration`: how long each message will be shown, in seconds, between 0 and 10
+    - `hudfragmessagefade`: 0 or 1: whether or not to fade out messages
     - `hudfragmessagex`: horizontal position (between 0.0 and 1.0) where messages will appear
     - `hudfragmessagey`: vertical position (between 0.0 and 1.0) where the newest message will appear; older messages will move outwards
     - `hudfragmessagescale`: size of the messages, between 0.0 and 1.0
+    - `hudfragmessagestackdir`: direction in which to stack old messages: -1 to stack upwards, 1 to stack downwards, 0 to stack towards the closes edge of the screen depending on `hudfragmessagey`
     - `hudfragmessagefilter`: bitfield filter var (like confilter), e.g. 0x3800 shows all players' frags, suicides, and teamkills
 
     Until a GUI menu for configuring hud frag messages exists, configure your normal console to show the frags you want to see as hud messages, then execute `/hudfragmessagefilter $confilter` to copy those settings for hud frag messages. You can then change your normal console filter back.

@@ -6,14 +6,14 @@
 struct fragmessage {
     string attackername, victimname;
     int weapon;
-    int millis;
+    int fragtime;
 
     fragmessage(const char *aname, const char *vname, int fragweapon)
     {
         copystring(attackername, aname ? aname : "");
         copystring(victimname, vname);
         weapon = fragweapon;
-        millis = lastmillis;
+        fragtime = lastmillis;
     }
 };
 
