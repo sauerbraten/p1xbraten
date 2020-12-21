@@ -29,10 +29,12 @@ apply-patches:
 	$(PATCH) < patches/fullconsole.patch
 	$(PATCH) < patches/hudscore.patch
 	$(PATCH) < patches/serverbrowser.patch
+	$(PATCH) < patches/listteams.patch
 	unix2dos src/vcpp/sauerbraten.vcxproj
 
 undo-patches:
 	dos2unix src/vcpp/sauerbraten.vcxproj
+	$(PATCH) --reverse < patches/listteams.patch
 	$(PATCH) --reverse < patches/serverbrowser.patch
 	$(PATCH) --reverse < patches/hudscore.patch
 	$(PATCH) --reverse < patches/fullconsole.patch

@@ -1,0 +1,97 @@
+Index: src/fpsgame/client.cpp
+===================================================================
+--- src/fpsgame/client.cpp	(revision 6479)
++++ src/fpsgame/client.cpp	(working copy)
+@@ -372,18 +372,33 @@
+     }
+     ICOMMAND(getclientnum, "s", (char *name), intret(name[0] ? parseplayer(name) : player1->clientnum));
+
+-    void listclients(bool local, bool bots)
++    void listteams()
+     {
+         vector<char> buf;
++        int numgroups = groupplayers();
++        if(!numgroups || (numgroups==1 && !groups[0]->team)) return;
++        loopi(numgroups)
++        {
++            if(i) buf.add(' ');
++            if(groups[i]->team) buf.put(groups[i]->team, strlen(groups[i]->team));
++        }
++        buf.add('\0');
++        result(buf.getbuf());
++    }
++    COMMAND(listteams, "");
++
++    void listclients(bool local, bool bots, bool specs, const char *team)
++    {
++        vector<char> buf;
+         string cn;
+         int numclients = 0;
+-        if(local && connected)
++        if(local && connected && (specs || player1->state!=CS_SPECTATOR) && (!*team || !strcasecmp(team, player1->team)))
+         {
+             formatstring(cn, "%d", player1->clientnum);
+             buf.put(cn, strlen(cn));
+             numclients++;
+         }
+-        loopv(clients) if(clients[i] && (bots || clients[i]->aitype == AI_NONE))
++        loopv(clients) if(clients[i] && (bots || clients[i]->aitype == AI_NONE) && (specs || clients[i]->state!=CS_SPECTATOR) && (!*team || !strcasecmp(team, clients[i]->team)))
+         {
+             formatstring(cn, "%d", clients[i]->clientnum);
+             if(numclients++) buf.add(' ');
+@@ -392,7 +407,7 @@
+         buf.add('\0');
+         result(buf.getbuf());
+     }
+-    ICOMMAND(listclients, "bb", (int *local, int *bots), listclients(*local>0, *bots!=0));
++    ICOMMAND(listclients, "bbbs", (int *local, int *bots, int *specs, char *team), listclients(*local>0, *bots!=0, *specs!=0, team));
+
+     void clearbans()
+     {
+Index: src/fpsgame/game.h
+===================================================================
+--- src/fpsgame/game.h	(revision 6479)
++++ src/fpsgame/game.h	(working copy)
+@@ -825,6 +825,14 @@
+     extern void setteaminfo(const char *team, int frags);
+     extern int statuscolor(fpsent *d, int color);
+
++    struct scoregroup : teamscore
++    {
++        vector<fpsent *> players;
++    };
++    extern vector<scoregroup *> groups;
++    extern vector<fpsent *> spectators;
++    extern int groupplayers();
++
+     // render
+     struct playermodelinfo
+     {
+Index: src/fpsgame/scoreboard.cpp
+===================================================================
+--- src/fpsgame/scoreboard.cpp	(revision 6479)
++++ src/fpsgame/scoreboard.cpp	(working copy)
+@@ -81,12 +81,8 @@
+         }
+     }
+
+-    struct scoregroup : teamscore
+-    {
+-        vector<fpsent *> players;
+-    };
+-    static vector<scoregroup *> groups;
+-    static vector<fpsent *> spectators;
++    vector<scoregroup *> groups;
++    vector<fpsent *> spectators;
+
+     static inline bool scoregroupcmp(const scoregroup *x, const scoregroup *y)
+     {
+@@ -102,7 +98,7 @@
+         return x->team && y->team && strcmp(x->team, y->team) < 0;
+     }
+
+-    static int groupplayers()
++    int groupplayers()
+     {
+         int numgroups = 0;
+         spectators.setsize(0);

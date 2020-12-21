@@ -9,6 +9,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [fullconsole.patch](#fullconsolepatch)
   - [hudscore.patch](#hudscorepatch)
   - [serverbrowser.patch](#serverbrowserpatch)
+  - [listteams.patch](#listteamspatch)
 - [Installation](#installation)
   - [Windows](#windows)
   - [macOS](#macos)
@@ -79,7 +80,7 @@ a.k.a. Features
     - `hudfragmessagestackdir`: direction in which to stack old messages: -1 to stack upwards, 1 to stack downwards, 0 to stack towards the closes edge of the screen depending on `hudfragmessagey`
     - `hudfragmessagefilter`: bitfield filter var (like confilter), e.g. 0x3800 shows all players' frags, suicides, and teamkills
 
-    Until a GUI menu for configuring hud frag messages exists, configure your normal console to show the frags you want to see as hud messages, then execute `/hudfragmessagefilter $confilter` to copy those settings for hud frag messages. You can then change your normal console filter back.
+      Install the [improved menu](#menu) to easily configure what types of frags are shown as hud messages.
 
 ### [fullconsole.patch](./patches/fullconsole.patch)
 
@@ -97,6 +98,11 @@ a.k.a. Features
 - styles the serverbrowser to be consistent with the cleaned up scoreboard
 - divides 'players' column into 'players' and 'slots'
 - right-justifies ping, players, slots, and port columns
+
+### [listteams.patch](./patches/listteams.patch)
+
+- adds `listteams` command that returns a list of team names when two or more teams exist and an empty string otherwise
+- extends `listclients` command to allow omitting spectators and only listing clients of a certain team (`listclients [includeself?] [includebots?] [includespecs?] [teamname?]`)
 
 ## Installation
 
@@ -118,13 +124,15 @@ Download linux_64_client from the link above and put it into bin_unix/ inside of
 
 ## Menu
 
-For easy configuration of the new features, download [data/menus.cfg](https://github.com/sauerbraten/p1xbraten/raw/main/data/menus.cfg) and place it in data/ inside you user data directory. The correct filepaths are:
+For easy configuration of the new features, download [data/menus.cfg](https://github.com/sauerbraten/p1xbraten/raw/main/data/menus.cfg) and place it inside a data folder inside you user data directory. The correct filepaths are:
 
 - Windows: `%USERPROFILE%\Documents\My Games\Sauerbraten\data\menus.cfg`
 - macOS: `$HOME/Library/Application Support/Sauerbraten/data/menus.cfg`
 - Linux: `$HOME/.sauerbraten/data/menus.cfg`
 
 The menu file also includes various cleanups of the vanilla GUI.
+
+An improved master menu using the changes from [listteams.patch](#listteamspatch) can be found [here]([./data/master.cfg](https://github.com/sauerbraten/p1xbraten/raw/main/data/master.cfg)). It will automatically be used when you save it as `data/master.cfg`.
 
 ## Building your own binary
 

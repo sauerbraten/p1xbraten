@@ -88,12 +88,8 @@ namespace game
         }
     }
 
-    struct scoregroup : teamscore
-    {
-        vector<fpsent *> players;
-    };
-    static vector<scoregroup *> groups;
-    static vector<fpsent *> spectators;
+    vector<scoregroup *> groups;
+    vector<fpsent *> spectators;
 
     static inline bool scoregroupcmp(const scoregroup *x, const scoregroup *y)
     {
@@ -109,7 +105,7 @@ namespace game
         return x->team && y->team && strcmp(x->team, y->team) < 0;
     }
 
-    static int groupplayers()
+    int groupplayers()
     {
         int numgroups = 0;
         spectators.setsize(0);

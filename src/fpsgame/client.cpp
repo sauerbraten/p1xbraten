@@ -373,18 +373,33 @@ namespace game
     }
     ICOMMAND(getclientnum, "s", (char *name), intret(name[0] ? parseplayer(name) : player1->clientnum));
 
-    void listclients(bool local, bool bots)
+    void listteams()
+    {
+        vector<char> buf;
+        int numgroups = groupplayers();
+        if(!numgroups || (numgroups==1 && !groups[0]->team)) return;
+        loopi(numgroups)
+        {
+            if(i) buf.add(' ');
+            if(groups[i]->team) buf.put(groups[i]->team, strlen(groups[i]->team));
+        }
+        buf.add('\0');
+        result(buf.getbuf());
+    }
+    COMMAND(listteams, "");
+
+    void listclients(bool local, bool bots, bool specs, const char *team)
     {
         vector<char> buf;
         string cn;
         int numclients = 0;
-        if(local && connected)
+        if(local && connected && (specs || player1->state!=CS_SPECTATOR) && (!*team || !strcasecmp(team, player1->team)))
         {
             formatstring(cn, "%d", player1->clientnum);
             buf.put(cn, strlen(cn));
             numclients++;
         }
-        loopv(clients) if(clients[i] && (bots || clients[i]->aitype == AI_NONE))
+        loopv(clients) if(clients[i] && (bots || clients[i]->aitype == AI_NONE) && (specs || clients[i]->state!=CS_SPECTATOR) && (!*team || !strcasecmp(team, clients[i]->team)))
         {
             formatstring(cn, "%d", clients[i]->clientnum);
             if(numclients++) buf.add(' ');
@@ -393,7 +408,7 @@ namespace game
         buf.add('\0');
         result(buf.getbuf());
     }
-    ICOMMAND(listclients, "bb", (int *local, int *bots), listclients(*local>0, *bots!=0));
+    ICOMMAND(listclients, "bbbs", (int *local, int *bots, int *specs, char *team), listclients(*local>0, *bots!=0, *specs!=0, team));
 
     void clearbans()
     {

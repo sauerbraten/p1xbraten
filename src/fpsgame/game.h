@@ -836,6 +836,14 @@ namespace game
     extern void setteaminfo(const char *team, int frags);
     extern int statuscolor(fpsent *d, int color);
 
+    struct scoregroup : teamscore
+    {
+        vector<fpsent *> players;
+    };
+    extern vector<scoregroup *> groups;
+    extern vector<fpsent *> spectators;
+    extern int groupplayers();
+
     // render
     struct playermodelinfo
     {
