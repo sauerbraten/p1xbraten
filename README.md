@@ -23,7 +23,7 @@ a.k.a. Features
 
 ### [moviehud.patch](./patches/moviehud.patch)
 
-- adds `hidespecfollow` toggle: when 1, hides the "SPECTATOR" and player name in the lower right of the screen when spectating)
+- adds `hidespecfollow` toggle: when 1, hides the "SPECTATOR" and player name in the lower right of the screen when spectating
 - adds `namesabovehead` toggle: when 0, hides the names above players' models (usually rendered as particle text), while keeping status icons for health boost, armor and quad
 
 ### [scoreboard.patch](./patches/scoreboard.patch)
@@ -44,14 +44,21 @@ a.k.a. Features
 
     ![example screenshots](https://i.imgur.com/hsCY56E.gif)
 
+- makes the following built-in cubescript commands return `hudplayer`'s stats instead of `player1`:
+    - `getfrags`
+    - `getflags`
+    - `getdeaths`
+
+    This allows you to see the stats of the player you're currently spectating in the gamehud instead of your own.
+
 - adds damage-related cubescript commands:
     - `getdamagepotential`
     - `getdamagedealt`
     - `getdamagereceived`
-    - `getdamagewasted` (= potential - dealt)
-    - `getnetdamage` (= dealt - received)
+    - `getdamagewasted` (= potential − dealt)
+    - `getnetdamage` (= dealt − received)
 
-    All of these commands (as well as `getaccuracy`) default to showing your own stats across all weapons. However, they all take two optional integer arguments to query by weapon and player: `/<cmd> [weapon] [cn]` (use -1 to query damage across all weapons)
+    All of these commands (as well as `getaccuracy`) default to showing your own (`hudplayer`'s) stats across all weapons. However, they all take two optional integer arguments to query by weapon and player: `/<cmd> [weapon] [cn]` (use -1 to query damage across all weapons)
 
     To use these new commands to show comed-like statistics in the game hud in the lower right corner, put the gamehud definition from [this file](./data/gamehud.cfg) into your autoexec.cfg.
 
@@ -67,7 +74,7 @@ a.k.a. Features
     - `hudfragmessageduration`: how long each message will be shown, in seconds, between 0 and 10
     - `hudfragmessagefade`: 0 or 1: whether or not to fade out messages
     - `hudfragmessagex`: horizontal position (between 0.0 and 1.0) where messages will appear
-    - `hudfragmessagey`: vertical position (between 0.0 and 1.0) where the newest message will appear; older messages will move outwards
+    - `hudfragmessagey`: vertical position (between 0.0 and 1.0) where the newest message will appear
     - `hudfragmessagescale`: size of the messages, between 0.0 and 1.0
     - `hudfragmessagestackdir`: direction in which to stack old messages: -1 to stack upwards, 1 to stack downwards, 0 to stack towards the closes edge of the screen depending on `hudfragmessagey`
     - `hudfragmessagefilter`: bitfield filter var (like confilter), e.g. 0x3800 shows all players' frags, suicides, and teamkills
