@@ -1187,19 +1187,13 @@ namespace game
 
     #define justified(elem,handleclick,dir) \
         { \
-            if(dir) \
-            { \
-                g->pushlist(); \
-                g->spring(); \
-                g->pushlist(); /* get vertical list dir back, so mergehits works */ \
-            } \
+            g->pushlist(); \
+            if(dir) g->spring(); \
+            g->pushlist(); /* get vertical list dir back, so mergehits works */ \
             int up = elem; \
             if(handleclick && up&G3D_UP) return true; \
-            if(dir) \
-            { \
-                g->poplist(); \
-                g->poplist(); \
-            } \
+            g->poplist(); \
+            g->poplist(); \
         }
 
     #include "colors.h"
@@ -1255,11 +1249,11 @@ namespace game
                     break;
 
                 case 7:
-                    leftjustified(g->buttonf("%s ", COL_WHITE, NULL, name));
+                    leftjustified(g->buttonf("%s", COL_WHITE, NULL, name));
                     break;
 
                 case 8:
-                    rightjustified(g->buttonf("%d ", COL_WHITE, NULL, port));
+                    rightjustified(g->buttonf("%d", COL_WHITE, NULL, port));
                     break;
 
                 case 9:
@@ -1267,7 +1261,7 @@ namespace game
                     {
                         leftjustified(g->button(sdesc, COL_WHITE));
                     }
-                    else leftjustified(g->buttonf("[%s protocol] ", COL_WHITE, NULL, attr.empty() ? "unknown" : (attr[0] < PROTOCOL_VERSION ? "older" : "newer")));
+                    else leftjustified(g->buttonf("[%s protocol]", COL_WHITE, NULL, attr.empty() ? "unknown" : (attr[0] < PROTOCOL_VERSION ? "older" : "newer")));
                     break;
             }
             return false;

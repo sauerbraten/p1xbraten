@@ -17,25 +17,19 @@ Index: src/fpsgame/fps.cpp
 ===================================================================
 --- src/fpsgame/fps.cpp	(revision 6479)
 +++ src/fpsgame/fps.cpp	(working copy)
-@@ -1173,13 +1173,34 @@
+@@ -1173,13 +1173,28 @@
          }
      }
 
 +    #define justified(elem,handleclick,dir) \
 +        { \
-+            if(dir) \
-+            { \
-+                g->pushlist(); \
-+                g->spring(); \
-+                g->pushlist(); /* get vertical list dir back, so mergehits works */ \
-+            } \
++            g->pushlist(); \
++            if(dir) g->spring(); \
++            g->pushlist(); /* get vertical list dir back, so mergehits works */ \
 +            int up = elem; \
 +            if(handleclick && up&G3D_UP) return true; \
-+            if(dir) \
-+            { \
-+                g->poplist(); \
-+                g->poplist(); \
-+            } \
++            g->poplist(); \
++            g->poplist(); \
 +        }
 +
 +    #include "colors.h"
@@ -55,7 +49,7 @@ Index: src/fpsgame/fps.cpp
          if(struts[i]) g->strut(struts[i]);
          g->mergehits(true);
          return true;
-@@ -1204,36 +1227,37 @@
+@@ -1204,36 +1221,37 @@
 
      bool serverinfoentry(g3d_gui *g, int i, const char *name, int port, const char *sdesc, const char *map, int ping, const vector<int> &attr, int np)
      {
@@ -85,11 +79,11 @@ Index: src/fpsgame/fps.cpp
 
                  case 7:
 -                    if(g->buttonf("%d ", 0xFFFFDD, NULL, port)&G3D_UP) return true;
-+                    leftjustified(g->buttonf("%s ", COL_WHITE, NULL, name));
++                    leftjustified(g->buttonf("%s", COL_WHITE, NULL, name));
                      break;
 
                  case 8:
-+                    rightjustified(g->buttonf("%d ", COL_WHITE, NULL, port));
++                    rightjustified(g->buttonf("%d", COL_WHITE, NULL, port));
 +                    break;
 +
 +                case 9:
@@ -99,11 +93,11 @@ Index: src/fpsgame/fps.cpp
 +                        leftjustified(g->button(sdesc, COL_WHITE));
                      }
 -                    else if(g->buttonf("[%s protocol] ", 0xFFFFDD, NULL, attr.empty() ? "unknown" : (attr[0] < PROTOCOL_VERSION ? "older" : "newer"))&G3D_UP) return true;
-+                    else leftjustified(g->buttonf("[%s protocol] ", COL_WHITE, NULL, attr.empty() ? "unknown" : (attr[0] < PROTOCOL_VERSION ? "older" : "newer")));
++                    else leftjustified(g->buttonf("[%s protocol]", COL_WHITE, NULL, attr.empty() ? "unknown" : (attr[0] < PROTOCOL_VERSION ? "older" : "newer")));
                      break;
              }
              return false;
-@@ -1243,52 +1267,55 @@
+@@ -1243,52 +1261,55 @@
          {
              case 0:
              {
