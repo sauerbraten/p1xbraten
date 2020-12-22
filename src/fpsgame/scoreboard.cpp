@@ -529,6 +529,11 @@ namespace game
             {
                 if(best) score2 = groups[1]->score;
                 else for(int i = 1; i < groups.length(); ++i) if(isteam(player1->team, groups[i]->team)) { score2 = groups[i]->score; break; }
+                if(score2 == INT_MIN)
+                {
+                    fpsent *p = followingplayer(player1);
+                    if(p->state==CS_SPECTATOR) score2 = groups[1]->score;
+                }
             }
         }
         else
@@ -538,7 +543,7 @@ namespace game
             best = p == g->players[0];
             if(g->players.length() > 1)
             {
-                if(best) score2 = g->players[1]->frags;
+                if(best || p->state==CS_SPECTATOR) score2 = g->players[1]->frags;
                 else score2 = p->frags;
             }
         }
