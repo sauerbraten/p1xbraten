@@ -373,20 +373,33 @@ namespace game
     }
     ICOMMAND(getclientnum, "s", (char *name), intret(name[0] ? parseplayer(name) : player1->clientnum));
 
-    void listteams()
+    void listteams(bool local, bool bots, bool specs)
     {
         vector<char> buf;
         int numgroups = groupplayers();
         if(!numgroups || (numgroups==1 && !groups[0]->team)) return;
         loopi(numgroups)
         {
-            if(i) buf.add(' ');
+            if(!local || !bots || !specs)
+            {
+                bool include = false;
+                loopvj(groups[i]->players)
+                {
+                    fpsent *p = groups[i]->players[j];
+                    if((local || p!=player1) && (bots || p->aitype==AI_NONE) && (specs || p->state!=CS_SPECTATOR)) {
+                        include = true;
+                        break;
+                    }
+                }
+                if(!include) continue;
+            }
+            if(buf.length()) buf.add(' ');
             if(groups[i]->team) buf.put(groups[i]->team, strlen(groups[i]->team));
         }
         buf.add('\0');
         result(buf.getbuf());
     }
-    COMMAND(listteams, "");
+    ICOMMAND(listteams, "bb", (int *local, int *bots, int *specs), listteams(*local!=0, *bots!=0, *specs!=0));
 
     void listclients(bool local, bool bots, bool specs, const char *team)
     {

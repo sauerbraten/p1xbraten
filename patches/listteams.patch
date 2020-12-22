@@ -1,26 +1,39 @@
 Index: src/fpsgame/client.cpp
 ===================================================================
---- src/fpsgame/client.cpp	(revision 6479)
+--- src/fpsgame/client.cpp	(revision 6488)
 +++ src/fpsgame/client.cpp	(working copy)
-@@ -372,18 +372,33 @@
+@@ -372,18 +372,46 @@
      }
      ICOMMAND(getclientnum, "s", (char *name), intret(name[0] ? parseplayer(name) : player1->clientnum));
 
 -    void listclients(bool local, bool bots)
-+    void listteams()
++    void listteams(bool local, bool bots, bool specs)
      {
          vector<char> buf;
 +        int numgroups = groupplayers();
 +        if(!numgroups || (numgroups==1 && !groups[0]->team)) return;
 +        loopi(numgroups)
 +        {
-+            if(i) buf.add(' ');
++            if(!local || !bots || !specs)
++            {
++                bool include = false;
++                loopvj(groups[i]->players)
++                {
++                    fpsent *p = groups[i]->players[j];
++                    if((local || p!=player1) && (bots || p->aitype==AI_NONE) && (specs || p->state!=CS_SPECTATOR)) {
++                        include = true;
++                        break;
++                    }
++                }
++                if(!include) continue;
++            }
++            if(buf.length()) buf.add(' ');
 +            if(groups[i]->team) buf.put(groups[i]->team, strlen(groups[i]->team));
 +        }
 +        buf.add('\0');
 +        result(buf.getbuf());
 +    }
-+    COMMAND(listteams, "");
++    ICOMMAND(listteams, "bb", (int *local, int *bots, int *specs), listteams(*local!=0, *bots!=0, *specs!=0));
 +
 +    void listclients(bool local, bool bots, bool specs, const char *team)
 +    {
@@ -39,7 +52,7 @@ Index: src/fpsgame/client.cpp
          {
              formatstring(cn, "%d", clients[i]->clientnum);
              if(numclients++) buf.add(' ');
-@@ -392,7 +407,7 @@
+@@ -392,7 +420,7 @@
          buf.add('\0');
          result(buf.getbuf());
      }
@@ -50,7 +63,7 @@ Index: src/fpsgame/client.cpp
      {
 Index: src/fpsgame/game.h
 ===================================================================
---- src/fpsgame/game.h	(revision 6479)
+--- src/fpsgame/game.h	(revision 6488)
 +++ src/fpsgame/game.h	(working copy)
 @@ -825,6 +825,14 @@
      extern void setteaminfo(const char *team, int frags);
@@ -69,7 +82,7 @@ Index: src/fpsgame/game.h
      {
 Index: src/fpsgame/scoreboard.cpp
 ===================================================================
---- src/fpsgame/scoreboard.cpp	(revision 6479)
+--- src/fpsgame/scoreboard.cpp	(revision 6488)
 +++ src/fpsgame/scoreboard.cpp	(working copy)
 @@ -81,12 +81,8 @@
          }
