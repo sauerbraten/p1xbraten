@@ -32,19 +32,6 @@ apply-patches:
 	$(PATCH) < patches/listteams.patch
 	unix2dos src/vcpp/sauerbraten.vcxproj
 
-undo-patches:
-	dos2unix src/vcpp/sauerbraten.vcxproj
-	$(PATCH) --reverse < patches/listteams.patch
-	$(PATCH) --reverse < patches/serverbrowser.patch
-	$(PATCH) --reverse < patches/hudscore.patch
-	$(PATCH) --reverse < patches/fullconsole.patch
-	$(PATCH) --reverse < patches/hudfragmessages.patch
-	$(PATCH) --reverse < patches/macos_builds.patch
-	$(PATCH) --reverse < patches/scoreboard.patch
-	$(PATCH) --reverse < patches/moviehud.patch
-	$(PATCH) --reverse < patches/modversion.patch
-	unix2dos src/vcpp/sauerbraten.vcxproj
-
 clean-sauer: check-env
 	cd $(SAUER_DIR)/src/enet && make clean
 	cd $(SAUER_DIR)/src && make clean
