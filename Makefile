@@ -31,6 +31,7 @@ apply-patches:
 	$(PATCH) < patches/serverbrowser.patch
 	$(PATCH) < patches/listteams.patch
 	$(PATCH) < patches/no_server_build.patch
+	$(PATCH) < patches/extrapings.patch
 	unix2dos src/vcpp/sauerbraten.vcxproj
 
 clean-sauer: check-env

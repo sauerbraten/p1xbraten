@@ -565,6 +565,7 @@ struct fpsent : dynent, fpsstate
     int playermodel;
     ai::aiinfo *ai;
     int ownernum, lastnode;
+    int extrapings, p1xbratenconfidence;
 
     vec muzzle;
 

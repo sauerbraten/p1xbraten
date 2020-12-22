@@ -1,0 +1,88 @@
+Index: src/fpsgame/client.cpp
+===================================================================
+--- src/fpsgame/client.cpp	(revision 6488)
++++ src/fpsgame/client.cpp	(working copy)
+@@ -118,6 +118,7 @@
+
+     bool senditemstoserver = false, sendcrc = false; // after a map change, since server doesn't have map data
+     int lastping = 0;
++    int lastextraping = 0;
+
+     bool connected = false, remote = false, demoplayback = false, gamepaused = false;
+     int sessionid = 0, mastermode = MM_OPEN, gamespeed = 100;
+@@ -347,6 +348,8 @@
+     }
+     ICOMMAND(isai, "ii", (int *cn, int *type), intret(isai(*cn, *type) ? 1 : 0));
+
++    ICOMMAND(getpbconfidence, "i", (int *cn), { fpsent *c = getclient(*cn); intret(c ? c->p1xbratenconfidence : -1); });
++
+     int parseplayer(const char *arg)
+     {
+         char *end;
+@@ -1046,7 +1049,14 @@
+             putint(p, N_PING);
+             putint(p, totalmillis);
+             lastping = totalmillis;
++            lastextraping = totalmillis;
+         }
++        else if(totalmillis-lastextraping>99) // send two extra N_PING packets between each normal one
++        {
++            putint(p, N_PING);
++            putint(p, (totalmillis-lastping)/99); // 1, 2, 1, 2, ...
++            lastextraping = totalmillis;
++        }
+         sendclientpacket(p.finalize(), 1);
+     }
+
+@@ -1757,14 +1767,36 @@
+             }
+
+             case N_PONG:
+-                addmsg(N_CLIENTPING, "i", player1->ping = (player1->ping*5+totalmillis-getint(p))/6);
++            {
++                int pong = getint(p);
++                if(pong<3) // extra N_PING response
++                {
++                    int sign = pong%2 ? -1 : 1;
++                    addmsg(N_CLIENTPING, "i", player1->ping+(sign*pong));
++                }
++                else addmsg(N_CLIENTPING, "i", player1->ping = (player1->ping*5+totalmillis-pong)/6);
+                 break;
+-
++            }
+             case N_CLIENTPING:
++            {
+                 if(!d) return;
+-                d->ping = getint(p);
++                int ping = getint(p);
++                d->extrapings++;
++                int sign = (d->extrapings)%2 ? -1 : 1;
++                if(ping==d->ping+sign*(d->extrapings))
++                {
++                    d->p1xbratenconfidence += d->extrapings;
++                    d->p1xbratenconfidence = min(d->p1xbratenconfidence, 1000);
++                }
++                else
++                {
++                    d->ping = ping;
++                    d->p1xbratenconfidence -= d->extrapings;
++                    d->p1xbratenconfidence = max(d->p1xbratenconfidence, -1000);
++                    d->extrapings = 0;
++                }
+                 break;
+-
++            }
+             case N_TIMEUP:
+                 timeupdate(getint(p));
+                 break;
+Index: src/fpsgame/game.h
+===================================================================
+--- src/fpsgame/game.h	(revision 6488)
++++ src/fpsgame/game.h	(working copy)
+@@ -557,6 +557,7 @@
+     int playermodel;
+     ai::aiinfo *ai;
+     int ownernum, lastnode;
++    int extrapings, p1xbratenconfidence;
+
+     vec muzzle;
