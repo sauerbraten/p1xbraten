@@ -61,7 +61,7 @@ a.k.a. Features
 
     All of these commands (as well as `getaccuracy`) default to showing your own (`hudplayer`'s) stats across all weapons. However, they all take two optional integer arguments to query by weapon and player: `/<cmd> [weapon] [cn]` (use -1 to query damage across all weapons)
 
-    To use these new commands to show comed-like statistics in the game hud in the lower right corner, put the gamehud definition from [this file](./data/gamehud.cfg) into your autoexec.cfg.
+    To use these new commands to show comed-like statistics in the game hud in the lower right corner, put the gamehud definition from [this file](./data/gamehud.cfg) into your autoexec.cfg, or install the [updated menu](#menu) and run `/exec data/gamehud.cfg` once.
 
 ### [hudfragmessages.patch](./patches/hudfragmessages.patch)
 
@@ -124,15 +124,17 @@ Download linux_64_client from the link above and put it into bin_unix/ inside of
 
 ## Menu
 
-For easy configuration of the new features, download [data/menus.cfg](https://github.com/sauerbraten/p1xbraten/raw/main/data/menus.cfg) and place it inside a data folder inside you user data directory. The correct filepaths are:
+For easy configuration of the new features, you can install an updated version of the `menus.cfg` file. The new file brings UI options for p1xbraten's new features and also includes various cleanups of the vanilla GUI.
 
-- Windows: `%USERPROFILE%\Documents\My Games\Sauerbraten\data\menus.cfg`
-- macOS: `$HOME/Library/Application Support/Sauerbraten/data/menus.cfg`
-- Linux: `$HOME/.sauerbraten/data/menus.cfg`
+Download the source code ZIP attached to the latest release and extract the data/ folder inside it into your user data directory. The correct filepaths are:
 
-The menu file also includes various cleanups of the vanilla GUI.
+- Windows: `%USERPROFILE%\Documents\My Games\Sauerbraten\`
+- macOS: `$HOME/Library/Application Support/Sauerbraten/`
+- Linux: `$HOME/.sauerbraten/`
 
-An improved master menu using the changes from [listteams.patch](#listteamspatch) can be found [here]([./data/master.cfg](https://github.com/sauerbraten/p1xbraten/raw/main/data/master.cfg)). It will automatically be used when you save it as `data/master.cfg`.
+Afterwards, you should have (depending on your OS and user name) something like `C:\Users\John Doe\Documents\My Games\Sauerbraten\data\menus.cfg`.
+
+Once installed, you can run `/exec data/gamehud.cfg` to get detailed weapon stats in the lower right corner of your screen. **This will override any existing gamehud you already have!**
 
 ## Building your own binary
 
