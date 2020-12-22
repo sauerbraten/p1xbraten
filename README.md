@@ -101,7 +101,7 @@ a.k.a. Features
 
 ### [listteams.patch](./patches/listteams.patch)
 
-- adds `listteams` command that returns a list of team names when two or more teams exist and an empty string otherwise
+- adds `listteams` command that returns a list of names of non-empty teams (according to filters) when two or more teams exist and an empty string otherwise (`listteams [includeself?] [includebots?] [includespecs?]`)
 - extends `listclients` command to allow omitting spectators and only listing clients of a certain team (`listclients [includeself?] [includebots?] [includespecs?] [teamname?]`)
 
 When you [install the updated menu](#menu), you'll get a better master menu thanks to these changes:
