@@ -104,6 +104,10 @@ a.k.a. Features
 - adds `listteams` command that returns a list of team names when two or more teams exist and an empty string otherwise
 - extends `listclients` command to allow omitting spectators and only listing clients of a certain team (`listclients [includeself?] [includebots?] [includespecs?] [teamname?]`)
 
+When you [install the updated menu](#menu), you'll get a better master menu thanks to these changes:
+
+![master menu](https://i.imgur.com/doC2IcB.png)
+
 ## Installation
 
 The latest builds are always at https://github.com/sauerbraten/p1xbraten/releases/latest.
