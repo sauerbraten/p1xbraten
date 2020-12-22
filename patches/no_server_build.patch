@@ -1,0 +1,27 @@
+Index: src/Makefile
+===================================================================
+--- src/Makefile	(revision 6488)
++++ src/Makefile	(working copy)
+@@ -198,7 +198,7 @@
+ master: $(MASTER_OBJS)
+ 	$(CXX) $(CXXFLAGS) -o $(WINBIN)/sauer_master.exe $(MASTER_OBJS) $(MASTER_LIBS)
+ 
+-install: all
++install: client
+ else
+ client:	libenet $(CLIENT_OBJS)
+ 	$(CXX) $(CXXFLAGS) -o sauer_client $(CLIENT_OBJS) $(CLIENT_LIBS)
+@@ -222,12 +222,10 @@
+ install: client
+ 	cp sauer_client ../sauerbraten.app/Contents/MacOS/sauerbraten_universal
+ else
+-install: all
++install: client
+ 	cp sauer_client	../bin_unix/$(PLATFORM_PREFIX)_client
+-	cp sauer_server	../bin_unix/$(PLATFORM_PREFIX)_server
+ ifneq (,$(STRIP))
+ 	$(STRIP) ../bin_unix/$(PLATFORM_PREFIX)_client
+-	$(STRIP) ../bin_unix/$(PLATFORM_PREFIX)_server
+ endif
+ endif
+ endif

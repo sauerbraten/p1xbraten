@@ -30,6 +30,7 @@ apply-patches:
 	$(PATCH) < patches/hudscore.patch
 	$(PATCH) < patches/serverbrowser.patch
 	$(PATCH) < patches/listteams.patch
+	$(PATCH) < patches/no_server_build.patch
 	unix2dos src/vcpp/sauerbraten.vcxproj
 
 clean-sauer: check-env

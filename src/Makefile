@@ -200,7 +200,7 @@ server: $(SERVER_OBJS)
 master: $(MASTER_OBJS)
 	$(CXX) $(CXXFLAGS) -o $(WINBIN)/sauer_master.exe $(MASTER_OBJS) $(MASTER_LIBS)
 
-install: all
+install: client
 else
 client:	libenet $(CLIENT_OBJS)
 	$(CXX) $(CXXFLAGS) -o sauer_client $(CLIENT_OBJS) $(CLIENT_LIBS)
@@ -227,12 +227,10 @@ ifneq (,$(STRIP))
 	$(STRIP) ../sauerbraten.app/Contents/MacOS/sauerbraten_universal
 endif
 else
-install: all
+install: client
 	cp sauer_client	../bin_unix/$(PLATFORM_PREFIX)_client
-	cp sauer_server	../bin_unix/$(PLATFORM_PREFIX)_server
 ifneq (,$(STRIP))
 	$(STRIP) ../bin_unix/$(PLATFORM_PREFIX)_client
-	$(STRIP) ../bin_unix/$(PLATFORM_PREFIX)_server
 endif
 endif
 endif
