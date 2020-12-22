@@ -22,18 +22,20 @@ Index: src/Makefile
  shared/crypto-standalone.o: shared/ents.h shared/command.h shared/iengine.h
 Index: src/fpsgame/fps.cpp
 ===================================================================
---- src/fpsgame/fps.cpp	(revision 6479)
+--- src/fpsgame/fps.cpp	(revision 6488)
 +++ src/fpsgame/fps.cpp	(working copy)
-@@ -496,6 +496,8 @@
+@@ -496,6 +496,10 @@
              if(d==player1) conoutf(contype, "\f2%s got fragged by %s", dname, aname);
              else conoutf(contype, "\f2%s fragged %s", aname, dname);
          }
++        if(actor==player1) aname = "\f2you";
++        if(d==player1) dname = "\f2you";
 +        if(d==actor) addfragmessage(contype, NULL, dname, HICON_TOKEN-HICON_FIST);
 +        else addfragmessage(contype, aname, dname, d->lasthitpushgun);
          deathstate(d);
  		ai::killed(d, actor);
      }
-@@ -1091,6 +1093,7 @@
+@@ -1091,6 +1095,7 @@
          {
              if(gameclock) drawgameclock(w, h);
              if(hudscore) drawhudscore(w, h);
