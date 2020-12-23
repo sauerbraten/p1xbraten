@@ -61,7 +61,7 @@ a.k.a. Features
 
     All of these commands (as well as `getaccuracy`) default to showing your own (`hudplayer`'s) stats across all weapons. However, they all take two optional integer arguments to query by weapon and player: `/<cmd> [weapon] [cn]` (use -1 to query damage across all weapons)
 
-    To use these new commands to show comed-like statistics in the game hud in the lower right corner, put the gamehud definition from [this file](./data/gamehud.cfg) into your autoexec.cfg, or install the [updated menu](#menu) and run `/exec data/gamehud.cfg` once.
+    To use these new commands to show comed-like statistics in the game hud in the lower right corner, run `/exec data/p1xbraten/gamehud.cfg`.
 
 ### [hudfragmessages.patch](./patches/hudfragmessages.patch)
 
@@ -128,17 +128,9 @@ Download linux_64_client from the link above and put it into bin_unix/ inside of
 
 ## Menu
 
-For easy configuration of the new features, you can install an updated version of the `menus.cfg` file. The new file brings UI options for p1xbraten's new features and also includes various cleanups of the vanilla GUI.
+For easy configuration of the new features, an updated version of the `menus.cfg` file is automatically installed when you start p1xbraten for the first time. The new file brings UI options for added features and also includes various cleanups of the vanilla GUI.
 
-Download the source code ZIP attached to the latest release and extract the data/ folder inside it into your user data directory. The correct filepaths are:
-
-- Windows: `%USERPROFILE%\Documents\My Games\Sauerbraten\`
-- macOS: `$HOME/Library/Application Support/Sauerbraten/`
-- Linux: `$HOME/.sauerbraten/`
-
-Afterwards, you should have (depending on your OS and user name) something like `C:\Users\John Doe\Documents\My Games\Sauerbraten\data\menus.cfg`.
-
-Once installed, you can run `/exec data/gamehud.cfg` to get detailed weapon stats in the lower right corner of your screen. **This will override any existing gamehud you already have!**
+If you do not want to use the p1xbraten menus, execute `/usep1xbratenmenus 0` and restart the game.
 
 ## Building your own binary
 
@@ -158,4 +150,4 @@ make
 make install
 ```
 
-`make` will copy the src/ directory from $SAUER_DIR, apply all patches and run `make` inside src/; `make install` will run `make install` inside src/ and copy the contents of data/ to ~/.p1xbraten/data/.
+`make` will copy the src/ directory from $SAUER_DIR, apply all patches and run `make` inside src/; `make install` will run `make install` inside src/.

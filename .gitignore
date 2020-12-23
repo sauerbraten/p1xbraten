@@ -10,3 +10,5 @@ bin64/*
 bin_unix/*
 sauerbraten.app/Contents/MacOS/*
 !/**/.gitkeep
+data/p1xbraten/*gz
+data/p1xbraten/*.gz.xxd

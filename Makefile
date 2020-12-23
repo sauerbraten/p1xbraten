@@ -1,4 +1,4 @@
-.PHONY: install clean-sauer update-src check-env
+.PHONY: build install clean apply-patches gzip-menus _include-menus clean-sauer update-src apply-to-vanilla check-env
 
 PATCH=patch --strip=0 --remove-empty-files --ignore-whitespace
 
@@ -8,12 +8,11 @@ ifneq (,$(wildcard ~/sauerbraten-code))
 endif
 endif
 
-build: update-src apply-patches
+build: update-src apply-patches gzip-menus _include-menus
 	cd src && make client
 
 install:
 	cd src && make install
-	cp -R data ~/.p1xbraten/
 
 clean:
 	cd src && make clean
@@ -32,7 +31,19 @@ apply-patches:
 	$(PATCH) < patches/listteams.patch
 	$(PATCH) < patches/no_server_build.patch
 	$(PATCH) < patches/extrapings.patch
+	$(PATCH) < patches/execfile.patch
+	$(PATCH) < patches/include_p1xbraten_menus.patch
 	unix2dos src/vcpp/sauerbraten.vcxproj
+
+gzip-menus:
+	gzip --keep --force --best --no-name data/p1xbraten/menus.cfg && xxd -i - data/p1xbraten/menus.cfg.gz.xxd < data/p1xbraten/menus.cfg.gz
+	gzip --keep --force --best --no-name data/p1xbraten/master.cfg && xxd -i - data/p1xbraten/master.cfg.gz.xxd < data/p1xbraten/master.cfg.gz
+	gzip --keep --force --best --no-name data/p1xbraten/gamehud.cfg && xxd -i - data/p1xbraten/gamehud.cfg.gz.xxd < data/p1xbraten/gamehud.cfg.gz
+
+_include-menus:
+	sed -i "s/menuscfggzlen = 0;/menuscfggzlen = $(shell stat --printf="%s" data/p1xbraten/menus.cfg.gz);/" src/fpsgame/p1xbraten_menus.cpp
+	sed -i "s/mastercfggzlen = 0;/mastercfggzlen = $(shell stat --printf="%s" data/p1xbraten/master.cfg.gz);/" src/fpsgame/p1xbraten_menus.cpp
+	sed -i "s/gamehudcfggzlen = 0;/gamehudcfggzlen = $(shell stat --printf="%s" data/p1xbraten/gamehud.cfg.gz);/" src/fpsgame/p1xbraten_menus.cpp
 
 clean-sauer: check-env
 	cd $(SAUER_DIR) && \

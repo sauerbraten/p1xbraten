@@ -128,6 +128,7 @@ CLIENT_OBJS= \
 	fpsgame/fragmessages.o \
 	fpsgame/monster.o \
 	fpsgame/movable.o \
+	fpsgame/p1xbraten_menus.o \
 	fpsgame/render.o \
 	fpsgame/scoreboard.o \
 	fpsgame/server.o \
@@ -487,6 +488,7 @@ fpsgame/movable.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
 fpsgame/movable.o: shared/ents.h shared/command.h shared/glexts.h
 fpsgame/movable.o: shared/glemu.h shared/iengine.h shared/igame.h
 fpsgame/movable.o: fpsgame/ai.h
+fpsgame/p1xbraten_menus.o: shared/cube.h
 fpsgame/render.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
 fpsgame/render.o: shared/ents.h shared/command.h shared/glexts.h
 fpsgame/render.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
