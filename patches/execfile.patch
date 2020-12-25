@@ -1,0 +1,76 @@
+Index: src/engine/command.cpp
+===================================================================
+--- src/engine/command.cpp	(revision 6488)
++++ src/engine/command.cpp	(working copy)
+@@ -2365,7 +2365,7 @@
+ {
+     string s;
+     copystring(s, cfgfile);
+-    char *buf = loadfile(path(s), NULL);
++    char *buf = loadfile(path(s), NULL, true, strlen(s)>3 && !strncmp(s+strlen(s)-3, ".gz", 3));
+     if(!buf)
+     {
+         if(msg) conoutf(CON_ERROR, "could not read \"%s\"", cfgfile);
+Index: src/shared/stream.cpp
+===================================================================
+--- src/shared/stream.cpp	(revision 6488)
++++ src/shared/stream.cpp	(working copy)
+@@ -921,7 +921,7 @@
+     offset size()
+     {
+         if(!file) return -1;
+-        offset pos = tell();
++        offset pos = file->tell();
+         if(!file->seek(-4, SEEK_END)) return -1;
+         uint isize = file->getlil<uint>();
+         return file->seek(pos, SEEK_SET) ? isize : offset(-1);
+@@ -1237,9 +1237,9 @@
+     return utf8;
+ }
+
+-char *loadfile(const char *fn, size_t *size, bool utf8)
++char *loadfile(const char *fn, size_t *size, bool utf8, bool gz)
+ {
+-    stream *f = openfile(fn, "rb");
++    stream *f = gz ? opengzfile(fn, "rb") : openfile(fn, "rb");
+     if(!f) return NULL;
+     stream::offset fsize = f->size();
+     if(fsize <= 0) { delete f; return NULL; }
+@@ -1246,19 +1246,13 @@
+     size_t len = fsize;
+     char *buf = new (false) char[len+1];
+     if(!buf) { delete f; return NULL; }
++    size_t rlen = f->read(buf, len);
++    delete f;
++    if(rlen != len) { delete[] buf; return NULL; }
+     size_t offset = 0;
+-    if(utf8 && len >= 3)
+-    {
+-        if(f->read(buf, 3) != 3) { delete f; delete[] buf; return NULL; }
+-        if(((uchar *)buf)[0] == 0xEF && ((uchar *)buf)[1] == 0xBB && ((uchar *)buf)[2] == 0xBF) len -= 3;
+-        else offset += 3;
+-    }
+-    size_t rlen = f->read(&buf[offset], len-offset);
+-    delete f;
+-    if(rlen != len-offset) { delete[] buf; return NULL; }
+-    if(utf8) len = decodeutf8((uchar *)buf, len, (uchar *)buf, len);
++    if(utf8 && len >= 3 && ((uchar *)buf)[0] == 0xEF && ((uchar *)buf)[1] == 0xBB && ((uchar *)buf)[2] == 0xBF) offset += 3;
++    if(utf8) len = decodeutf8((uchar *)&buf[offset], len-offset, (uchar *)&buf[offset], len-offset);
+     buf[len] = '\0';
+     if(size!=NULL) *size = len;
+     return buf;
+ }
+-
+Index: src/shared/tools.h
+===================================================================
+--- src/shared/tools.h	(revision 6488)
++++ src/shared/tools.h	(working copy)
+@@ -1368,7 +1368,7 @@
+ extern stream *opentempfile(const char *filename, const char *mode);
+ extern stream *opengzfile(const char *filename, const char *mode, stream *file = NULL, int level = Z_BEST_COMPRESSION);
+ extern stream *openutf8file(const char *filename, const char *mode, stream *file = NULL);
+-extern char *loadfile(const char *fn, size_t *size, bool utf8 = true);
++extern char *loadfile(const char *fn, size_t *size, bool utf8 = true, bool gz = false);
+ extern bool listdir(const char *dir, bool rel, const char *ext, vector<char *> &files);
+ extern int listfiles(const char *dir, const char *ext, vector<char *> &files);
+ extern int listzipfiles(const char *dir, const char *ext, vector<char *> &files);

@@ -2365,7 +2365,7 @@ bool execfile(const char *cfgfile, bool msg)
 {
     string s;
     copystring(s, cfgfile);
-    char *buf = loadfile(path(s), NULL);
+    char *buf = loadfile(path(s), NULL, true, strlen(s)>3 && !strncmp(s+strlen(s)-3, ".gz", 3));
     if(!buf)
     {
         if(msg) conoutf(CON_ERROR, "could not read \"%s\"", cfgfile);
