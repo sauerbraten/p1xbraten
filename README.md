@@ -62,7 +62,7 @@ a.k.a. Features
 
     All of these commands (as well as `getaccuracy`) default to showing your own (`hudplayer`'s) stats across all weapons. However, they all take two optional integer arguments to query by weapon and player: `/<cmd> [weapon] [cn]` (use -1 to query damage across all weapons)
 
-    To use these new commands to show comed-like statistics in the game hud in the lower right corner, run `/exec data/p1xbraten/gamehud.cfg`.
+    To show comed-like statistics in the game hud in the lower right corner, run `/exec data/p1xbraten/gamehud.cfg.gz`.
 
 ### [hudfragmessages.patch](./patches/hudfragmessages.patch)
 
@@ -81,7 +81,7 @@ a.k.a. Features
     - `hudfragmessagestackdir`: direction in which to stack old messages: -1 to stack upwards, 1 to stack downwards, 0 to stack towards the closes edge of the screen depending on `hudfragmessagey`
     - `hudfragmessagefilter`: bitfield filter var (like confilter), e.g. 0x3800 shows all players' frags, suicides, and teamkills
 
-      Install the [improved menu](#menu) to easily configure what types of frags are shown as hud messages.
+      You can easily configure what types of frags are shown as hud messages using the [improved menu](#menu) (options -> hud -> adjust hud frag messages).
 
 ### [fullconsole.patch](./patches/fullconsole.patch)
 
@@ -105,7 +105,7 @@ a.k.a. Features
 - adds `listteams` command that returns a list of names of non-empty teams (according to filters) when two or more teams exist and an empty string otherwise (`listteams [includeself?] [includebots?] [includespecs?]`)
 - extends `listclients` command to allow omitting spectators and only listing clients of a certain team (`listclients [includeself?] [includebots?] [includespecs?] [teamname?]`)
 
-When you [install the updated menu](#menu), you'll get a better master menu thanks to these changes:
+[The updated menu](#menu) includes a better master menu thanks to these changes:
 
 ![master menu](https://i.imgur.com/doC2IcB.png)
 
