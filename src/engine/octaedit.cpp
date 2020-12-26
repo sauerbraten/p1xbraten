@@ -2517,6 +2517,7 @@ void getslottex(int *idx)
     intret(slot.variants->index);
 }
 
+ICOMMAND(settex, "i", (int *tex), { if(!vslots.inrange(*tex) || noedit()) return; filltexlist(); edittex(*tex); });
 COMMANDN(edittex, edittex_, "i");
 COMMAND(gettex, "");
 COMMAND(getcurtex, "");
@@ -2547,6 +2548,8 @@ void mpreplacetex(int oldtex, int newtex, bool insel, selinfo &sel, bool local)
     }
     allchanged();
 }
+
+ICOMMAND(replacetex, "iii", (int *oldtex, int *newtex, int *insel), { if(!noedit()) mpreplacetex(*oldtex, *newtex, *insel!=0, sel, true); });
 
 bool mpreplacetex(int oldtex, int newtex, bool insel, selinfo &sel, ucharbuf &buf)
 {

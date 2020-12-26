@@ -33,6 +33,7 @@ apply-patches:
 	$(PATCH) < patches/extrapings.patch
 	$(PATCH) < patches/execfile.patch
 	$(PATCH) < patches/include_p1xbraten_menus.patch
+	$(PATCH) < patches/tex_commands.patch
 	unix2dos src/vcpp/sauerbraten.vcxproj
 
 gzip-menus:

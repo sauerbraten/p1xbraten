@@ -1,0 +1,21 @@
+Index: src/engine/octaedit.cpp
+===================================================================
+--- src/engine/octaedit.cpp	(revision 6488)
++++ src/engine/octaedit.cpp	(working copy)
+@@ -2517,6 +2517,7 @@
+     intret(slot.variants->index);
+ }
+
++ICOMMAND(settex, "i", (int *tex), { if(!vslots.inrange(*tex) || noedit()) return; filltexlist(); edittex(*tex); });
+ COMMANDN(edittex, edittex_, "i");
+ COMMAND(gettex, "");
+ COMMAND(getcurtex, "");
+@@ -2548,6 +2549,8 @@
+     allchanged();
+ }
+
++ICOMMAND(replacetex, "iii", (int *oldtex, int *newtex, int *insel), { if(!noedit()) mpreplacetex(*oldtex, *newtex, *insel!=0, sel, true); });
++
+ bool mpreplacetex(int oldtex, int newtex, bool insel, selinfo &sel, ucharbuf &buf)
+ {
+     if(!unpacktex(oldtex, buf, false)) return false;

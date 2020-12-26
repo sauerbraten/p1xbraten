@@ -10,6 +10,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [hudscore.patch](#hudscorepatch)
   - [serverbrowser.patch](#serverbrowserpatch)
   - [listteams.patch](#listteamspatch)
+  - [tex_commands.patch](#tex_commandspatch)
 - [Installation](#installation)
   - [Windows](#windows)
   - [macOS](#macos)
@@ -107,6 +108,11 @@ a.k.a. Features
 When you [install the updated menu](#menu), you'll get a better master menu thanks to these changes:
 
 ![master menu](https://i.imgur.com/doC2IcB.png)
+
+### [tex_commands.patch](./patches/tex_commands.patch)
+
+- adds `settex <id>` command to apply a texture by ID
+- adds `replacetex <old> <new> [insel?]` command to replace a texture with another by specifying their IDs
 
 ## Installation
 
