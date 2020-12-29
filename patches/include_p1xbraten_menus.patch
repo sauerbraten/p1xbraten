@@ -20,39 +20,28 @@ Index: src/Makefile
  fpsgame/render.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
  fpsgame/render.o: shared/ents.h shared/command.h shared/glexts.h
  fpsgame/render.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
-Index: src/engine/main.cpp
-===================================================================
---- src/engine/main.cpp	(revision 6488)
-+++ src/engine/main.cpp	(working copy)
-@@ -1313,6 +1313,8 @@
-
-     initing = INIT_GAME;
-     game::loadconfigs();
-+    game::writep1xbratenmenufiles();
-+    game::executep1xbratenmenufiles();
-
-     initing = NOT_INITING;
-
 Index: src/fpsgame/p1xbraten_menus.cpp
 ===================================================================
 --- src/fpsgame/p1xbraten_menus.cpp	(nonexistent)
 +++ src/fpsgame/p1xbraten_menus.cpp	(working copy)
-@@ -0,0 +1,59 @@
+@@ -0,0 +1,61 @@
 +#include "cube.h"
 +
 +namespace game {
 +
-+    const char *menuscfgfname = "data/p1xbraten/menus.cfg.gz";
++    string menuscfgfname = "data/p1xbraten/menus.cfg.gz";
 +    const uchar menuscfggz[] = {
 +        #include "../../data/p1xbraten/menus.cfg.gz.xxd"
 +    };
++
 +    const size_t menuscfggzlen = 0;
-+    const char *mastercfgfname = "data/p1xbraten/master.cfg.gz";
++    string mastercfgfname = "data/p1xbraten/master.cfg.gz";
 +    const uchar mastercfggz[] = {
 +        #include "../../data/p1xbraten/master.cfg.gz.xxd"
 +    };
++
 +    const size_t mastercfggzlen = 0;
-+    const char *gamehudcfgfname = "data/p1xbraten/gamehud.cfg.gz";
++    string gamehudcfgfname = "data/p1xbraten/gamehud.cfg.gz";
 +    const uchar gamehudcfggz[] = {
 +        #include "../../data/p1xbraten/gamehud.cfg.gz.xxd"
 +    };
@@ -69,17 +58,17 @@ Index: src/fpsgame/p1xbraten_menus.cpp
 +    {
 +        if(!usep1xbratenmenus) return 1;
 +
-+        stream *f = openrawfile(menuscfgfname, "w");
++        stream *f = openrawfile(path(menuscfgfname), "wb");
 +        if(!f) return 2;
 +        f->write(menuscfggz, menuscfggzlen);
 +        delete f;
 +
-+        f = openrawfile(mastercfgfname, "w");
++        f = openrawfile(path(mastercfgfname), "wb");
 +        if(!f) return 2;
 +        f->write(mastercfggz, mastercfggzlen);
 +        delete f;
 +
-+        f = openrawfile(gamehudcfgfname, "w");
++        f = openrawfile(path(gamehudcfgfname), "wb");
 +        if(!f) return 2;
 +        f->write(gamehudcfggz, gamehudcfggzlen);
 +        delete f;

@@ -2,17 +2,19 @@
 
 namespace game {
 
-    const char *menuscfgfname = "data/p1xbraten/menus.cfg.gz";
+    string menuscfgfname = "data/p1xbraten/menus.cfg.gz";
     const uchar menuscfggz[] = {
         #include "../../data/p1xbraten/menus.cfg.gz.xxd"
     };
+
     const size_t menuscfggzlen = 16051;
-    const char *mastercfgfname = "data/p1xbraten/master.cfg.gz";
+    string mastercfgfname = "data/p1xbraten/master.cfg.gz";
     const uchar mastercfggz[] = {
         #include "../../data/p1xbraten/master.cfg.gz.xxd"
     };
+
     const size_t mastercfggzlen = 1031;
-    const char *gamehudcfgfname = "data/p1xbraten/gamehud.cfg.gz";
+    string gamehudcfgfname = "data/p1xbraten/gamehud.cfg.gz";
     const uchar gamehudcfggz[] = {
         #include "../../data/p1xbraten/gamehud.cfg.gz.xxd"
     };
@@ -29,17 +31,17 @@ namespace game {
     {
         if(!usep1xbratenmenus) return 1;
 
-        stream *f = openrawfile(menuscfgfname, "w");
+        stream *f = openrawfile(path(menuscfgfname), "wb");
         if(!f) return 2;
         f->write(menuscfggz, menuscfggzlen);
         delete f;
 
-        f = openrawfile(mastercfgfname, "w");
+        f = openrawfile(path(mastercfgfname), "wb");
         if(!f) return 2;
         f->write(mastercfggz, mastercfggzlen);
         delete f;
 
-        f = openrawfile(gamehudcfgfname, "w");
+        f = openrawfile(path(gamehudcfgfname), "wb");
         if(!f) return 2;
         f->write(gamehudcfggz, gamehudcfggzlen);
         delete f;

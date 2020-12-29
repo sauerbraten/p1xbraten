@@ -1313,8 +1313,6 @@ int main(int argc, char **argv)
 
     initing = INIT_GAME;
     game::loadconfigs();
-    game::writep1xbratenmenufiles();
-    game::executep1xbratenmenufiles();
 
     initing = NOT_INITING;
 
