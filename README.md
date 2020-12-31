@@ -32,7 +32,7 @@ a.k.a. Features
 
 - enables suicide and detailed, per-weapon damage recording
 
-    Note that suicide and damage recording is only accurate in games you observed from the beginning. When you join a running game, all previous damage is unknown, and suicides are only initialized from negative frag counts.
+  Note that suicide and damage recording is only accurate in games you observed from the beginning. When you join a running game, all previous damage is unknown, and suicides are only initialized from negative frag counts.
 
 - cleans up the scoreboard look (for example, right-justifies numeric scoreboard columns)
 
@@ -44,14 +44,14 @@ a.k.a. Features
     - `showdamage`: when 1, shows each player's overall damage dealt; when 2, shows each player's overall net damage (= dealt - received); always hidden in insta modes
     - `showdamagereceived`: when 1, shows each player's damage received
 
-    ![example screenshots](https://i.imgur.com/hsCY56E.gif)
+  ![example screenshots](https://i.imgur.com/hsCY56E.gif)
 
 - makes the following built-in cubescript commands return `hudplayer`'s stats instead of `player1`:
     - `getfrags`
     - `getflags`
     - `getdeaths`
 
-    This allows you to see the stats of the player you're currently spectating in the gamehud instead of your own.
+  This allows you to see the stats of the player you're currently spectating in the gamehud instead of your own.
 
 - adds damage-related cubescript commands:
     - `getdamagepotential`
@@ -60,15 +60,15 @@ a.k.a. Features
     - `getdamagewasted` (= potential − dealt)
     - `getnetdamage` (= dealt − received)
 
-    All of these commands (as well as `getaccuracy`) default to showing your own (`hudplayer`'s) stats across all weapons. However, they all take two optional integer arguments to query by weapon and player: `/<cmd> [weapon] [cn]` (use -1 to query damage across all weapons)
+  All of the new damage-related commands (as well as `getaccuracy`) default to showing your own (`hudplayer`'s) stats across all weapons. However, they all take two optional integer arguments to query by weapon and player: `/<cmd> [weapon] [cn]` (use -1 to query damage across all weapons)
 
-    To show comed-like statistics in the game hud in the lower right corner, run `/exec data/p1xbraten/gamehud.cfg.gz`.
+  To show comed-like statistics in the game hud in the lower right corner, run `/exec data/p1xbraten/gamehud.cfg.gz`.
 
 ### [hudfragmessages.patch](./patches/hudfragmessages.patch)
 
 - enables frag messages showing the weapon used to complete the frag (on by default)
 
-    ![fragmessages](https://i.imgur.com/K4GL6oB.png)
+  ![fragmessages](https://i.imgur.com/K4GL6oB.png)
 
 - adds the following variables:
     - `hudfragmessages`: 0 disables all frag messages, 1 enables them for all modes, 2 enables them for non-insta modes only
@@ -81,7 +81,7 @@ a.k.a. Features
     - `hudfragmessagestackdir`: direction in which to stack old messages: -1 to stack upwards, 1 to stack downwards, 0 to stack towards the closes edge of the screen depending on `hudfragmessagey`
     - `hudfragmessagefilter`: bitfield filter var (like confilter), e.g. 0x3800 shows all players' frags, suicides, and teamkills
 
-      You can easily configure what types of frags are shown as hud messages using the [improved menu](#menu) (options -> hud -> adjust hud frag messages).
+You can easily configure the hud frag messages using the [improved menu](#menu) (options -> hud -> adjust hud frag messages).
 
 ### [fullconsole.patch](./patches/fullconsole.patch)
 
@@ -118,7 +118,7 @@ a.k.a. Features
 
 The latest builds are always at https://github.com/sauerbraten/p1xbraten/releases/latest.
 
-You do not need to download anything but the correct executable in order to run this client mod! However you might want to install the [updated menus.cfg](#menu).
+*You do not need to download anything but the correct executable in order to run this client mod!*
 
 ### Windows
 
