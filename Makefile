@@ -34,6 +34,7 @@ apply-patches:
 	$(PATCH) < patches/execfile.patch
 	$(PATCH) < patches/include_p1xbraten_menus.patch
 	$(PATCH) < patches/tex_commands.patch
+	$(PATCH) < patches/decouple_input.patch
 	unix2dos src/vcpp/sauerbraten.vcxproj
 
 gzip-menus:

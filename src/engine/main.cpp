@@ -1031,30 +1031,38 @@ void swapbuffers(bool overlay)
     gle::disable();
     SDL_GL_SwapWindow(screen);
 }
- 
+
 VAR(menufps, 0, 60, 1000);
 VARP(maxfps, 0, 200, 1000);
+VARP(tickrate, 0, 0, 1000);
 
-void limitfps(int &millis, int curmillis)
+void ratelimit(int &millis, int lastdrawmillis, bool &draw)
 {
-    int limit = (mainmenu || minimized) && menufps ? (maxfps ? min(maxfps, menufps) : menufps) : maxfps;
-    if(!limit) return;
-    static int fpserror = 0;
-    int delay = 1000/limit - (millis-curmillis);
-    if(delay < 0) fpserror = 0;
-    else
+    int fpslimit = (mainmenu || minimized) && menufps ? (maxfps ? min(maxfps, menufps) : menufps) : maxfps;
+    if(!fpslimit) draw = true;
+    int tickratelimit = tickrate ? max(tickrate, fpslimit) : 0;
+    if(!fpslimit && !tickratelimit) return;
+    int delay = 1;
+    if(tickratelimit) delay = 1000/tickratelimit - (millis-totalmillis);
+    // should we draw?
+    int fpsdelay = INT_MAX;
+    if(fpslimit)
     {
-        fpserror += 1000%limit;
-        if(fpserror >= limit)
+        fpsdelay = 1000/fpslimit - (millis-lastdrawmillis);
+        static int fpserror = 0;
+        if(fpserror >= fpslimit) fpsdelay++;
+        if(fpsdelay <= delay)
         {
-            ++delay;
-            fpserror -= limit;
+            draw = true;
+            if(fpserror >= fpslimit) fpserror -= fpslimit;
+            fpserror += 1000%fpslimit;
         }
-        if(delay > 0)
-        {
-            SDL_Delay(delay);
-            millis += delay;
-        }
+    }
+    delay = min(delay, fpsdelay);
+    if(delay > 0)
+    {
+        SDL_Delay(delay);
+        millis += delay;
     }
 }
 
@@ -1348,9 +1356,10 @@ int main(int argc, char **argv)
 
     for(;;)
     {
-        static int frames = 0;
+        static int frames = 0, lastdrawmillis = 0;
         int millis = getclockmillis();
-        limitfps(millis, totalmillis);
+        bool draw = false;
+        ratelimit(millis, lastdrawmillis, draw);
         elapsedtime = millis - totalmillis;
         static int timeerr = 0;
         int scaledtime = game::scaletime(elapsedtime) + timeerr;
@@ -1358,10 +1367,10 @@ int main(int argc, char **argv)
         timeerr = scaledtime%100;
         if(!multiplayer(false) && curtime>200) curtime = 200;
         if(game::ispaused()) curtime = 0;
-		lastmillis += curtime;
+        lastmillis += curtime;
         totalmillis = millis;
         updatetime();
- 
+
         checkinput();
         menuprocess();
         tryedit();
@@ -1372,24 +1381,31 @@ int main(int argc, char **argv)
 
         serverslice(false, 0);
 
-        if(frames) updatefpshistory(elapsedtime);
-        frames++;
+        if(draw)
+        {
+            if(frames) updatefpshistory(millis-lastdrawmillis);
+            frames++;
+        }
 
         // miscellaneous general game effects
         recomputecamera();
-        updateparticles();
+        if(draw) updateparticles();
         updatesounds();
 
         if(minimized) continue;
 
-        inbetweenframes = false;
-        if(mainmenu) gl_drawmainmenu();
-        else gl_drawframe();
-        swapbuffers();
-        renderedframe = inbetweenframes = true;
+        if(draw)
+        {
+            inbetweenframes = false;
+            if(mainmenu) gl_drawmainmenu();
+            else gl_drawframe();
+            swapbuffers();
+            renderedframe = inbetweenframes = true;
+            lastdrawmillis = millis;
+        }
     }
-    
-    ASSERT(0);   
+
+    ASSERT(0);
     return EXIT_FAILURE;
 
     #if defined(WIN32) && !defined(_DEBUG) && !defined(__GNUC__)
