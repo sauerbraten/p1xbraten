@@ -118,11 +118,11 @@ You can easily configure the hud frag messages using the [improved menu](#menu) 
 ### [decouple_framedrawing.patch](./patches/decouple_framedrawing.patch)
 
 - removes fps-induced limiting of the main loop (for example, input & network processing were affected by `maxfps`)
-- introduce `tickrate` var to limit the main loop independently from `maxfps` (for example to save power): 0 to disable limiting, 1..1000 to set how many ticks per second are allowed; `maxfps` overrides `tickrate` if `maxfps < tickrate`
+- introduce `maxtps` var to limit the main loop independently from `maxfps` (for example to save power): 0 to disable limiting (default), 100..1000 to set how many ticks per second are allowed; `maxfps` overrides `maxtps` if `maxfps < maxtps`
 
-This patch allows using `maxfps` without compromising on the frequency of input polling and network event processing. In vanilla Sauerbraten, `maxfps` limits the whole game's main loop. This patch removes the main loop limit and instead skips frame drawing until a new frame is needed, but still processes network events and player input on every iteration.
+This patch allows using `maxfps` without compromising on the frequency of input polling and network event processing. In vanilla Sauerbraten, `maxfps` limits the whole game's main loop. This patch removes the main loop limiting and instead skips only frame drawing until a new frame is needed, but still processes network events and player input on every main loop iteration.
 
-While vanilla Sauerbraten is truly unlimited after `/maxfps 0`, p1xbraten sets `/tickrate 1000` by default to play nice with the OS. Setting `maxfps` to any value other than 0 also forces a maximum tick rate of 1000 (but respects lower settings), even if `tickrate` is 0, so that p1xbraten can prioritise frame draw timing. Set both `maxfps` and `tickrate` to 0 to get vanilla's unlimited behavior back.
+While vanilla Sauerbraten is truly unlimited after `/maxfps 0`, p1xbraten's mainloop can additionally be limited using the `maxtps` variable. Setting `maxfps` to any value other than 0 also forces a maximum tick frequency of 1000 (but respects lower settings), even if you set `maxtps 0`, so that p1xbraten can prioritise frame draw timing. Set both `maxfps` and `maxtps` to 0 to get vanilla's unlimited behavior back.
 
 ## Installation
 

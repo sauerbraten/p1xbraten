@@ -19,7 +19,7 @@ Index: src/engine/main.cpp
 +
  VAR(menufps, 0, 60, 1000);
  VARP(maxfps, 0, 200, 1000);
-+VARP(tickrate, 0, 0, 1000);
++VARFP(maxtps, 0, 0, 1000, { if(maxtps && maxtps<60) {conoutf("can't set maxtps < 60"); maxtps = 60;} });
 
 -void limitfps(int &millis, int curmillis)
 +void ratelimit(int &millis, int lastdrawmillis, bool &draw)
@@ -32,10 +32,10 @@ Index: src/engine/main.cpp
 -    else
 +    int fpslimit = (mainmenu || minimized) && menufps ? (maxfps ? min(maxfps, menufps) : menufps) : maxfps;
 +    if(!fpslimit) draw = true;
-+    int tickratelimit = tickrate ? max(tickrate, fpslimit) : 0;
-+    if(!fpslimit && !tickratelimit) return;
++    int tpslimit = maxtps ? max(maxtps, fpslimit) : 0;
++    if(!fpslimit && !tpslimit) return;
 +    int delay = 1;
-+    if(tickratelimit) delay = 1000/tickratelimit - (millis-totalmillis);
++    if(tpslimit) delay = 1000/tpslimit - (millis-totalmillis);
 +    // should we draw?
 +    int fpsdelay = INT_MAX;
 +    if(fpslimit)
