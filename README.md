@@ -146,7 +146,7 @@ Download linux_64_client from the link above and put it into bin_unix/ inside of
 
 For easy configuration of the new features, an updated version of the `menus.cfg` file is automatically installed when you start p1xbraten for the first time. The new file brings UI options for added features and also includes various cleanups of the vanilla GUI.
 
-If you do not want to use the p1xbraten menus, execute `/usep1xbratenmenus 0` and restart the game.
+If you do not want to use the p1xbraten menus, execute `/usep1xbratenmenus 0`.
 
 ## Building your own binary
 

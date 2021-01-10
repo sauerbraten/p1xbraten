@@ -35,9 +35,11 @@ namespace game
     {
         if(arg[0] ? player1->state==CS_SPECTATOR : following>=0)
         {
+            int ofollowing = following;
             following = arg[0] ? parseplayer(arg) : -1;
             if(following==player1->clientnum) following = -1;
             followdir = 0;
+            if(following!=ofollowing) clearfragmessages();
             conoutf("follow %s", following>=0 ? "on" : "off");
         }
 	}
@@ -56,6 +58,7 @@ namespace game
             cur = (cur + dir + clients.length()) % clients.length();
             if(clients[cur] && clients[cur]->state!=CS_SPECTATOR)
             {
+                if(following != cur) clearfragmessages();
                 if(following<0) conoutf("follow on");
                 following = cur;
                 followdir = dir;
@@ -116,6 +119,7 @@ namespace game
         if(following<0) return;
         following = -1;
         followdir = 0;
+        clearfragmessages();
         conoutf("follow off");
     }
 
@@ -1104,7 +1108,7 @@ namespace game
         {
             if(gameclock) drawgameclock(w, h);
             if(hudscore) drawhudscore(w, h);
-            if(hudfragmessages==1 || (hudfragmessages==2 && !m_insta)) drawfragmessages(d, w, h);
+            if(hudfragmessages==1 || (hudfragmessages==2 && !m_insta)) drawfragmessages(w, h);
         }
     }
 

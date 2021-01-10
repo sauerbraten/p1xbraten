@@ -11,12 +11,12 @@ Index: src/Makefile
  	fpsgame/movable.o \
  	fpsgame/render.o \
 @@ -482,3 +483,4 @@
-+fpsgame/fragmessages.o: fpsgame/game.h fpsgame/fragmessage_type.h
++fpsgame/fragmessages.o: fpsgame/game.h
  fpsgame/monster.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
  fpsgame/monster.o: shared/ents.h shared/command.h shared/glexts.h
  fpsgame/monster.o: shared/glemu.h shared/iengine.h shared/igame.h
 @@ -525,3 +527,4 @@
-+fpsgame/game.h.gch: fpsgame/fragmessage_type.h fpsgame/fragmessages.h
++fpsgame/game.h.gch: fpsgame/fragmessages.h
 
  shared/crypto-standalone.o: shared/cube.h shared/tools.h shared/geom.h
  shared/crypto-standalone.o: shared/ents.h shared/command.h shared/iengine.h
@@ -24,7 +24,35 @@ Index: src/fpsgame/fps.cpp
 ===================================================================
 --- src/fpsgame/fps.cpp	(revision 6488)
 +++ src/fpsgame/fps.cpp	(working copy)
-@@ -496,6 +496,10 @@
+@@ -34,9 +34,11 @@
+     {
+         if(arg[0] ? player1->state==CS_SPECTATOR : following>=0)
+         {
++            int ofollowing = following;
+             following = arg[0] ? parseplayer(arg) : -1;
+             if(following==player1->clientnum) following = -1;
+             followdir = 0;
++            if(following!=ofollowing) clearfragmessages();
+             conoutf("follow %s", following>=0 ? "on" : "off");
+         }
+ 	}
+@@ -55,6 +57,7 @@
+             cur = (cur + dir + clients.length()) % clients.length();
+             if(clients[cur] && clients[cur]->state!=CS_SPECTATOR)
+             {
++                if(following != cur) clearfragmessages();
+                 if(following<0) conoutf("follow on");
+                 following = cur;
+                 followdir = dir;
+@@ -115,6 +118,7 @@
+         if(following<0) return;
+         following = -1;
+         followdir = 0;
++        clearfragmessages();
+         conoutf("follow off");
+     }
+
+@@ -496,6 +500,10 @@
              if(d==player1) conoutf(contype, "\f2%s got fragged by %s", dname, aname);
              else conoutf(contype, "\f2%s fragged %s", aname, dname);
          }
@@ -35,50 +63,26 @@ Index: src/fpsgame/fps.cpp
          deathstate(d);
  		ai::killed(d, actor);
      }
-@@ -1091,6 +1095,7 @@
+@@ -1091,6 +1099,7 @@
          {
              if(gameclock) drawgameclock(w, h);
              if(hudscore) drawhudscore(w, h);
-+            if(hudfragmessages==1 || (hudfragmessages==2 && !m_insta)) drawfragmessages(d, w, h);
++            if(hudfragmessages==1 || (hudfragmessages==2 && !m_insta)) drawfragmessages(w, h);
          }
      }
 
-Index: src/fpsgame/fragmessage_type.h
-===================================================================
---- src/fpsgame/fragmessage_type.h	(nonexistent)
-+++ src/fpsgame/fragmessage_type.h	(working copy)
-@@ -0,0 +1,20 @@
-+#ifndef __FRAGMESSAGE_TYPE_H__
-+#define __FRAGMESSAGE_TYPE_H__
-+
-+#include "game.h"
-+
-+struct fragmessage {
-+    string attackername, victimname;
-+    int weapon;
-+    int fragtime;
-+
-+    fragmessage(const char *aname, const char *vname, int fragweapon)
-+    {
-+        copystring(attackername, aname ? aname : "");
-+        copystring(victimname, vname);
-+        weapon = fragweapon;
-+        fragtime = lastmillis;
-+    }
-+};
-+
-+#endif
 Index: src/fpsgame/fragmessages.cpp
 ===================================================================
 --- src/fpsgame/fragmessages.cpp	(nonexistent)
 +++ src/fpsgame/fragmessages.cpp	(working copy)
-@@ -0,0 +1,71 @@
+@@ -0,0 +1,76 @@
 +#include "game.h"
-+#include "fragmessage_type.h"
 +
 +namespace game {
++    vector<fragmessage> fragmessages; // oldest first, newest at the end
++
 +    VARP(hudfragmessages, 0, 1, 2);
-+    VARP(maxhudfragmessages, 1, 3, 10);
++    VARFP(maxhudfragmessages, 1, 3, 10, { fragmessages.growbuf(maxhudfragmessages); fragmessages.shrink(maxhudfragmessages); });
 +    FVARP(hudfragmessageduration, 0, 2.0f, 10.0f); // in seconds
 +    VARP(hudfragmessagefade, 0, 1, 1);
 +    FVARP(hudfragmessagex, 0, 0.5f, 1.0f);
@@ -90,14 +94,18 @@ Index: src/fpsgame/fragmessages.cpp
 +    void addfragmessage(int contype, const char *aname, const char *vname, int gun)
 +    {
 +        if(!(contype&hudfragmessagefilter)) return;
-+        fpsent *h = hudplayer();
-+        if(h->fragmessages->length()>=maxhudfragmessages) h->fragmessages->remove(0, h->fragmessages->length()-maxhudfragmessages+1);
-+        h->fragmessages->add(fragmessage(aname, vname, gun));
++        if(fragmessages.length()>=maxhudfragmessages) fragmessages.remove(0, fragmessages.length()-maxhudfragmessages+1);
++        fragmessages.add(fragmessage(aname, vname, gun));
 +    }
 +
-+    void drawfragmessages(fpsent *d, int w, int h)
++    void clearfragmessages()
 +    {
-+        if(d->fragmessages->empty()) return;
++        fragmessages.shrink(0);
++    }
++
++    void drawfragmessages(int w, int h)
++    {
++        if(fragmessages.empty()) return;
 +
 +        float stepsize = (3*HICON_SIZE)/2;
 +        float stackdir = hudfragmessagestackdir ? hudfragmessagestackdir : (hudfragmessagey>0.5 ? 1 : -1); // default: towards closest edge
@@ -109,20 +117,20 @@ Index: src/fpsgame/fragmessages.cpp
 +
 +        int showmillis = (int)(hudfragmessageduration*1000.0f);
 +
-+        for(int i = d->fragmessages->length()-1; i>=0; i--)
++        for(int i = fragmessages.length()-1; i>=0; i--)
 +        {
-+            fragmessage &m = (*d->fragmessages)[i];
++            fragmessage &m = fragmessages[i];
 +
 +            if(lastmillis-m.fragtime > showmillis + (hudfragmessagefade ? 255 : 0))
 +            {
 +                // all messages before i are older, so remove all of them
-+                d->fragmessages->remove(0, i+1);
++                fragmessages.remove(0, i+1);
 +                break;
 +            }
 +
 +            int alpha = 255 - max(0, lastmillis-m.fragtime-showmillis);
 +
-+            vec2 drawposcenter = vec2(0, (d->fragmessages->length()-1-i)*stackdir*stepsize).add(origin);
++            vec2 drawposcenter = vec2(0, (fragmessages.length()-1-i)*stackdir*stepsize).add(origin);
 +
 +            int tw, th; vec2 drawpos;
 +            if(m.attackername[0])
@@ -144,65 +152,52 @@ Index: src/fpsgame/fragmessages.cpp
 +        pophudmatrix();
 +    }
 +}
-\ No newline at end of file
 Index: src/fpsgame/fragmessages.h
 ===================================================================
 --- src/fpsgame/fragmessages.h	(nonexistent)
 +++ src/fpsgame/fragmessages.h	(working copy)
-@@ -0,0 +1,13 @@
+@@ -0,0 +1,28 @@
 +#ifndef __FRAGMESSAGES_H__
 +#define __FRAGMESSAGES_H__
 +
 +#include "game.h"
 +
 +namespace game {
++    struct fragmessage {
++        string attackername, victimname;
++        int weapon;
++        int fragtime;
++
++        fragmessage(const char *aname, const char *vname, int fragweapon)
++        {
++            copystring(attackername, aname ? aname : "");
++            copystring(victimname, vname);
++            weapon = fragweapon;
++            fragtime = lastmillis;
++        }
++    };
++
 +    extern vector<fragmessage> fragmessages;
 +    extern int hudfragmessages;
 +    extern void addfragmessage(int contype, const char *aname, const char *vname, int gun);
-+    extern void drawfragmessages(fpsent *d, int w, int h);
++    extern void clearfragmessages();
++    extern void drawfragmessages(int w, int h);
 +}
 +
 +#endif
-\ No newline at end of file
 Index: src/fpsgame/game.h
 ===================================================================
---- src/fpsgame/game.h	(revision 6479)
+--- src/fpsgame/game.h	(revision 6488)
 +++ src/fpsgame/game.h	(working copy)
-@@ -535,6 +535,8 @@
-     }
- };
-
-+#include "fragmessage_type.h"
-+
- struct fpsent : dynent, fpsstate
- {
-     int weight;                         // affects the effectiveness of hitpush
-@@ -543,6 +545,8 @@
+@@ -543,6 +543,7 @@
      int respawned, suicided;
      int lastpain;
      int lastaction, lastattackgun;
 +    int lasthitpushgun;
-+    vector<fragmessage> *fragmessages; // oldest first, newest at the end
      bool attacking;
      int attacksound, attackchan, idlesound, idlechan;
      int lasttaunt;
-@@ -563,6 +567,7 @@
-     fpsent() : weight(100), clientnum(-1), privilege(PRIV_NONE), lastupdate(0), plag(0), ping(0), lifesequence(0), respawned(-1), suicided(-1), lastpain(0), attacksound(-1), attackchan(-1), idlesound(-1), idlechan(-1), frags(0), flags(0), deaths(0), totaldamage(0), totalshots(0), edit(NULL), smoothmillis(-1), playermodel(-1), ai(NULL), ownernum(-1), muzzle(-1, -1, -1)
-     {
-         name[0] = team[0] = info[0] = 0;
-+        fragmessages = new vector<fragmessage>;
-         respawn();
-     }
-     ~fpsent()
-@@ -571,6 +576,7 @@
-         if(attackchan >= 0) stopsound(attacksound, attackchan);
-         if(idlechan >= 0) stopsound(idlesound, idlechan);
-         if(ai) delete ai;
-+        DELETEP(fragmessages);
-     }
-
-     void hitpush(int damage, const vec &dir, fpsent *actor, int gun)
-@@ -578,6 +584,7 @@
+@@ -578,6 +579,7 @@
          vec push(dir);
          push.mul((actor==this && guns[gun].exprad ? EXP_SELFPUSH : 1.0f)*guns[gun].hitpush*damage/weight);
          vel.add(push);
@@ -210,7 +205,7 @@ Index: src/fpsgame/game.h
      }
 
      void stopattacksound()
-@@ -846,6 +853,8 @@
+@@ -846,6 +848,8 @@
      extern vec hudgunorigin(int gun, const vec &from, const vec &to, fpsent *d);
  }
 
@@ -221,7 +216,7 @@ Index: src/fpsgame/game.h
      extern const char *modename(int n, const char *unknown = "unknown");
 Index: src/vcpp/sauerbraten.vcxproj
 ===================================================================
---- src/vcpp/sauerbraten.vcxproj	(revision 6479)
+--- src/vcpp/sauerbraten.vcxproj	(revision 6488)
 +++ src/vcpp/sauerbraten.vcxproj	(working copy)
 @@ -1078,6 +1078,20 @@
        <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
