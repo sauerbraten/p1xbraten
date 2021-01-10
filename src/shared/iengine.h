@@ -1,9 +1,10 @@
 // the interface the game uses to access the engine
 
-extern int curtime;                     // current frame time
-extern int lastmillis;                  // last time
-extern int elapsedtime;                 // elapsed frame time
-extern int totalmillis;                 // total elapsed time
+extern int curtime;          // scaled duration since last step
+extern int lastmillis;       // totalmillis value at last step
+extern int elapsedtime;      // wall clock duration since last step
+extern int totalmillis;      // total elapsed wall clock duration since engine start
+extern int curframetime;     // scaled duration since last frame
 extern uint totalsecs;
 extern int gamespeed, paused;
 

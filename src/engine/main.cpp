@@ -72,7 +72,7 @@ void fatal(const char *s, ...)    // failure exit
     exit(EXIT_FAILURE);
 }
 
-int curtime = 0, lastmillis = 1, elapsedtime = 0, totalmillis = 1;
+int curtime = 0, lastmillis = 1, elapsedtime = 0, totalmillis = 1, curframetime = 0;
 
 dynent *player = NULL;
 
@@ -1360,6 +1360,13 @@ int main(int argc, char **argv)
         int millis = getclockmillis();
         bool draw = false;
         ratelimit(millis, lastdrawmillis, draw);
+        if(draw)
+        {
+            static int frametimeerr = 0;
+            int scaledframetime = game::scaletime(millis-lastdrawmillis) + frametimeerr;
+            curframetime = scaledframetime/100;
+            frametimeerr = scaledframetime%100;
+        }
         elapsedtime = millis - totalmillis;
         static int timeerr = 0;
         int scaledtime = game::scaletime(elapsedtime) + timeerr;

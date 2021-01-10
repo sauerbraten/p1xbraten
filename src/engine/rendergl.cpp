@@ -2025,7 +2025,7 @@ void drawdamagecompass(int w, int h)
         gle::attrib(m.transform(vec2(0, 0)));
 
         // fade in log space so short blips don't disappear too quickly
-        scale -= float(curtime)/damagecompassfade;
+        scale -= float(curframetime)/damagecompassfade;
         damagedirs[i] = scale > 0 ? (pow(logscale, scale) - 1) / (logscale - 1) : 0;
     }
     if(dirs) gle::end();

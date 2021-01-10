@@ -2,6 +2,15 @@ Index: src/engine/main.cpp
 ===================================================================
 --- src/engine/main.cpp	(revision 6488)
 +++ src/engine/main.cpp	(working copy)
+@@ -72,7 +72,7 @@
+     exit(EXIT_FAILURE);
+ }
+
+-int curtime = 0, lastmillis = 1, elapsedtime = 0, totalmillis = 1;
++int curtime = 0, lastmillis = 1, elapsedtime = 0, totalmillis = 1, curframetime = 0;
+
+ dynent *player = NULL;
+
 @@ -1031,31 +1031,39 @@
      gle::disable();
      SDL_GL_SwapWindow(screen);
@@ -59,7 +68,7 @@ Index: src/engine/main.cpp
  }
 
  #if defined(WIN32) && !defined(_DEBUG) && !defined(__GNUC__)
-@@ -1346,9 +1354,10 @@
+@@ -1346,9 +1354,17 @@
 
      for(;;)
      {
@@ -69,10 +78,17 @@ Index: src/engine/main.cpp
 -        limitfps(millis, totalmillis);
 +        bool draw = false;
 +        ratelimit(millis, lastdrawmillis, draw);
++        if(draw)
++        {
++            static int frametimeerr = 0;
++            int scaledframetime = game::scaletime(millis-lastdrawmillis) + frametimeerr;
++            curframetime = scaledframetime/100;
++            frametimeerr = scaledframetime%100;
++        }
          elapsedtime = millis - totalmillis;
          static int timeerr = 0;
          int scaledtime = game::scaletime(elapsedtime) + timeerr;
-@@ -1356,10 +1365,10 @@
+@@ -1356,10 +1372,10 @@
          timeerr = scaledtime%100;
          if(!multiplayer(false) && curtime>200) curtime = 200;
          if(game::ispaused()) curtime = 0;
@@ -85,7 +101,7 @@ Index: src/engine/main.cpp
          checkinput();
          menuprocess();
          tryedit();
-@@ -1370,24 +1379,31 @@
+@@ -1370,24 +1386,31 @@
 
          serverslice(false, 0);
 
@@ -127,3 +143,35 @@ Index: src/engine/main.cpp
      return EXIT_FAILURE;
 
      #if defined(WIN32) && !defined(_DEBUG) && !defined(__GNUC__)
+Index: src/engine/rendergl.cpp
+===================================================================
+--- src/engine/rendergl.cpp	(revision 6488)
++++ src/engine/rendergl.cpp	(working copy)
+@@ -2025,7 +2025,7 @@
+         gle::attrib(m.transform(vec2(0, 0)));
+
+         // fade in log space so short blips don't disappear too quickly
+-        scale -= float(curtime)/damagecompassfade;
++        scale -= float(curframetime)/damagecompassfade;
+         damagedirs[i] = scale > 0 ? (pow(logscale, scale) - 1) / (logscale - 1) : 0;
+     }
+     if(dirs) gle::end();
+Index: src/shared/iengine.h
+===================================================================
+--- src/shared/iengine.h	(revision 6488)
++++ src/shared/iengine.h	(working copy)
+@@ -1,9 +1,10 @@
+ // the interface the game uses to access the engine
+
+-extern int curtime;                     // current frame time
+-extern int lastmillis;                  // last time
+-extern int elapsedtime;                 // elapsed frame time
+-extern int totalmillis;                 // total elapsed time
++extern int curtime;          // scaled duration since last step
++extern int lastmillis;       // totalmillis value at last step
++extern int elapsedtime;      // wall clock duration since last step
++extern int totalmillis;      // total elapsed wall clock duration since engine start
++extern int curframetime;     // scaled duration since last frame
+ extern uint totalsecs;
+ extern int gamespeed, paused;
+
