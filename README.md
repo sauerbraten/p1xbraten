@@ -128,7 +128,7 @@ You can easily configure the hud frag messages using the [improved menu](#menu) 
 
   - for lowest average latency, use `/maxtps 0` and set `maxfps` to your screen refresh rate plus ~10% (to make sure there's always a new frame ready), for example `/maxfps 70`, then `/vsync 1`
   - to use fewer resources and save laptop battery, use `/maxfps 0`, `/maxtps 100` and `/vsync 1`
-  - for lowest consistent latency, use `/maxfps 0`, `/vsync 0`, and set `maxtps` to the highest value that gives you a stable fps counter on your system (disable vsync to find out)
+  - for lowest consistent latency, use `/maxfps 0`, `/vsync 0`, then set `maxtps` to the highest value that gives you a stable fps counter on your system, then `/vsync 1`
 
 - adds Wayland detection
 
@@ -136,7 +136,7 @@ You can easily configure the hud frag messages using the [improved menu](#menu) 
 
   Because Wayland provides tear-free presentation out of the box, p1xbraten ignores `/vsync 1` when running on Wayland. The fps counter in p1xbraten will show the rate at which your Wayland compositor requests frames, which usually matches your display's refresh rate. Basically, Wayland takes care of vsync for you.
 
-  Most Linux distributions that use Wayland will run Sauerbraten as an Xorg app through Xwayland. **Set `SDL_VIDEODRIVER=wayland` in your launch script** (like in my [start.sh](./start.sh#L62) to force SDL to use Wayland. You can check whether p1xbraten is running as a Wayland process using the `/wayland` variable.
+  Most Linux distributions that use Wayland will run Sauerbraten as an Xorg app through Xwayland. **Set `SDL_VIDEODRIVER=wayland` in your launch script** (like in my [start.sh](./start.sh#L62)) to force SDL to use Wayland. You can check whether p1xbraten is running as a Wayland process using the `/wayland` variable.
 
 ## Installation
 
