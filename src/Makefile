@@ -479,7 +479,7 @@ fpsgame/fps.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
 fpsgame/fps.o: shared/ents.h shared/command.h shared/glexts.h shared/glemu.h
 fpsgame/fps.o: shared/iengine.h shared/igame.h fpsgame/ai.h
 fpsgame/fps.o: fpsgame/weaponstats.h
-fpsgame/fragmessages.o: fpsgame/game.h
+fpsgame/fragmessages.o: fpsgame/game.h fpsgame/fragmessages.h
 fpsgame/monster.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
 fpsgame/monster.o: shared/ents.h shared/command.h shared/glexts.h
 fpsgame/monster.o: shared/glemu.h shared/iengine.h shared/igame.h
