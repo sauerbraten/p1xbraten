@@ -118,7 +118,7 @@ You can easily configure the hud frag messages using the [improved menu](#menu) 
 ### [decouple_framedrawing.patch](./patches/decouple_framedrawing.patch)
 
 - removes fps-induced limiting of the main loop (for example, input & network processing were affected by `maxfps`)
-- introduce `maxtps` var to limit the main loop independently from `maxfps` (for example to save power): 0 to disable limiting (default), 100..1000 to set how many ticks per second are allowed; `maxfps` overrides `maxtps` if `maxfps < maxtps`
+- introduce `maxtps` var to limit the main loop independently from `maxfps` (for example to save power): 0 to disable limiting (default), 100..1000 to set how many ticks per second are allowed; `maxfps` overrides `maxtps` if `maxfps > maxtps`
 
   These two changes allow using `maxfps` without compromising on the frequency of input polling and network event processing. In vanilla Sauerbraten, `maxfps` limits the whole game's main loop if it's set to any value other than 0. This patch removes that limiting behavior and instead processes network events and player input on every main loop iteration, and skips frame drawing until a new frame is required to reach the requests frame rate.
 
