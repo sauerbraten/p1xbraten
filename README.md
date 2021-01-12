@@ -2,6 +2,13 @@
 
 This repository contains the source for my client mod, as well as the patches applied to the vanilla source to get there.
 
+<p>
+<figure>
+  <blockquote>mouse input feels smooth af with your client now @pix</blockquote>
+  —Acuerta, <cite><a href='https://discord.com/channels/186571398422986754/388590104387649537/798528659400032286'>12 Jan 2021</a></cite>
+</figure>
+</p>
+
 - [Patches](#patches)
   - [moviehud.patch](#moviehudpatch)
   - [scoreboard.patch](#scoreboardpatch)
