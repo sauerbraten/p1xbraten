@@ -1046,7 +1046,7 @@ void ratelimit(int &millis, int lastdrawmillis, bool &draw)
     int fpslimit = (mainmenu || minimized) && menufps ? (maxfps ? min(maxfps, menufps) : menufps) : maxfps;
     if(!fpslimit && !wayland) draw = true;
     int tpslimit = maxtps ? max(maxtps, fpslimit) : 0;
-    if(!fpslimit && !wayland && !tpslimit) return;
+    if(!fpslimit && !tpslimit) return;
     int delay = 1;
     if(tpslimit) delay = 1000/tpslimit - (millis-totalmillis);
     // should we draw?
