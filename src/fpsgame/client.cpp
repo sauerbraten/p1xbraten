@@ -1816,7 +1816,7 @@ namespace game
                 int sign = (d->extrapings)%2 ? -1 : 1;
                 if(ping==d->ping+sign*(d->extrapings))
                 {
-                    d->p1xbratenconfidence += d->extrapings;
+                    d->p1xbratenconfidence += d->extrapings * 2;
                     d->p1xbratenconfidence = min(d->p1xbratenconfidence, 1000);
                 }
                 else
