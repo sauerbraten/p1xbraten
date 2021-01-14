@@ -7,13 +7,13 @@ namespace game {
         #include "../../data/p1xbraten/menus.cfg.gz.xxd"
     };
 
-    const size_t menuscfggzlen = 16051;
+    const size_t menuscfggzlen = 16060;
     string mastercfgfname = "data/p1xbraten/master.cfg.gz";
     const uchar mastercfggz[] = {
         #include "../../data/p1xbraten/master.cfg.gz.xxd"
     };
 
-    const size_t mastercfggzlen = 1031;
+    const size_t mastercfggzlen = 1029;
     string gamehudcfgfname = "data/p1xbraten/gamehud.cfg.gz";
     const uchar gamehudcfggz[] = {
         #include "../../data/p1xbraten/gamehud.cfg.gz.xxd"
