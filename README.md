@@ -54,23 +54,27 @@ a.k.a. Features
 
   ![example screenshots](https://i.imgur.com/hsCY56E.gif)
 
-- makes the following built-in cubescript commands return `hudplayer`'s stats instead of `player1`:
+- makes the following built-in cubescript commands take an optional player CN as argument:
     - `getfrags`
     - `getflags`
     - `getdeaths`
+    - `getaccuracy`
+    - `gettotaldamage`
+    - `gettotalshots`
+    - `getweapon`
 
-  This allows you to see the stats of the player you're currently spectating in the gamehud instead of your own.
+  Omitting the argument will return the information about `hudplayer`, i.e. yourself (if playing) or the player you're currently spectating.
 
 - adds damage-related cubescript commands:
-    - `getdamagepotential`
-    - `getdamagedealt`
+    - `getdamagepotential` (same as `gettotalshots` when not filtering by weapon)
+    - `getdamagedealt` (same as `gettotaldamage` when not filtering by weapon)
     - `getdamagereceived`
     - `getdamagewasted` (= potential − dealt)
     - `getnetdamage` (= dealt − received)
 
-  All of the new damage-related commands (as well as `getaccuracy`) default to showing your own (`hudplayer`'s) stats across all weapons. However, they all take two optional integer arguments to query by weapon and player: `/<cmd> [weapon] [cn]` (use -1 to query damage across all weapons)
+  All of the new damage-related commands (as well as `getaccuracy`) default to showing `hudplayer`'s stats across all weapons. However, they all take two optional integer arguments to query stats of a certain player and optionally for a specific weapon: `/<cmd> [cn] [weapon]` (use -1 as CN to query specific weapon stats about `hudplayer`).
 
-  To show comed-like statistics in the game hud in the lower right corner, run `/exec data/p1xbraten/gamehud.cfg.gz`.
+  To show comed-like statistics in the lower right corner, run `/exec data/p1xbraten/gamehud.cfg.gz`.
 
 ### [hudfragmessages.patch](./patches/hudfragmessages.patch)
 
