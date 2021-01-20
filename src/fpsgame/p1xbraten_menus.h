@@ -1,10 +1,10 @@
 #include "cube.h"
 
 namespace game {
+    template<size_t N>
     struct embeddedfile {
         string name;
         const uint crc;
-        const size_t len;
-        const uchar contents[];
+        const uchar contents[N];
     };
 }

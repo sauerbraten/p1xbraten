@@ -44,11 +44,11 @@ gzip-menus:
 
 _include-menus:
 	sed -i "s/0,\/\/menuscrc/0x$(shell crc32 data/p1xbraten/menus.cfg),/" src/fpsgame/p1xbraten_menus.cpp
-	sed -i "s/0,\/\/menuslen/$(shell stat --printf="%s" data/p1xbraten/menus.cfg.gz),/" src/fpsgame/p1xbraten_menus.cpp
+	sed -i "s/embeddedfile<0> menuscfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/menus.cfg.gz)> menuscfg/" src/fpsgame/p1xbraten_menus.cpp
 	sed -i "s/0,\/\/mastercrc/0x$(shell crc32 data/p1xbraten/master.cfg),/" src/fpsgame/p1xbraten_menus.cpp
-	sed -i "s/0,\/\/masterlen/$(shell stat --printf="%s" data/p1xbraten/master.cfg.gz),/" src/fpsgame/p1xbraten_menus.cpp
+	sed -i "s/embeddedfile<0> mastercfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/master.cfg.gz)> mastercfg/" src/fpsgame/p1xbraten_menus.cpp
 	sed -i "s/0,\/\/gamehudcrc/0x$(shell crc32 data/p1xbraten/gamehud.cfg),/" src/fpsgame/p1xbraten_menus.cpp
-	sed -i "s/0,\/\/gamehudlen/$(shell stat --printf="%s" data/p1xbraten/gamehud.cfg.gz),/" src/fpsgame/p1xbraten_menus.cpp
+	sed -i "s/embeddedfile<0> gamehudcfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/gamehud.cfg.gz)> gamehudcfg/" src/fpsgame/p1xbraten_menus.cpp
 
 clean-sauer: check-env
 	cd $(SAUER_DIR) && \

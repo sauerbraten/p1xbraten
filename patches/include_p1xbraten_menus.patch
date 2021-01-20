@@ -25,39 +25,37 @@ Index: src/fpsgame/p1xbraten_menus.cpp
 ===================================================================
 --- src/fpsgame/p1xbraten_menus.cpp	(nonexistent)
 +++ src/fpsgame/p1xbraten_menus.cpp	(working copy)
-@@ -0,0 +1,81 @@
+@@ -0,0 +1,79 @@
 +#include "cube.h"
 +#include "p1xbraten_menus.h"
 +
 +namespace game {
-+    struct embeddedfile menuscfg = {
++    struct embeddedfile<0> menuscfg = {
 +        "data/p1xbraten/menus.cfg.gz",
 +        0,//menuscrc
-+        0,//menuslen
 +        {
 +            #include "../../data/p1xbraten/menus.cfg.gz.xxd"
 +        }
 +    };
 +
-+    struct embeddedfile mastercfg = {
++    struct embeddedfile<0> mastercfg = {
 +        "data/p1xbraten/master.cfg.gz",
 +        0,//mastercrc
-+        0,//masterlen
 +        {
 +            #include "../../data/p1xbraten/master.cfg.gz.xxd"
 +        }
 +    };
 +
-+    struct embeddedfile gamehudcfg = {
++    struct embeddedfile<0> gamehudcfg = {
 +        "data/p1xbraten/gamehud.cfg.gz",
 +        0,//gamehudcrc
-+        0,//gamehudlen
 +        {
 +            #include "../../data/p1xbraten/gamehud.cfg.gz.xxd"
 +        }
 +    };
 +
-+    int update(embeddedfile *i)
++    template<size_t N>
++    int update(embeddedfile<N> *i)
 +    {
 +        stream *f = opengzfile(path(i->name), "rb");
 +        if(f)
@@ -69,7 +67,7 @@ Index: src/fpsgame/p1xbraten_menus.cpp
 +
 +        f = openrawfile(path(i->name), "wb");
 +        if(!f) return 2;
-+        f->write(i->contents, i->len);
++        f->write(i->contents, N);
 +        delete f;
 +        conoutf("updated %s", i->name);
 +        return 0;
@@ -115,11 +113,11 @@ Index: src/fpsgame/p1xbraten_menus.h
 +#include "cube.h"
 +
 +namespace game {
++    template<size_t N>
 +    struct embeddedfile {
 +        string name;
 +        const uint crc;
-+        const size_t len;
-+        const uchar contents[];
++        const uchar contents[N];
 +    };
 +}
 \ No newline at end of file
