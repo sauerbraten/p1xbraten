@@ -1,8 +1,6 @@
-NOTE: This patch relies on execfile.patch to allow loading and executing gzipped cubescript files.
-
 Index: src/Makefile
 ===================================================================
---- src/Makefile	(revision 6488)
+--- src/Makefile	(revision 6490)
 +++ src/Makefile	(working copy)
 @@ -127,6 +127,7 @@
  	fpsgame/fps.o \
@@ -12,11 +10,14 @@ Index: src/Makefile
  	fpsgame/render.o \
  	fpsgame/scoreboard.o \
  	fpsgame/server.o \
-@@ -481,6 +482,7 @@
+@@ -481,6 +482,10 @@
  fpsgame/movable.o: shared/ents.h shared/command.h shared/glexts.h
  fpsgame/movable.o: shared/glemu.h shared/iengine.h shared/igame.h
  fpsgame/movable.o: fpsgame/ai.h
-+fpsgame/p1xbraten_menus.o: shared/cube.h
++fpsgame/p1xbraten_menus.o: shared/cube.h shared/tools.h shared/geom.h
++fpsgame/p1xbraten_menus.o: shared/ents.h shared/command.h shared/glexts.h
++fpsgame/p1xbraten_menus.o: shared/glemu.h shared/iengine.h shared/igame.h
++fpsgame/p1xbraten_menus.o: fpsgame/p1xbraten_menus.h
  fpsgame/render.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
  fpsgame/render.o: shared/ents.h shared/command.h shared/glexts.h
  fpsgame/render.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
@@ -24,54 +25,75 @@ Index: src/fpsgame/p1xbraten_menus.cpp
 ===================================================================
 --- src/fpsgame/p1xbraten_menus.cpp	(nonexistent)
 +++ src/fpsgame/p1xbraten_menus.cpp	(working copy)
-@@ -0,0 +1,61 @@
+@@ -0,0 +1,81 @@
 +#include "cube.h"
++#include "p1xbraten_menus.h"
 +
 +namespace game {
-+
-+    string menuscfgfname = "data/p1xbraten/menus.cfg.gz";
-+    const uchar menuscfggz[] = {
-+        #include "../../data/p1xbraten/menus.cfg.gz.xxd"
++    struct embeddedfile menuscfg = {
++        "data/p1xbraten/menus.cfg.gz",
++        0,//menuscrc
++        0,//menuslen
++        {
++            #include "../../data/p1xbraten/menus.cfg.gz.xxd"
++        }
 +    };
 +
-+    const size_t menuscfggzlen = 0;
-+    string mastercfgfname = "data/p1xbraten/master.cfg.gz";
-+    const uchar mastercfggz[] = {
-+        #include "../../data/p1xbraten/master.cfg.gz.xxd"
++    struct embeddedfile mastercfg = {
++        "data/p1xbraten/master.cfg.gz",
++        0,//mastercrc
++        0,//masterlen
++        {
++            #include "../../data/p1xbraten/master.cfg.gz.xxd"
++        }
 +    };
 +
-+    const size_t mastercfggzlen = 0;
-+    string gamehudcfgfname = "data/p1xbraten/gamehud.cfg.gz";
-+    const uchar gamehudcfggz[] = {
-+        #include "../../data/p1xbraten/gamehud.cfg.gz.xxd"
++    struct embeddedfile gamehudcfg = {
++        "data/p1xbraten/gamehud.cfg.gz",
++        0,//gamehudcrc
++        0,//gamehudlen
++        {
++            #include "../../data/p1xbraten/gamehud.cfg.gz.xxd"
++        }
 +    };
-+    const size_t gamehudcfggzlen = 0;
++
++    int update(embeddedfile *i)
++    {
++        stream *f = opengzfile(path(i->name), "rb");
++        if(f)
++        {
++            uint fcrc = f->getcrc();
++            delete f;
++            if(fcrc && fcrc == i->crc) return 0; // no need to write
++        }
++
++        f = openrawfile(path(i->name), "wb");
++        if(!f) return 2;
++        f->write(i->contents, i->len);
++        delete f;
++        conoutf("updated %s", i->name);
++        return 0;
++    }
 +
 +    extern int usep1xbratenmenus;
 +
 +    void executep1xbratenmenufiles()
 +    {
-+        if(usep1xbratenmenus) execfile(menuscfgfname);
++        if(usep1xbratenmenus) execfile(menuscfg.name);
 +    }
 +
 +    int writep1xbratenmenufiles()
 +    {
 +        if(!usep1xbratenmenus) return 1;
 +
-+        stream *f = openrawfile(path(menuscfgfname), "wb");
-+        if(!f) return 2;
-+        f->write(menuscfggz, menuscfggzlen);
-+        delete f;
++        int err = update(&menuscfg);
++        if(err) { conoutf("\f6error updating %s (error code %d)!", menuscfg.name, err); return err; }
 +
-+        f = openrawfile(path(mastercfgfname), "wb");
-+        if(!f) return 2;
-+        f->write(mastercfggz, mastercfggzlen);
-+        delete f;
++        err = update(&mastercfg);
++        if(err) { conoutf("\f6error updating %s(error code %d)!", mastercfg.name, err); return err; }
 +
-+        f = openrawfile(path(gamehudcfgfname), "wb");
-+        if(!f) return 2;
-+        f->write(gamehudcfggz, gamehudcfggzlen);
-+        delete f;
++        err = update(&gamehudcfg);
++        if(err) { conoutf("\f6error updating %s(error code %d)!", gamehudcfg.name, err); return err; }
 +
 +        return 0;
 +    }
@@ -84,11 +106,26 @@ Index: src/fpsgame/p1xbraten_menus.cpp
 +        }
 +        else execfile("data/menus.cfg");
 +    });
-+
 +}
+Index: src/fpsgame/p1xbraten_menus.h
+===================================================================
+--- src/fpsgame/p1xbraten_menus.h	(nonexistent)
++++ src/fpsgame/p1xbraten_menus.h	(working copy)
+@@ -0,0 +1,10 @@
++#include "cube.h"
++
++namespace game {
++    struct embeddedfile {
++        string name;
++        const uint crc;
++        const size_t len;
++        const uchar contents[];
++    };
++}
+\ No newline at end of file
 Index: src/shared/igame.h
 ===================================================================
---- src/shared/igame.h	(revision 6488)
+--- src/shared/igame.h	(revision 6490)
 +++ src/shared/igame.h	(working copy)
 @@ -48,6 +48,8 @@
      extern const char *autoexec();
@@ -99,9 +136,30 @@ Index: src/shared/igame.h
 
      extern void updateworld();
      extern void initclient();
+Index: src/shared/stream.cpp
+===================================================================
+--- src/shared/stream.cpp	(revision 6490)
++++ src/shared/stream.cpp	(working copy)
+@@ -853,7 +853,15 @@
+         return true;
+     }
+
+-    uint getcrc() { return crc; }
++    uint getcrc()
++    {
++        if(crc) return crc;
++        if(!file) return 0;
++        offset pos = file->tell();
++        if(!file->seek(-8, SEEK_END)) return 0;
++        uint icrc = file->getlil<uint>();
++        return file->seek(pos, SEEK_SET) ? icrc : 0;
++    }
+
+     void finishreading()
+     {
 Index: src/vcpp/sauerbraten.vcxproj
 ===================================================================
---- src/vcpp/sauerbraten.vcxproj	(revision 6488)
+--- src/vcpp/sauerbraten.vcxproj	(revision 6490)
 +++ src/vcpp/sauerbraten.vcxproj	(working copy)
 @@ -1132,6 +1132,20 @@
        <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)2.obj</ObjectFileName>

@@ -43,9 +43,12 @@ gzip-menus:
 	gzip --keep --force --best --no-name data/p1xbraten/gamehud.cfg && xxd -i - data/p1xbraten/gamehud.cfg.gz.xxd < data/p1xbraten/gamehud.cfg.gz
 
 _include-menus:
-	sed -i "s/menuscfggzlen = 0;/menuscfggzlen = $(shell stat --printf="%s" data/p1xbraten/menus.cfg.gz);/" src/fpsgame/p1xbraten_menus.cpp
-	sed -i "s/mastercfggzlen = 0;/mastercfggzlen = $(shell stat --printf="%s" data/p1xbraten/master.cfg.gz);/" src/fpsgame/p1xbraten_menus.cpp
-	sed -i "s/gamehudcfggzlen = 0;/gamehudcfggzlen = $(shell stat --printf="%s" data/p1xbraten/gamehud.cfg.gz);/" src/fpsgame/p1xbraten_menus.cpp
+	sed -i "s/0,\/\/menuscrc/0x$(shell crc32 data/p1xbraten/menus.cfg),/" src/fpsgame/p1xbraten_menus.cpp
+	sed -i "s/0,\/\/menuslen/$(shell stat --printf="%s" data/p1xbraten/menus.cfg.gz),/" src/fpsgame/p1xbraten_menus.cpp
+	sed -i "s/0,\/\/mastercrc/0x$(shell crc32 data/p1xbraten/master.cfg),/" src/fpsgame/p1xbraten_menus.cpp
+	sed -i "s/0,\/\/masterlen/$(shell stat --printf="%s" data/p1xbraten/master.cfg.gz),/" src/fpsgame/p1xbraten_menus.cpp
+	sed -i "s/0,\/\/gamehudcrc/0x$(shell crc32 data/p1xbraten/gamehud.cfg),/" src/fpsgame/p1xbraten_menus.cpp
+	sed -i "s/0,\/\/gamehudlen/$(shell stat --printf="%s" data/p1xbraten/gamehud.cfg.gz),/" src/fpsgame/p1xbraten_menus.cpp
 
 clean-sauer: check-env
 	cd $(SAUER_DIR) && \

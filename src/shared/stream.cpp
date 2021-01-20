@@ -853,7 +853,15 @@ struct gzstream : stream
         return true;
     }
 
-    uint getcrc() { return crc; }
+    uint getcrc()
+    {
+        if(crc) return crc;
+        if(!file) return 0;
+        offset pos = file->tell();
+        if(!file->seek(-8, SEEK_END)) return 0;
+        uint icrc = file->getlil<uint>();
+        return file->seek(pos, SEEK_SET) ? icrc : 0;
+    }
 
     void finishreading()
     {

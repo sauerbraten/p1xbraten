@@ -491,7 +491,10 @@ fpsgame/movable.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
 fpsgame/movable.o: shared/ents.h shared/command.h shared/glexts.h
 fpsgame/movable.o: shared/glemu.h shared/iengine.h shared/igame.h
 fpsgame/movable.o: fpsgame/ai.h
-fpsgame/p1xbraten_menus.o: shared/cube.h
+fpsgame/p1xbraten_menus.o: shared/cube.h shared/tools.h shared/geom.h
+fpsgame/p1xbraten_menus.o: shared/ents.h shared/command.h shared/glexts.h
+fpsgame/p1xbraten_menus.o: shared/glemu.h shared/iengine.h shared/igame.h
+fpsgame/p1xbraten_menus.o: fpsgame/p1xbraten_menus.h
 fpsgame/render.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
 fpsgame/render.o: shared/ents.h shared/command.h shared/glexts.h
 fpsgame/render.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
