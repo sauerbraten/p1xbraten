@@ -1,6 +1,6 @@
 Index: src/Makefile
 ===================================================================
---- src/Makefile	(revision 6479)
+--- src/Makefile	(revision 6490)
 +++ src/Makefile	(working copy)
 @@ -130,6 +130,7 @@
  	fpsgame/render.o \
@@ -30,30 +30,32 @@ Index: src/Makefile
  fpsgame/scoreboard.o: shared/geom.h shared/ents.h shared/command.h
  fpsgame/scoreboard.o: shared/glexts.h shared/glemu.h shared/iengine.h
  fpsgame/scoreboard.o: shared/igame.h fpsgame/ai.h
-+fpsgame/scoreboard.o: fpsgame/colors.h
++fpsgame/scoreboard.o: fpsgame/weaponstats.h fpsgame/colors.h
  fpsgame/server.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
  fpsgame/server.o: shared/ents.h shared/command.h shared/glexts.h
  fpsgame/server.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
-@@ -500,6 +504,8 @@
+@@ -500,6 +504,10 @@
  fpsgame/weapon.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
  fpsgame/weapon.o: shared/ents.h shared/command.h shared/glexts.h
  fpsgame/weapon.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
-+fpsgame/weapon.o: fpsgame/weaponstats.h
-+fpsgame/weaponstats.o: fpsgame/game.h
++fpsgame/weaponstats.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
++fpsgame/weaponstats.o: shared/ents.h shared/command.h shared/glexts.h
++fpsgame/weaponstats.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
++fpsgame/weaponstats.o: fpsgame/weaponstats.h
 
  shared/cube.h.gch: shared/tools.h shared/geom.h shared/ents.h
  shared/cube.h.gch: shared/command.h shared/glexts.h shared/glemu.h
-@@ -512,6 +518,7 @@
+@@ -512,6 +520,7 @@
  fpsgame/game.h.gch: shared/cube.h shared/tools.h shared/geom.h shared/ents.h
  fpsgame/game.h.gch: shared/command.h shared/glexts.h shared/glemu.h
  fpsgame/game.h.gch: shared/iengine.h shared/igame.h fpsgame/ai.h
-+fpsgame/game.h.gch: fpsgame/weaponstats_type.h fpsgame/weaponstats.h
++fpsgame/game.h.gch: fpsgame/weaponstats_type.h
 
  shared/crypto-standalone.o: shared/cube.h shared/tools.h shared/geom.h
  shared/crypto-standalone.o: shared/ents.h shared/command.h shared/iengine.h
 Index: src/engine/rendertext.cpp
 ===================================================================
---- src/engine/rendertext.cpp	(revision 6479)
+--- src/engine/rendertext.cpp	(revision 6490)
 +++ src/engine/rendertext.cpp	(working copy)
 @@ -222,9 +222,9 @@
          switch(c)
@@ -69,7 +71,7 @@ Index: src/engine/rendertext.cpp
              case '6': color = bvec(255, 128,   0); break;   // orange
 Index: src/fpsgame/client.cpp
 ===================================================================
---- src/fpsgame/client.cpp	(revision 6479)
+--- src/fpsgame/client.cpp	(revision 6490)
 +++ src/fpsgame/client.cpp	(working copy)
 @@ -1,4 +1,5 @@
  #include "game.h"
@@ -114,7 +116,7 @@ Index: src/fpsgame/colors.h
 +#define COL_ADMIN COL_ORANGE
 Index: src/fpsgame/fps.cpp
 ===================================================================
---- src/fpsgame/fps.cpp	(revision 6479)
+--- src/fpsgame/fps.cpp	(revision 6490)
 +++ src/fpsgame/fps.cpp	(working copy)
 @@ -1,4 +1,5 @@
  #include "game.h"
@@ -152,11 +154,11 @@ Index: src/fpsgame/fps.cpp
 -    ICOMMAND(getaccuracy, "", (), intret((player1->totaldamage*100)/max(player1->totalshots, 1)));
 -    ICOMMAND(gettotaldamage, "", (), intret(player1->totaldamage));
 -    ICOMMAND(gettotalshots, "", (), intret(player1->totalshots));
-+    ICOMMAND(getfrags, "", (), intret(hudplayer()->frags));
-+    ICOMMAND(getflags, "", (), intret(hudplayer()->flags));
-+    ICOMMAND(getdeaths, "", (), intret(hudplayer()->deaths));
-+    ICOMMAND(gettotaldamage, "", (), intret(playerdamage(NULL, DMG_DEALT)));
-+    ICOMMAND(gettotalshots, "", (), intret(playerdamage(NULL, DMG_POTENTIAL)));
++    PLAYER_VARGS_ICOMMAND(getfrags, intret(p->frags));
++    PLAYER_VARGS_ICOMMAND(getflags, intret(p->flags));
++    PLAYER_VARGS_ICOMMAND(getdeaths, intret(p->deaths));
++    PLAYER_VARGS_ICOMMAND(gettotaldamage, intret(playerdamage(p, DMG_DEALT)));
++    PLAYER_VARGS_ICOMMAND(gettotalshots, intret(playerdamage(p, DMG_POTENTIAL)));
 
      vector<fpsent *> clients;
 
@@ -174,7 +176,7 @@ Index: src/fpsgame/fps.cpp
          setclientmode();
 Index: src/fpsgame/game.h
 ===================================================================
---- src/fpsgame/game.h	(revision 6479)
+--- src/fpsgame/game.h	(revision 6490)
 +++ src/fpsgame/game.h	(working copy)
 @@ -535,6 +535,8 @@
      }
@@ -203,27 +205,19 @@ Index: src/fpsgame/game.h
      {
          name[0] = team[0] = info[0] = 0;
          respawn();
-@@ -846,6 +850,8 @@
-     extern vec hudgunorigin(int gun, const vec &from, const vec &to, fpsent *d);
- }
-
-+#include "weaponstats.h"
-+
- namespace server
- {
-     extern const char *modename(int n, const char *unknown = "unknown");
 Index: src/fpsgame/scoreboard.cpp
 ===================================================================
---- src/fpsgame/scoreboard.cpp	(revision 6479)
+--- src/fpsgame/scoreboard.cpp	(revision 6490)
 +++ src/fpsgame/scoreboard.cpp	(working copy)
-@@ -1,5 +1,6 @@
+@@ -1,5 +1,7 @@
  // creation of scoreboard
  #include "game.h"
++#include "weaponstats.h"
 +#include "colors.h"
 
  namespace game
  {
-@@ -7,7 +8,7 @@
+@@ -7,7 +9,7 @@
      VARP(showservinfo, 0, 1, 1);
      VARP(showclientnum, 0, 0, 1);
      VARP(showpj, 0, 0, 1);
@@ -232,7 +226,7 @@ Index: src/fpsgame/scoreboard.cpp
      VARP(showspectators, 0, 1, 1);
      VARP(showspectatorping, 0, 0, 1);
      VARP(highlightscore, 0, 1, 1);
-@@ -14,6 +15,12 @@
+@@ -14,6 +16,12 @@
      VARP(showconnecting, 0, 0, 1);
      VARP(hidefrags, 0, 1, 1);
      VARP(showdeaths, 0, 0, 1);
@@ -245,7 +239,7 @@ Index: src/fpsgame/scoreboard.cpp
 
      static hashset<teaminfo> teaminfos;
 
-@@ -138,17 +145,15 @@
+@@ -138,17 +146,15 @@
 
      int statuscolor(fpsent *d, int color)
      {
@@ -266,7 +260,7 @@ Index: src/fpsgame/scoreboard.cpp
          const ENetAddress *address = connectedpeer();
          if(showservinfo && address)
          {
-@@ -155,23 +160,22 @@
+@@ -155,23 +161,22 @@
              string hostname;
              if(enet_address_get_host_ip(address, hostname, sizeof(hostname)) >= 0)
              {
@@ -297,7 +291,7 @@ Index: src/fpsgame/scoreboard.cpp
              else
              {
                  int secs = max(maplimit-lastmillis+999, 0)/1000, mins = secs/60;
-@@ -178,15 +182,16 @@
+@@ -178,15 +183,16 @@
                  secs %= 60;
                  g.pushlist();
                  g.strut(mins >= 10 ? 4.5f : 3.5f);
@@ -317,7 +311,7 @@ Index: src/fpsgame/scoreboard.cpp
 
          int numgroups = groupplayers();
          loopk(numgroups)
-@@ -194,8 +199,7 @@
+@@ -194,8 +200,7 @@
              if((k%2)==0) g.pushlist(); // horizontal
 
              scoregroup &sg = *groups[k];
@@ -327,7 +321,7 @@ Index: src/fpsgame/scoreboard.cpp
 
              g.pushlist(); // vertical
              g.pushlist(); // horizontal
-@@ -207,124 +211,148 @@
+@@ -207,124 +212,148 @@
                      b; \
                  }
 
@@ -548,7 +542,7 @@ Index: src/fpsgame/scoreboard.cpp
                      });
                      g.poplist();
                  }
-@@ -332,10 +360,10 @@
+@@ -332,10 +361,10 @@
 
              if(showclientnum || player1->privilege>=PRIV_MASTER)
              {
@@ -562,7 +556,7 @@ Index: src/fpsgame/scoreboard.cpp
                  g.poplist();
              }
 
-@@ -348,81 +376,79 @@
+@@ -348,81 +377,79 @@
              g.poplist(); // horizontal
              g.poplist(); // vertical
 
@@ -684,7 +678,7 @@ Index: src/fpsgame/scoreboard.cpp
 
      struct scoreboardgui : g3d_callback
      {
-@@ -475,8 +501,8 @@
+@@ -475,8 +502,8 @@
      VARP(hudscorealign, -1, 0, 1);
      FVARP(hudscorex, 0, 0.50f, 1);
      FVARP(hudscorey, 0, 0.03f, 1);
@@ -697,7 +691,7 @@ Index: src/fpsgame/scoreboard.cpp
 
 Index: src/fpsgame/weapon.cpp
 ===================================================================
---- src/fpsgame/weapon.cpp	(revision 6479)
+--- src/fpsgame/weapon.cpp	(revision 6490)
 +++ src/fpsgame/weapon.cpp	(working copy)
 @@ -1,5 +1,6 @@
  // weapon.cpp: all shooting and effects code, projectile management
@@ -706,6 +700,15 @@ Index: src/fpsgame/weapon.cpp
 
  namespace game
  {
+@@ -17,7 +18,7 @@
+     VARP(maxdebris, 10, 25, 1000);
+     VARP(maxbarreldebris, 5, 10, 1000);
+
+-    ICOMMAND(getweapon, "", (), intret(player1->gunselect));
++    PLAYER_VARGS_ICOMMAND(getweapon, intret(p->gunselect));
+
+     void gunselect(int gun, fpsent *d)
+     {
 @@ -825,6 +826,7 @@
  		d->gunwait = guns[d->gunselect].attackdelay;
  		if(d->gunselect == GUN_PISTOL && d->ai) d->gunwait += int(d->gunwait*(((101-d->skill)+rnd(111-d->skill))/100.f));
@@ -718,8 +721,9 @@ Index: src/fpsgame/weaponstats.cpp
 ===================================================================
 --- src/fpsgame/weaponstats.cpp	(nonexistent)
 +++ src/fpsgame/weaponstats.cpp	(working copy)
-@@ -0,0 +1,65 @@
+@@ -0,0 +1,60 @@
 +#include "game.h"
++#include "weaponstats.h"
 +
 +namespace game {
 +    void recordpotentialdamage(fpsent *shooter)
@@ -737,7 +741,7 @@ Index: src/fpsgame/weaponstats.cpp
 +
 +    void recorddamage(fpsent *attacker, fpsent *target, int damage)
 +    {
-+        if(!shouldcountdamage(attacker, target)) return;
++        if((attacker == target) || isteam(attacker->team, target->team)) return;
 +        int gun = attacker->gunselect;
 +        // try to fix gun used to deal the damage
 +        if((gun != GUN_SG && damage != guns[gun].damage * (attacker->quadmillis ? 4 : 1)) || (gun == GUN_SG && damage%(attacker->quadmillis ? 40 : 10) != 0))
@@ -748,49 +752,45 @@ Index: src/fpsgame/weaponstats.cpp
 +        target->stats.add(DMG_RECEIVED, gun, damage);
 +    }
 +
-+    #define DMG_ICOMMAND(name,ret) ICOMMAND(name, "V", (tagval *args, int numargs), { \
-+        int gun = numargs > 0 ? args[0].getint() : -1; \
-+        fpsent *p = numargs > 1 ? getclient(args[1].getint()) : hudplayer(); \
-+        return ret;\
-+    })
-+
 +    int playerdamage(fpsent *p, int typ, int gun)
 +    {
 +        if(!p) p = hudplayer();
 +        return p->stats.get(typ, gun);
 +    }
-+    DMG_ICOMMAND(getdamagepotential, intret(playerdamage(p, DMG_POTENTIAL, gun)))
-+    DMG_ICOMMAND(getdamagedealt, intret(playerdamage(p, DMG_DEALT, gun)))
-+    DMG_ICOMMAND(getdamagereceived, intret(playerdamage(p, DMG_RECEIVED, gun)))
++    DAMAGECOMMAND(getdamagepotential, intret(playerdamage(p, DMG_POTENTIAL, gun)))
++    DAMAGECOMMAND(getdamagedealt, intret(playerdamage(p, DMG_DEALT, gun)))
++    DAMAGECOMMAND(getdamagereceived, intret(playerdamage(p, DMG_RECEIVED, gun)))
 +
 +    int playerdamagewasted(fpsent *p, int gun)
 +    {
 +        if(!p) p = hudplayer();
 +        return p->stats.wasted(gun);
 +    }
-+    DMG_ICOMMAND(getdamagewasted, intret(playerdamagewasted(p, gun)))
++    DAMAGECOMMAND(getdamagewasted, intret(playerdamagewasted(p, gun)))
 +
 +    int playernetdamage(fpsent *p, int gun)
 +    {
 +        if(!p) p = hudplayer();
 +        return p->stats.net(gun);
 +    }
-+    DMG_ICOMMAND(getnetdamage, intret(playernetdamage(p, gun)))
++    DAMAGECOMMAND(getnetdamage, intret(playernetdamage(p, gun)))
 +
 +    float playeraccuracy(fpsent *p, int gun)
 +    {
 +        if(!p) p = hudplayer();
 +        return p->stats.accuracy(gun);
 +    }
-+    DMG_ICOMMAND(getaccuracy, floatret(playeraccuracy(p, gun)))
++    DAMAGECOMMAND(getaccuracy, floatret(playeraccuracy(p, gun)))
 +}
 Index: src/fpsgame/weaponstats.h
 ===================================================================
 --- src/fpsgame/weaponstats.h	(nonexistent)
 +++ src/fpsgame/weaponstats.h	(working copy)
-@@ -0,0 +1,14 @@
+@@ -0,0 +1,27 @@
 +#ifndef __WEAPONSTATS_H__
 +#define __WEAPONSTATS_H__
++
++#include "game.h"
 +
 +namespace game {
 +    extern void recordpotentialdamage(fpsent *shooter);
@@ -800,6 +800,17 @@ Index: src/fpsgame/weaponstats.h
 +    extern int playerdamagewasted(fpsent *p, int gun = -1);
 +    extern int playernetdamage(fpsent *p, int gun = -1);
 +    extern float playeraccuracy(fpsent *p, int gun = -1);
++
++    #define PLAYER_VARGS_ICOMMAND(name,b) ICOMMAND(name, "V", (tagval *args, int numargs), { \
++        fpsent *p = numargs > 0 ? getclient(args[0].getint()) : hudplayer(); \
++        if(!p) { conoutf("\f6no player with CN %d", args[0].getint()); return; } \
++        b; \
++    })
++
++    #define DAMAGECOMMAND(name,b) PLAYER_VARGS_ICOMMAND(name, { \
++        int gun = numargs > 1 ? args[1].getint() : -1; \
++        b;\
++    })
 +}
 +
 +#endif
@@ -869,7 +880,7 @@ Index: src/fpsgame/weaponstats_type.h
 +#endif
 Index: src/vcpp/sauerbraten.vcxproj
 ===================================================================
---- src/vcpp/sauerbraten.vcxproj	(revision 6479)
+--- src/vcpp/sauerbraten.vcxproj	(revision 6490)
 +++ src/vcpp/sauerbraten.vcxproj	(working copy)
 @@ -1208,6 +1208,20 @@
        <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>

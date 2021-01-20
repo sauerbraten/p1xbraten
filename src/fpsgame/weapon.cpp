@@ -18,7 +18,7 @@ namespace game
     VARP(maxdebris, 10, 25, 1000);
     VARP(maxbarreldebris, 5, 10, 1000);
 
-    ICOMMAND(getweapon, "", (), intret(player1->gunselect));
+    PLAYER_VARGS_ICOMMAND(getweapon, intret(p->gunselect));
 
     void gunselect(int gun, fpsent *d)
     {

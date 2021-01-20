@@ -861,8 +861,6 @@ namespace game
     extern vec hudgunorigin(int gun, const vec &from, const vec &to, fpsent *d);
 }
 
-#include "weaponstats.h"
-
 #include "fragmessages.h"
 
 namespace server

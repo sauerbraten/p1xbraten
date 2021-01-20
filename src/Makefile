@@ -499,7 +499,7 @@ fpsgame/scoreboard.o: fpsgame/game.h shared/cube.h shared/tools.h
 fpsgame/scoreboard.o: shared/geom.h shared/ents.h shared/command.h
 fpsgame/scoreboard.o: shared/glexts.h shared/glemu.h shared/iengine.h
 fpsgame/scoreboard.o: shared/igame.h fpsgame/ai.h
-fpsgame/scoreboard.o: fpsgame/colors.h
+fpsgame/scoreboard.o: fpsgame/weaponstats.h fpsgame/colors.h
 fpsgame/server.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
 fpsgame/server.o: shared/ents.h shared/command.h shared/glexts.h
 fpsgame/server.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
@@ -512,8 +512,10 @@ fpsgame/waypoint.o: fpsgame/ai.h
 fpsgame/weapon.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
 fpsgame/weapon.o: shared/ents.h shared/command.h shared/glexts.h
 fpsgame/weapon.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
-fpsgame/weapon.o: fpsgame/weaponstats.h
-fpsgame/weaponstats.o: fpsgame/game.h
+fpsgame/weaponstats.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
+fpsgame/weaponstats.o: shared/ents.h shared/command.h shared/glexts.h
+fpsgame/weaponstats.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
+fpsgame/weaponstats.o: fpsgame/weaponstats.h
 
 shared/cube.h.gch: shared/tools.h shared/geom.h shared/ents.h
 shared/cube.h.gch: shared/command.h shared/glexts.h shared/glemu.h
@@ -527,7 +529,7 @@ engine/engine.h.gch: engine/wayland.h
 fpsgame/game.h.gch: shared/cube.h shared/tools.h shared/geom.h shared/ents.h
 fpsgame/game.h.gch: shared/command.h shared/glexts.h shared/glemu.h
 fpsgame/game.h.gch: shared/iengine.h shared/igame.h fpsgame/ai.h
-fpsgame/game.h.gch: fpsgame/weaponstats_type.h fpsgame/weaponstats.h
+fpsgame/game.h.gch: fpsgame/weaponstats_type.h
 fpsgame/game.h.gch: fpsgame/fragmessages.h
 
 shared/crypto-standalone.o: shared/cube.h shared/tools.h shared/geom.h
