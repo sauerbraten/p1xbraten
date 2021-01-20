@@ -1,6 +1,6 @@
 Index: src/engine/command.cpp
 ===================================================================
---- src/engine/command.cpp	(revision 6488)
+--- src/engine/command.cpp	(revision 6490)
 +++ src/engine/command.cpp	(working copy)
 @@ -2365,7 +2365,7 @@
  {
@@ -13,17 +13,8 @@ Index: src/engine/command.cpp
          if(msg) conoutf(CON_ERROR, "could not read \"%s\"", cfgfile);
 Index: src/shared/stream.cpp
 ===================================================================
---- src/shared/stream.cpp	(revision 6488)
+--- src/shared/stream.cpp	(revision 6490)
 +++ src/shared/stream.cpp	(working copy)
-@@ -921,7 +921,7 @@
-     offset size()
-     {
-         if(!file) return -1;
--        offset pos = tell();
-+        offset pos = file->tell();
-         if(!file->seek(-4, SEEK_END)) return -1;
-         uint isize = file->getlil<uint>();
-         return file->seek(pos, SEEK_SET) ? isize : offset(-1);
 @@ -1237,9 +1237,9 @@
      return utf8;
  }
@@ -63,7 +54,7 @@ Index: src/shared/stream.cpp
 -
 Index: src/shared/tools.h
 ===================================================================
---- src/shared/tools.h	(revision 6488)
+--- src/shared/tools.h	(revision 6490)
 +++ src/shared/tools.h	(working copy)
 @@ -1368,7 +1368,7 @@
  extern stream *opentempfile(const char *filename, const char *mode);
