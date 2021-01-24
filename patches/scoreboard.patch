@@ -802,7 +802,7 @@ Index: src/fpsgame/weaponstats.h
 +    extern float playeraccuracy(fpsent *p, int gun = -1);
 +
 +    #define PLAYER_VARGS_ICOMMAND(name,b) ICOMMAND(name, "V", (tagval *args, int numargs), { \
-+        fpsent *p = numargs > 0 ? getclient(args[0].getint()) : hudplayer(); \
++        fpsent *p = (numargs > 0 && args[0].getint() != -1) ? getclient(args[0].getint()) : hudplayer(); \
 +        if(!p) { conoutf("\f6no player with CN %d", args[0].getint()); return; } \
 +        b; \
 +    })
