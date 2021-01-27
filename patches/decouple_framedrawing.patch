@@ -1,6 +1,6 @@
 Index: src/engine/main.cpp
 ===================================================================
---- src/engine/main.cpp	(revision 6488)
+--- src/engine/main.cpp	(revision 6490)
 +++ src/engine/main.cpp	(working copy)
 @@ -72,7 +72,7 @@
      exit(EXIT_FAILURE);
@@ -11,12 +11,8 @@ Index: src/engine/main.cpp
 
  dynent *player = NULL;
 
-@@ -1031,31 +1031,39 @@
-     gle::disable();
-     SDL_GL_SwapWindow(screen);
- }
--
-+
+@@ -1034,28 +1034,36 @@
+
  VAR(menufps, 0, 60, 1000);
  VARP(maxfps, 0, 200, 1000);
 +VARFP(maxtps, 0, 0, 1000, { if(maxtps && maxtps<60) {conoutf("can't set maxtps < 60"); maxtps = 60;} });
@@ -30,6 +26,18 @@ Index: src/engine/main.cpp
 -    int delay = 1000/limit - (millis-curmillis);
 -    if(delay < 0) fpserror = 0;
 -    else
+-    {
+-        fpserror += 1000%limit;
+-        if(fpserror >= limit)
+-        {
+-            ++delay;
+-            fpserror -= limit;
+-        }
+-        if(delay > 0)
+-        {
+-            SDL_Delay(delay);
+-            millis += delay;
+-        }
 +    int fpslimit = (mainmenu || minimized) && menufps ? (maxfps ? min(maxfps, menufps) : menufps) : maxfps;
 +    if(!fpslimit) draw = true;
 +    int tpslimit = maxtps ? max(maxtps, fpslimit) : 0;
@@ -39,36 +47,27 @@ Index: src/engine/main.cpp
 +    // should we draw?
 +    int fpsdelay = INT_MAX;
 +    if(fpslimit)
-     {
--        fpserror += 1000%limit;
--        if(fpserror >= limit)
++    {
 +        fpsdelay = 1000/fpslimit - (millis-lastdrawmillis);
 +        static int fpserror = 0;
 +        if(fpserror >= fpslimit) fpsdelay++;
 +        if(fpsdelay <= delay)
-         {
--            ++delay;
--            fpserror -= limit;
++        {
 +            draw = true;
 +            if(fpserror >= fpslimit) fpserror -= fpslimit;
 +            fpserror += 1000%fpslimit;
-         }
--        if(delay > 0)
--        {
--            SDL_Delay(delay);
--            millis += delay;
--        }
-     }
++        }
++    }
 +    delay = min(delay, fpsdelay);
 +    if(delay > 0)
 +    {
-+        SDL_Delay(delay);
-+        millis += delay;
-+    }
++       SDL_Delay(delay);
++       millis += delay;
+     }
  }
 
  #if defined(WIN32) && !defined(_DEBUG) && !defined(__GNUC__)
-@@ -1346,9 +1354,17 @@
+@@ -1346,9 +1354,10 @@
 
      for(;;)
      {
@@ -78,46 +77,20 @@ Index: src/engine/main.cpp
 -        limitfps(millis, totalmillis);
 +        bool draw = false;
 +        ratelimit(millis, lastdrawmillis, draw);
-+        if(draw)
-+        {
-+            static int frametimeerr = 0;
-+            int scaledframetime = game::scaletime(millis-lastdrawmillis) + frametimeerr;
-+            curframetime = scaledframetime/100;
-+            frametimeerr = scaledframetime%100;
-+        }
          elapsedtime = millis - totalmillis;
          static int timeerr = 0;
          int scaledtime = game::scaletime(elapsedtime) + timeerr;
-@@ -1356,10 +1372,10 @@
-         timeerr = scaledtime%100;
-         if(!multiplayer(false) && curtime>200) curtime = 200;
-         if(game::ispaused()) curtime = 0;
--		lastmillis += curtime;
-+        lastmillis += curtime;
-         totalmillis = millis;
-         updatetime();
--
-+
-         checkinput();
-         menuprocess();
-         tryedit();
-@@ -1370,24 +1386,31 @@
+@@ -1370,9 +1379,6 @@
 
          serverslice(false, 0);
 
 -        if(frames) updatefpshistory(elapsedtime);
 -        frames++;
-+        if(draw)
-+        {
-+            if(frames) updatefpshistory(millis-lastdrawmillis);
-+            frames++;
-+        }
-
+-
          // miscellaneous general game effects
          recomputecamera();
--        updateparticles();
-+        if(draw) updateparticles();
-         updatesounds();
+         updateparticles();
+@@ -1380,11 +1386,24 @@
 
          if(minimized) continue;
 
@@ -128,6 +101,15 @@ Index: src/engine/main.cpp
 -        renderedframe = inbetweenframes = true;
 +        if(draw)
 +        {
++            int frametime = millis - lastdrawmillis;
++            static int frametimeerr = 0;
++            int scaledframetime = game::scaletime(frametime) + frametimeerr;
++            curframetime = scaledframetime/100;
++            frametimeerr = scaledframetime%100;
++
++            if(frames) updatefpshistory(frametime);
++            frames++;
++
 +            inbetweenframes = false;
 +            if(mainmenu) gl_drawmainmenu();
 +            else gl_drawframe();
@@ -136,16 +118,11 @@ Index: src/engine/main.cpp
 +            lastdrawmillis = millis;
 +        }
      }
--
--    ASSERT(0);
-+
-+    ASSERT(0);
-     return EXIT_FAILURE;
 
-     #if defined(WIN32) && !defined(_DEBUG) && !defined(__GNUC__)
+     ASSERT(0);
 Index: src/engine/rendergl.cpp
 ===================================================================
---- src/engine/rendergl.cpp	(revision 6488)
+--- src/engine/rendergl.cpp	(revision 6490)
 +++ src/engine/rendergl.cpp	(working copy)
 @@ -2025,7 +2025,7 @@
          gle::attrib(m.transform(vec2(0, 0)));
@@ -158,7 +135,7 @@ Index: src/engine/rendergl.cpp
      if(dirs) gle::end();
 Index: src/shared/iengine.h
 ===================================================================
---- src/shared/iengine.h	(revision 6488)
+--- src/shared/iengine.h	(revision 6490)
 +++ src/shared/iengine.h	(working copy)
 @@ -1,9 +1,10 @@
  // the interface the game uses to access the engine

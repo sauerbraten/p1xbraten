@@ -1031,7 +1031,7 @@ void swapbuffers(bool overlay)
     gle::disable();
     SDL_GL_SwapWindow(screen);
 }
-
+ 
 VAR(menufps, 0, 60, 1000);
 VARP(maxfps, 0, 200, 1000);
 VARFP(maxtps, 0, 0, 1000, { if(maxtps && maxtps<60) {conoutf("can't set maxtps < 60"); maxtps = 60;} });
@@ -1061,8 +1061,8 @@ void ratelimit(int &millis, int lastdrawmillis, bool &draw)
     delay = min(delay, fpsdelay);
     if(delay > 0)
     {
-        SDL_Delay(delay);
-        millis += delay;
+       SDL_Delay(delay);
+       millis += delay;
     }
 }
 
@@ -1360,13 +1360,6 @@ int main(int argc, char **argv)
         int millis = getclockmillis();
         bool draw = false;
         ratelimit(millis, lastdrawmillis, draw);
-        if(draw)
-        {
-            static int frametimeerr = 0;
-            int scaledframetime = game::scaletime(millis-lastdrawmillis) + frametimeerr;
-            curframetime = scaledframetime/100;
-            frametimeerr = scaledframetime%100;
-        }
         elapsedtime = millis - totalmillis;
         static int timeerr = 0;
         int scaledtime = game::scaletime(elapsedtime) + timeerr;
@@ -1374,10 +1367,10 @@ int main(int argc, char **argv)
         timeerr = scaledtime%100;
         if(!multiplayer(false) && curtime>200) curtime = 200;
         if(game::ispaused()) curtime = 0;
-        lastmillis += curtime;
+		lastmillis += curtime;
         totalmillis = millis;
         updatetime();
-
+ 
         checkinput();
         menuprocess();
         tryedit();
@@ -1388,21 +1381,24 @@ int main(int argc, char **argv)
 
         serverslice(false, 0);
 
-        if(draw)
-        {
-            if(frames) updatefpshistory(millis-lastdrawmillis);
-            frames++;
-        }
-
         // miscellaneous general game effects
         recomputecamera();
-        if(draw) updateparticles();
+        updateparticles();
         updatesounds();
 
         if(minimized) continue;
 
         if(draw)
         {
+            int frametime = millis - lastdrawmillis;
+            static int frametimeerr = 0;
+            int scaledframetime = game::scaletime(frametime) + frametimeerr;
+            curframetime = scaledframetime/100;
+            frametimeerr = scaledframetime%100;
+
+            if(frames) updatefpshistory(frametime);
+            frames++;
+
             inbetweenframes = false;
             if(mainmenu) gl_drawmainmenu();
             else gl_drawframe();
@@ -1411,8 +1407,8 @@ int main(int argc, char **argv)
             lastdrawmillis = millis;
         }
     }
-
-    ASSERT(0);
+    
+    ASSERT(0);   
     return EXIT_FAILURE;
 
     #if defined(WIN32) && !defined(_DEBUG) && !defined(__GNUC__)
