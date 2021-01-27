@@ -11,7 +11,7 @@ Index: src/engine/main.cpp
 
  dynent *player = NULL;
 
-@@ -1034,28 +1034,36 @@
+@@ -1034,28 +1034,44 @@
 
  VAR(menufps, 0, 60, 1000);
  VARP(maxfps, 0, 200, 1000);
@@ -43,19 +43,27 @@ Index: src/engine/main.cpp
 +    int tpslimit = minimized ? 100 : (maxtps ? max(maxtps, fpslimit) : 0);
 +    if(!fpslimit && !tpslimit) return;
 +    int delay = 1;
-+    if(tpslimit) delay = 1000/tpslimit - (millis-totalmillis);
++    if(tpslimit) delay = max(1000/tpslimit - (millis-totalmillis), 0);
 +    // should we draw?
 +    int fpsdelay = INT_MAX;
 +    if(!minimized && fpslimit)
 +    {
-+        fpsdelay = 1000/fpslimit - (millis-lastdrawmillis);
 +        static int fpserror = 0;
-+        if(fpserror >= fpslimit) fpsdelay++;
-+        if(fpsdelay <= delay)
++        fpsdelay = 1000/fpslimit - (millis-lastdrawmillis);
++        if(fpsdelay < 0)
 +        {
 +            draw = true;
-+            if(fpserror >= fpslimit) fpserror -= fpslimit;
-+            fpserror += 1000%fpslimit;
++            fpserror = 0;
++        }
++        else
++        {
++            if(fpserror >= fpslimit) fpsdelay++;
++            if(fpsdelay <= delay)
++            {
++                draw = true;
++                if(fpserror >= fpslimit) fpserror -= fpslimit;
++                fpserror += 1000%fpslimit;
++            }
 +        }
 +    }
 +    delay = min(delay, fpsdelay);
@@ -67,7 +75,7 @@ Index: src/engine/main.cpp
  }
 
  #if defined(WIN32) && !defined(_DEBUG) && !defined(__GNUC__)
-@@ -1346,9 +1354,10 @@
+@@ -1346,9 +1362,10 @@
 
      for(;;)
      {
@@ -80,7 +88,7 @@ Index: src/engine/main.cpp
          elapsedtime = millis - totalmillis;
          static int timeerr = 0;
          int scaledtime = game::scaletime(elapsedtime) + timeerr;
-@@ -1370,9 +1379,6 @@
+@@ -1370,9 +1387,6 @@
 
          serverslice(false, 0);
 
@@ -90,7 +98,7 @@ Index: src/engine/main.cpp
          // miscellaneous general game effects
          recomputecamera();
          updateparticles();
-@@ -1380,11 +1386,24 @@
+@@ -1380,11 +1394,24 @@
 
          if(minimized) continue;
 

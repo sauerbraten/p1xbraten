@@ -1043,19 +1043,27 @@ void ratelimit(int &millis, int lastdrawmillis, bool &draw)
     int tpslimit = minimized ? 100 : (maxtps ? max(maxtps, fpslimit) : 0);
     if(!fpslimit && !tpslimit) return;
     int delay = 1;
-    if(tpslimit) delay = 1000/tpslimit - (millis-totalmillis);
+    if(tpslimit) delay = max(1000/tpslimit - (millis-totalmillis), 0);
     // should we draw?
     int fpsdelay = INT_MAX;
     if(!minimized && fpslimit)
     {
-        fpsdelay = 1000/fpslimit - (millis-lastdrawmillis);
         static int fpserror = 0;
-        if(fpserror >= fpslimit) fpsdelay++;
-        if(fpsdelay <= delay)
+        fpsdelay = 1000/fpslimit - (millis-lastdrawmillis);
+        if(fpsdelay < 0)
         {
             draw = true;
-            if(fpserror >= fpslimit) fpserror -= fpslimit;
-            fpserror += 1000%fpslimit;
+            fpserror = 0;
+        }
+        else
+        {
+            if(fpserror >= fpslimit) fpsdelay++;
+            if(fpsdelay <= delay)
+            {
+                draw = true;
+                if(fpserror >= fpslimit) fpserror -= fpslimit;
+                fpserror += 1000%fpslimit;
+            }
         }
     }
     delay = min(delay, fpsdelay);
