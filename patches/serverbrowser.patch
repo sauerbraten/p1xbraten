@@ -108,14 +108,14 @@ Index: src/fpsgame/fps.cpp
              }
 
              case 1:
-+                rightjustified(g->buttonf(attr.length()>=4 && np >= attr[3] ? "\f3%d " : "%d", COL_WHITE, NULL, np));
++                rightjustified(g->buttonf(attr.length()>=4 && np >= attr[3] ? "\f3%d" : "%d", COL_WHITE, NULL, np));
 +                break;
 +
 +            case 2:
                  if(attr.length()>=4)
                  {
 -                    if(g->buttonf(np >= attr[3] ? "\f3%d/%d " : "%d/%d ", 0xFFFFDD, NULL, np, attr[3])&G3D_UP) return true;
-+                    rightjustified(g->buttonf(np >= attr[3] ? "\f3%d " : "%d", COL_WHITE, NULL, attr[3]));
++                    rightjustified(g->buttonf(np >= attr[3] ? "\f3%d" : "%d", COL_WHITE, NULL, attr[3]));
                  }
 -                else if(g->buttonf("%d ", 0xFFFFDD, NULL, np)&G3D_UP) return true;
 +                else rightjustified(g->button(" ", COL_WHITE));

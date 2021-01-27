@@ -1282,13 +1282,13 @@ namespace game
             }
 
             case 1:
-                rightjustified(g->buttonf(attr.length()>=4 && np >= attr[3] ? "\f3%d " : "%d", COL_WHITE, NULL, np));
+                rightjustified(g->buttonf(attr.length()>=4 && np >= attr[3] ? "\f3%d" : "%d", COL_WHITE, NULL, np));
                 break;
 
             case 2:
                 if(attr.length()>=4)
                 {
-                    rightjustified(g->buttonf(np >= attr[3] ? "\f3%d " : "%d", COL_WHITE, NULL, attr[3]));
+                    rightjustified(g->buttonf(np >= attr[3] ? "\f3%d" : "%d", COL_WHITE, NULL, attr[3]));
                 }
                 else rightjustified(g->button(" ", COL_WHITE));
                 break;
