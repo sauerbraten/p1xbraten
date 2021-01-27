@@ -620,7 +620,6 @@ void restorevsync()
 {
     if(initing || !glcontext) return;
     extern int vsync, vsynctear;
-    if(wayland && vsync) { conoutf("wayland is tear-free, disabling vsync"); vsync = 0; }
     if(!SDL_GL_SetSwapInterval(vsync ? (vsynctear ? -1 : 1) : 0))
         curvsync = vsync;
 }
@@ -732,10 +731,6 @@ void setupscreen()
     SDL_SetWindowMaximumSize(screen, SCR_MAXW, SCR_MAXH);
 
     SDL_GetWindowSize(screen, &screenw, &screenh);
-
-    #ifdef SDL_VIDEO_DRIVER_WAYLAND
-    setupwayland();
-    #endif
 }
 
 void resetgl()
@@ -1044,14 +1039,14 @@ VARFP(maxtps, 0, 0, 1000, { if(maxtps && maxtps<60) {conoutf("can't set maxtps <
 void ratelimit(int &millis, int lastdrawmillis, bool &draw)
 {
     int fpslimit = (mainmenu || minimized) && menufps ? (maxfps ? min(maxfps, menufps) : menufps) : maxfps;
-    if(!fpslimit && !wayland) draw = true;
+    if(!fpslimit) draw = true;
     int tpslimit = maxtps ? max(maxtps, fpslimit) : 0;
     if(!fpslimit && !tpslimit) return;
     int delay = 1;
     if(tpslimit) delay = 1000/tpslimit - (millis-totalmillis);
     // should we draw?
     int fpsdelay = INT_MAX;
-    if(fpslimit && !wayland)
+    if(fpslimit)
     {
         fpsdelay = 1000/fpslimit - (millis-lastdrawmillis);
         static int fpserror = 0;
@@ -1365,6 +1360,13 @@ int main(int argc, char **argv)
         int millis = getclockmillis();
         bool draw = false;
         ratelimit(millis, lastdrawmillis, draw);
+        if(draw)
+        {
+            static int frametimeerr = 0;
+            int scaledframetime = game::scaletime(millis-lastdrawmillis) + frametimeerr;
+            curframetime = scaledframetime/100;
+            frametimeerr = scaledframetime%100;
+        }
         elapsedtime = millis - totalmillis;
         static int timeerr = 0;
         int scaledtime = game::scaletime(elapsedtime) + timeerr;
@@ -1372,7 +1374,7 @@ int main(int argc, char **argv)
         timeerr = scaledtime%100;
         if(!multiplayer(false) && curtime>200) curtime = 200;
         if(game::ispaused()) curtime = 0;
-		lastmillis += curtime;
+        lastmillis += curtime;
         totalmillis = millis;
         updatetime();
 
@@ -1386,27 +1388,21 @@ int main(int argc, char **argv)
 
         serverslice(false, 0);
 
+        if(draw)
+        {
+            if(frames) updatefpshistory(millis-lastdrawmillis);
+            frames++;
+        }
+
         // miscellaneous general game effects
         recomputecamera();
-        updateparticles();
+        if(draw) updateparticles();
         updatesounds();
 
         if(minimized) continue;
 
-        #ifdef SDL_VIDEO_DRIVER_WAYLAND
-        if(wayland) draw = SDL_AtomicCAS(&framerequested, 1, 0);
-        #endif
         if(draw)
         {
-            int frametime = millis - lastdrawmillis;
-            static int frametimeerr = 0;
-            int scaledframetime = game::scaletime(frametime) + frametimeerr;
-            curframetime = scaledframetime/100;
-            frametimeerr = scaledframetime%100;
-
-            if(frames) updatefpshistory(frametime);
-            frames++;
-
             inbetweenframes = false;
             if(mainmenu) gl_drawmainmenu();
             else gl_drawframe();

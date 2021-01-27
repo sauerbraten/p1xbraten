@@ -607,8 +607,6 @@ namespace recorder
     extern void cleanup();
 }
 
-#include "wayland.h"
-
 #endif
 
 #endif

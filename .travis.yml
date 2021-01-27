@@ -2,7 +2,7 @@ os: linux
 dist: bionic
 language: cpp
 compiler: clang
-install: sudo apt-get install libsdl2-dev libsdl2-mixer-dev libsdl2-image-dev zlib1g-dev libwayland-dev binutils
+install: sudo apt-get install libsdl2-dev libsdl2-mixer-dev libsdl2-image-dev zlib1g-dev binutils
 before script:
   - cd src
   - sed -i "s/<git-dev>/$(git describe)/" engine/main.cpp

@@ -131,23 +131,15 @@ You can easily configure the hud frag messages using the [improved menu](#menu) 
 - removes fps-induced limiting of the main loop (for example, input & network processing were affected by `maxfps`)
 - introduce `maxtps` var to limit the main loop independently from `maxfps` (for example to save power): 0 to disable limiting (default), 100..1000 to set how many ticks per second are allowed; `maxfps` overrides `maxtps` if `maxfps > maxtps`
 
-  These two changes allow using `maxfps` without compromising on the frequency of input polling and network event processing. In vanilla Sauerbraten, `maxfps` limits the whole game's main loop if it's set to any value other than 0. This patch removes that limiting behavior and instead processes network events and player input on every main loop iteration, and skips frame drawing until a new frame is required to reach the requests frame rate.
+This patch allows using `maxfps` without compromising on the frequency of input polling and network event processing. In vanilla Sauerbraten, `maxfps` limits the whole game's main loop. This patch removes the main loop limiting and instead skips only frame drawing until a new frame is needed, but still processes network events and player input on every main loop iteration.
 
-  While vanilla Sauerbraten is truly unlimited after `/maxfps 0`, p1xbraten's mainloop can also be limited by the `maxtps` variable. Setting `maxfps` to any value other than 0 may override `maxtps`, so that p1xbraten can prioritise frame draw timing: if `maxtps == 0`, p1xbraten will limit the main loop to 1000 ticks per second, or if `maxtps < maxfps`, the value of `maxfps` will be used. Set both `maxfps` and `maxtps` to 0 to get vanilla's truly unlimited behavior back.
+While vanilla Sauerbraten is truly unlimited after `/maxfps 0`, p1xbraten's mainloop can additionally be limited using the `maxtps` variable. Setting `maxfps` to any value other than 0 also forces a maximum tick frequency of 1000 (but respects lower settings), even if you set `maxtps 0`, so that p1xbraten can prioritise frame draw timing. Set both `maxfps` and `maxtps` to 0 to get vanilla's unlimited behavior back.
 
-  Using `maxfps` and `maxtps`, you can optimize for different goals:
+Using `maxfps` and `maxtps`, you can optimize for different goals:
 
-  - for lowest average latency, use `/maxtps 0` and set `maxfps` to your screen refresh rate plus ~10% (to make sure there's always a new frame ready), for example `/maxfps 70`, then `/vsync 1`
-  - to use fewer resources and save laptop battery, use `/maxfps 0`, `/maxtps 100` and `/vsync 1`
-  - for lowest consistent latency, use `/maxfps 0`, `/vsync 0`, then set `maxtps` to the highest value that gives you a stable fps counter on your system, then `/vsync 1`
-
-- adds Wayland detection
-
-  When running on Wayland, p1xbraten ignores `maxfps` and makes use of frame callbacks, so a frame is only rendered when the compositor requests it. This way, no frames are drawn when p1xbraten is in the background, which saves energy and leaves resources to foreground tasks. Because of the decoupling of frame drawing from the main engine loop mentioned above, input and network events are still processed at the frequency dictated by `maxtps`, and you can set a lower `maxtps` value to limit resource use further.
-
-  Because Wayland provides tear-free presentation out of the box, p1xbraten ignores `/vsync 1` when running on Wayland. The fps counter in p1xbraten will show the rate at which your Wayland compositor requests frames, which usually matches your display's refresh rate. Basically, Wayland takes care of vsync for you.
-
-  Most Linux distributions that use Wayland will run Sauerbraten as an Xorg app through Xwayland. **Set `SDL_VIDEODRIVER=wayland` in your launch script** (like in my [start.sh](./start.sh#L62)) to force SDL to use Wayland. You can check whether p1xbraten is running as a Wayland process using the `/wayland` variable.
+- for lowest average latency, use `/maxtps 0` and set `maxfps` to your screen refresh rate plus ~10% (to make sure there's always a new frame ready), for example `/maxfps 70`, then `/vsync 1`
+- to use fewer resources and save laptop battery, use `/maxfps 0`, `/maxtps 100` and `/vsync 1`
+- for lowest consistent latency, use `/maxfps 0`, `/vsync 0`, then set `maxtps` to the highest value that gives you a stable fps counter on your system, then `/vsync 1`
 
 ## Installation
 
@@ -157,15 +149,15 @@ The latest builds are always at https://github.com/sauerbraten/p1xbraten/release
 
 ### Windows
 
-Download sauerbraten.exe from the link above and put it into `C:\Program Files (x86)\Sauerbraten\bin64\` (your Sauerbraten installation folder).
+Download sauerbraten.exe from the link above and put it into C:\Program Files (x86)\Sauerbraten\bin64\ (your Sauerbraten installation folder).
 
 ### macOS
 
-Download sauerbraten_universal from the link above and put it into `/Applications/sauerbraten.app/Contents/MacOS/`, then execute `chmod +x /Applications/sauerbraten.app/Contents/MacOS/sauerbraten_universal` in a terminal.
+Download sauerbraten_universal from the link above and put it into /Applications/sauerbraten.app/Contents/MacOS/, then `chmod +x /Applications/sauerbraten.app/Contents/MacOS/sauerbraten_universal`.
 
 ### Linux
 
-Download linux_64_client from the link above and put it into `bin_unix/` inside of your Sauerbraten directory, then run `chmod +x bin_unix/linux_64_client` in a terminal inside your installation directory.
+Download linux_64_client from the link above and put it into bin_unix/ inside of your Sauerbraten directory, then `chmod +x bin_unix/linux_64_client`.
 
 ## Menu
 
