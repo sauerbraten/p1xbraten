@@ -402,7 +402,7 @@ namespace game
         buf.add('\0');
         result(buf.getbuf());
     }
-    ICOMMAND(listteams, "bb", (int *local, int *bots, int *specs), listteams(*local!=0, *bots!=0, *specs!=0));
+    ICOMMAND(listteams, "bbb", (int *local, int *bots, int *specs), listteams(*local!=0, *bots!=0, *specs!=0));
 
     void listclients(bool local, bool bots, bool specs, const char *team)
     {
