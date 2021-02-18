@@ -149,15 +149,21 @@ The latest builds are always at https://github.com/sauerbraten/p1xbraten/release
 
 ### Windows
 
-Download sauerbraten.exe from the link above and put it into C:\Program Files (x86)\Sauerbraten\bin64\ (your Sauerbraten installation folder).
+Download p1xbraten_\<version\>_setup.exe from the link above and execute it. p1xbraten will be installed alongside your existing Sauerbraten installation.
 
 ### macOS
 
-Download sauerbraten_universal from the link above and put it into /Applications/sauerbraten.app/Contents/MacOS/, then `chmod +x /Applications/sauerbraten.app/Contents/MacOS/sauerbraten_universal`.
+1. Open Finder
+2. Press Shift + Command + G (⇧⌘G)
+3. Go to `/Applications/sauerbraten.app/Contents/MacOS/`
+4. Make a copy of sauerbraten_universal (in case you want to go back to the vanilla client in the future)
+5. Download sauerbraten_universal from the link above and drag it into the Finder window, replacing the old file
+6. Open a Terminal and type `chmod +x ` (note the space at the end), then drag the sauerbraten_universal file into the Terminal window
+7. When it says `chmod +x /Applications/sauerbraten.app/Contents/MacOS/sauerbraten_universal`, press Enter to execute
 
 ### Linux
 
-Download linux_64_client from the link above and put it into bin_unix/ inside of your Sauerbraten directory, then `chmod +x bin_unix/linux_64_client`.
+Download linux_64_client from the link above and put it into bin_unix/ inside of your Sauerbraten directory (*after* backing up the original file), then `chmod +x bin_unix/linux_64_client`.
 
 ## Menu
 

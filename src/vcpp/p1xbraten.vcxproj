@@ -35,9 +35,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectName>sauerbraten</ProjectName>
+    <ProjectName>p1xbraten</ProjectName>
     <ProjectGuid>{06594C6D-6DA9-49DC-9A91-8F47221DDCFD}</ProjectGuid>
-    <RootNamespace>sauerbraten</RootNamespace>
+    <RootNamespace>p1xbraten</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'" Label="Configuration">
@@ -110,32 +110,27 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\bin\</OutDir>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">..\..\bin64\</OutDir>
+    <OutDir>..\..\bin\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\</IntDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\Release64\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</GenerateManifest>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</GenerateManifest>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\bin\</OutDir>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">..\..\bin64\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\</IntDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\Debug64\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">..\..\bin\</OutDir>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">..\..\bin64\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">Profile\</IntDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Profile64\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">false</LinkIncremental>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">false</LinkIncremental>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">sauerbraten_debug</TargetName>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">sauerbraten_debug</TargetName>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">sauerbraten</TargetName>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">sauerbraten</TargetName>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">sauerbraten</TargetName>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">sauerbraten</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">p1xbraten_x86_debug</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">p1xbraten_x64_debug</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">p1xbraten_x86</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">p1xbraten_x64</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">p1xbraten_x86</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">p1xbraten_x64</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -1252,7 +1247,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="sauerbraten.rc" />
+    <ResourceCompile Include="p1xbraten.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

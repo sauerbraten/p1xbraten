@@ -11,11 +11,14 @@ for:
       - image: Visual Studio 2019
   before_build:
     - ps: (Get-Content src/engine/main.cpp) -replace '<git-dev>', (git describe) | Set-Content src/engine/main.cpp
+    - ps: (Get-Content src/vcpp/p1xbraten.nsi) -replace '<git-dev>', (git describe) | Set-Content src/vcpp/p1xbraten.nsi
   build:
-    project: src/vcpp/sauerbraten.vcxproj
+    project: src/vcpp/p1xbraten_build_all.vcxproj
     verbosity: minimal
+  after_build:
+    - ps: makensis src/vcpp/p1xbraten.nsi
   artifacts:
-  - path: bin64/sauerbraten.exe
+  - path: p1xbraten_*_setup.exe
 -
   matrix:
     only:
