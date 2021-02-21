@@ -19,6 +19,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [listteams.patch](#listteamspatch)
   - [tex_commands.patch](#tex_commandspatch)
   - [decouple_framedrawing.patch](#decouple_framedrawingpatch)
+  - [crosshaircolor.patch](#crosshaircolorpatch)
 - [Installation](#installation)
   - [Windows](#windows)
   - [macOS](#macos)
@@ -140,6 +141,10 @@ Using `maxfps` and `maxtps`, you can optimize for different goals:
 - for lowest average latency, use `/maxtps 0` and set `maxfps` to your screen refresh rate plus ~10% (to make sure there's always a new frame ready), for example `/maxfps 70`, then `/vsync 1`
 - to use fewer resources and save laptop battery, use `/maxfps 0`, `/maxtps 100` and `/vsync 1`
 - for lowest consistent latency, use `/maxfps 0`, `/vsync 0`, then set `maxtps` to the highest value that gives you a stable fps counter on your system, then `/vsync 1`
+
+### [crosshaircolor.patch](./patches/crosshaircolor.patch)
+
+- adds `crosshaircolor` variable to set a base crosshair color (for example, `/crosshaircolor 0 255 0` for pleasant green)
 
 ## Installation
 

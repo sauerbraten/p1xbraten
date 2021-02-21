@@ -35,6 +35,7 @@ apply-patches:
 	$(PATCH) < patches/include_p1xbraten_menus.patch
 	$(PATCH) < patches/tex_commands.patch
 	$(PATCH) < patches/decouple_framedrawing.patch
+	$(PATCH) < patches/crosshaircolor.patch
 	unix2dos src/vcpp/sauerbraten.vcxproj
 
 gzip-menus:
