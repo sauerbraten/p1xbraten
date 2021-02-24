@@ -8,7 +8,7 @@
         <Platform>%(Platforms.Identity)</Platform>
       </ConfigAndPlatform>
     </ItemGroup>
-    <MSBuild Projects="p1xbraten.vcxproj" Targets="Build"
+    <MSBuild Projects="src/vcpp/sauerbraten.vcxproj" Targets="Build"
              Properties="Configuration=%(ConfigAndPlatform.Identity);Platform=%(ConfigAndPlatform.Platform)"/>
   </Target>
 </Project>

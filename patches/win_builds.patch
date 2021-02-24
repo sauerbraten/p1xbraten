@@ -1,0 +1,144 @@
+Index: src/vcpp/sauerbraten.nsi
+===================================================================
+--- src/vcpp/sauerbraten.nsi	(revision 6490)
++++ src/vcpp/sauerbraten.nsi	(working copy)
+@@ -1,15 +1,15 @@
+-Name "Sauerbraten"
++Name "p1xbraten"
+
+-OutFile "sauerbraten_20YY_MM_DD_foo_edition_win32_setup.exe"
++OutFile "..\..\p1xbraten_<git-dev>_setup.exe"
+
+ InstallDir $PROGRAMFILES\Sauerbraten
+
+-InstallDirRegKey HKLM "Software\Sauerbraten" "Install_Dir"
++InstallDirRegKey HKLM "Software\p1xbraten" "Install_Dir"
+
+ SetCompressor /SOLID lzma
+-XPStyle on
+
+ Page components
++DirText "Choose your Sauerbraten installation directory. p1xbraten will be installed in it alongside the original files."
+ Page directory
+ Page instfiles
+
+@@ -16,49 +16,52 @@
+ UninstPage uninstConfirm
+ UninstPage instfiles
+
+-Section "Sauerbraten (required)"
++Section "p1xbraten (required)"
+
+   SectionIn RO
+
+   SetOutPath $INSTDIR
+
+-  File /r "..\..\*.*"
++  IfFileExists "$INSTDIR\sauerbraten.bat" VanillaFound VanillaNotFound
++  VanillaNotFound:
++    Abort "Vanilla Sauerbraten files not found in installation directory!"
++  VanillaFound:
+
+-  WriteRegStr HKLM SOFTWARE\Sauerbraten "Install_Dir" "$INSTDIR"
++  File "/oname=bin\p1xbraten.exe" "..\..\bin\p1xbraten_x86.exe"
++  File "/oname=bin64\p1xbraten.exe" "..\..\bin\p1xbraten_x64.exe"
++  File "..\..\p1xbraten.bat"
+
+-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Sauerbraten" "DisplayName" "Sauerbraten"
+-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Sauerbraten" "UninstallString" '"$INSTDIR\uninstall.exe"'
+-  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Sauerbraten" "NoModify" 1
+-  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Sauerbraten" "NoRepair" 1
+-  WriteUninstaller "uninstall.exe"
++  WriteRegStr HKLM SOFTWARE\p1xbraten "Install_Dir" "$INSTDIR"
+
+-  IfFileExists "$DOCUMENTS\My Games\Sauerbraten\config.cfg" ConfigFound NoConfig
+-  ConfigFound:
+-     Delete "$DOCUMENTS\My Games\Sauerbraten\old-config.cfg"
+-     Rename "$DOCUMENTS\My Games\Sauerbraten\config.cfg" "$DOCUMENTS\My Games\Sauerbraten\old-config.cfg"
+-  NoConfig:
++  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\p1xbraten" "DisplayName" "p1xbraten"
++  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\p1xbraten" "UninstallString" '"$INSTDIR\uninstall_p1xbraten.exe"'
++  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\p1xbraten" "NoModify" 1
++  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\p1xbraten" "NoRepair" 1
++  WriteUninstaller "uninstall_p1xbraten.exe"
+
+ SectionEnd
+
+ Section "Start Menu Shortcuts"
+
+-  CreateDirectory "$SMPROGRAMS\Sauerbraten"
++  CreateDirectory "$SMPROGRAMS\p1xbraten"
+
+   SetOutPath "$INSTDIR"
+
+-  CreateShortCut "$INSTDIR\Sauerbraten.lnk"                "$INSTDIR\sauerbraten.bat" "" "$INSTDIR\bin\sauerbraten.exe" 0 SW_SHOWMINIMIZED
+-  CreateShortCut "$SMPROGRAMS\Sauerbraten\Sauerbraten.lnk" "$INSTDIR\sauerbraten.bat" "" "$INSTDIR\bin\sauerbraten.exe" 0 SW_SHOWMINIMIZED
+-  CreateShortCut "$SMPROGRAMS\Sauerbraten\Uninstall.lnk"   "$INSTDIR\uninstall.exe"   "" "$INSTDIR\uninstall.exe" 0
+-  CreateShortCut "$SMPROGRAMS\Sauerbraten\README.lnk"      "$INSTDIR\README.html"     "" "$INSTDIR\README.html" 0
++  CreateShortCut "$INSTDIR\p1xbraten.lnk"                "$INSTDIR\p1xbraten.bat" "" "$INSTDIR\bin\p1xbraten.exe" 0 SW_SHOWMINIMIZED
++  CreateShortCut "$SMPROGRAMS\p1xbraten\p1xbraten.lnk"   "$INSTDIR\p1xbraten.bat" "" "$INSTDIR\bin\p1xbraten.exe" 0 SW_SHOWMINIMIZED
++  CreateShortCut "$SMPROGRAMS\p1xbraten\Uninstall.lnk"   "$INSTDIR\uninstall.exe"   "" "$INSTDIR\uninstall.exe" 0
+
+ SectionEnd
+
+ Section "Uninstall"
+
+-  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Sauerbraten"
+-  DeleteRegKey HKLM SOFTWARE\Sauerbraten
++  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\p1xbraten"
++  DeleteRegKey HKLM SOFTWARE\p1xbraten
+
+-  RMDir /r "$SMPROGRAMS\Sauerbraten"
+-  RMDir /r "$INSTDIR"
++  RMDir /r "$SMPROGRAMS\p1xbraten"
++  Delete "$INSTDIR\p1xbraten.lnk"
++  Delete "$INSTDIR\p1xbraten.bat"
++  Delete "$INSTDIR\bin\p1xbraten.exe"
++  Delete "$INSTDIR\bin64\p1xbraten.exe"
+
+ SectionEnd
+Index: src/vcpp/sauerbraten.vcxproj
+===================================================================
+--- src/vcpp/sauerbraten.vcxproj	(revision 6490)
++++ src/vcpp/sauerbraten.vcxproj	(working copy)
+@@ -110,8 +110,7 @@
+   <PropertyGroup Label="UserMacros" />
+   <PropertyGroup>
+     <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\bin\</OutDir>
+-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">..\..\bin64\</OutDir>
++    <OutDir>..\..\bin\</OutDir>
+     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\</IntDir>
+     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\Release64\</IntDir>
+     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
+@@ -118,24 +117,20 @@
+     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
+     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</GenerateManifest>
+     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</GenerateManifest>
+-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\bin\</OutDir>
+-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">..\..\bin64\</OutDir>
+     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\</IntDir>
+     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\Debug64\</IntDir>
+     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
+     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
+-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">..\..\bin\</OutDir>
+-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">..\..\bin64\</OutDir>
+     <IntDir Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">Profile\</IntDir>
+     <IntDir Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Profile64\</IntDir>
+     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">false</LinkIncremental>
+     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">false</LinkIncremental>
+-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">sauerbraten_debug</TargetName>
+-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">sauerbraten_debug</TargetName>
+-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">sauerbraten</TargetName>
+-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">sauerbraten</TargetName>
+-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">sauerbraten</TargetName>
+-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">sauerbraten</TargetName>
++    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">p1xbraten_x86_debug</TargetName>
++    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">p1xbraten_x64_debug</TargetName>
++    <TargetName Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">p1xbraten_x86</TargetName>
++    <TargetName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">p1xbraten_x64</TargetName>
++    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">p1xbraten_x86</TargetName>
++    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">p1xbraten_x64</TargetName>
+   </PropertyGroup>
+   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+     <ClCompile>

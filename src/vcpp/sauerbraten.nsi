@@ -19,18 +19,18 @@ UninstPage instfiles
 Section "p1xbraten (required)"
 
   SectionIn RO
-
+  
   SetOutPath $INSTDIR
-
+  
   IfFileExists "$INSTDIR\sauerbraten.bat" VanillaFound VanillaNotFound
   VanillaNotFound:
     Abort "Vanilla Sauerbraten files not found in installation directory!"
   VanillaFound:
-
+  
   File "/oname=bin\p1xbraten.exe" "..\..\bin\p1xbraten_x86.exe"
   File "/oname=bin64\p1xbraten.exe" "..\..\bin\p1xbraten_x64.exe"
   File "..\..\p1xbraten.bat"
-
+  
   WriteRegStr HKLM SOFTWARE\p1xbraten "Install_Dir" "$INSTDIR"
 
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\p1xbraten" "DisplayName" "p1xbraten"
@@ -44,17 +44,17 @@ SectionEnd
 Section "Start Menu Shortcuts"
 
   CreateDirectory "$SMPROGRAMS\p1xbraten"
-
+  
   SetOutPath "$INSTDIR"
-
+  
   CreateShortCut "$INSTDIR\p1xbraten.lnk"                "$INSTDIR\p1xbraten.bat" "" "$INSTDIR\bin\p1xbraten.exe" 0 SW_SHOWMINIMIZED
   CreateShortCut "$SMPROGRAMS\p1xbraten\p1xbraten.lnk"   "$INSTDIR\p1xbraten.bat" "" "$INSTDIR\bin\p1xbraten.exe" 0 SW_SHOWMINIMIZED
   CreateShortCut "$SMPROGRAMS\p1xbraten\Uninstall.lnk"   "$INSTDIR\uninstall.exe"   "" "$INSTDIR\uninstall.exe" 0
-
+  
 SectionEnd
 
 Section "Uninstall"
-
+  
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\p1xbraten"
   DeleteRegKey HKLM SOFTWARE\p1xbraten
 

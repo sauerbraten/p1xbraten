@@ -58,10 +58,10 @@ then
   MACHINE_NAME=
 fi
 
-# if [ ${XDG_SESSION_TYPE} == wayland ]
-# then
-#   export SDL_VIDEODRIVER=wayland
-# fi
+if [ ${XDG_SESSION_TYPE} == wayland ]
+then
+  export SDL_VIDEODRIVER=wayland
+fi
 
 if [ -x ${SAUER_BIN}/${SYSTEM_NAME}${MACHINE_NAME}client ]
 then

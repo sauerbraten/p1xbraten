@@ -35,9 +35,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectName>p1xbraten</ProjectName>
+    <ProjectName>sauerbraten</ProjectName>
     <ProjectGuid>{06594C6D-6DA9-49DC-9A91-8F47221DDCFD}</ProjectGuid>
-    <RootNamespace>p1xbraten</RootNamespace>
+    <RootNamespace>sauerbraten</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'" Label="Configuration">
@@ -1247,7 +1247,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="p1xbraten.rc" />
+    <ResourceCompile Include="sauerbraten.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

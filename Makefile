@@ -20,6 +20,7 @@ clean:
 
 apply-patches:
 	dos2unix src/vcpp/sauerbraten.vcxproj
+	dos2unix src/vcpp/sauerbraten.nsi
 	$(PATCH) < patches/modversion.patch
 	$(PATCH) < patches/moviehud.patch
 	$(PATCH) < patches/scoreboard.patch
@@ -36,6 +37,8 @@ apply-patches:
 	$(PATCH) < patches/tex_commands.patch
 	$(PATCH) < patches/decouple_framedrawing.patch
 	$(PATCH) < patches/crosshaircolor.patch
+	$(PATCH) < patches/win_builds.patch
+	unix2dos src/vcpp/sauerbraten.nsi
 	unix2dos src/vcpp/sauerbraten.vcxproj
 
 gzip-menus:
