@@ -10,7 +10,7 @@ for:
     only:
       - image: Visual Studio 2019
   before_build:
-    - ps: (Get-Content src/engine/main.cpp) -replace '<git-dev>', (git describe) | Set-Content src/engine/main.cpp
+    - ps: (Get-Content src/engine/p1xbraten_version.cpp) -replace '<git-dev>', (git describe) | Set-Content src/engine/p1xbraten_version.cpp
     - ps: (Get-Content src/vcpp/sauerbraten.nsi) -replace '<git-dev>', (git describe) | Set-Content src/vcpp/sauerbraten.nsi
   build:
     project: p1xbraten.vcxproj
@@ -25,7 +25,7 @@ for:
       - image: macOS
   before_build:
     - cd src
-    - sed -i '' "s/<git-dev>/$(git describe)/" engine/main.cpp
+    - sed -i '' "s/<git-dev>/$(git describe)/" engine/p1xbraten_version.cpp
   build_script:
     - make client
   after_build:

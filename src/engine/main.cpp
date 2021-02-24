@@ -1341,7 +1341,7 @@ int main(int argc, char **argv)
 
     identflags |= IDF_PERSIST;
 
-    conoutf("p1xbraten version: <git-dev>");
+    migratep1xbraten();
 
     logoutf("init: mainloop");
 

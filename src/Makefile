@@ -104,6 +104,7 @@ CLIENT_OBJS= \
 	engine/octa.o \
 	engine/octaedit.o \
 	engine/octarender.o \
+	engine/p1xbraten_version.o \
 	engine/physics.o \
 	engine/pvs.o \
 	engine/rendergl.o \
@@ -368,6 +369,12 @@ engine/octarender.o: shared/glexts.h shared/glemu.h shared/iengine.h
 engine/octarender.o: shared/igame.h engine/world.h engine/octa.h
 engine/octarender.o: engine/lightmap.h engine/bih.h engine/texture.h
 engine/octarender.o: engine/model.h
+engine/p1xbraten_version.o: engine/engine.h shared/cube.h shared/tools.h
+engine/p1xbraten_version.o: shared/geom.h shared/ents.h shared/command.h
+engine/p1xbraten_version.o: shared/glexts.h shared/glemu.h shared/iengine.h
+engine/p1xbraten_version.o: shared/igame.h engine/world.h engine/octa.h
+engine/p1xbraten_version.o: engine/lightmap.h engine/bih.h engine/texture.h
+engine/p1xbraten_version.o: engine/model.h
 engine/physics.o: engine/engine.h shared/cube.h shared/tools.h shared/geom.h
 engine/physics.o: shared/ents.h shared/command.h shared/glexts.h
 engine/physics.o: shared/glemu.h shared/iengine.h shared/igame.h

@@ -5,7 +5,7 @@ compiler: clang
 install: sudo apt-get install libsdl2-dev libsdl2-mixer-dev libsdl2-image-dev zlib1g-dev binutils
 before script:
   - cd src
-  - sed -i "s/<git-dev>/$(git describe)/" engine/main.cpp
+  - sed -i "s/<git-dev>/$(git describe)/" engine/p1xbraten_version.cpp
 script: make client
 before_deploy:
   - strip sauer_client

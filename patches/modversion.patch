@@ -1,13 +1,113 @@
+Index: src/Makefile
+===================================================================
+--- src/Makefile	(revision 6491)
++++ src/Makefile	(working copy)
+@@ -104,6 +104,7 @@
+ 	engine/octa.o \
+ 	engine/octaedit.o \
+ 	engine/octarender.o \
++	engine/p1xbraten_version.o \
+ 	engine/physics.o \
+ 	engine/pvs.o \
+ 	engine/rendergl.o \
+@@ -364,6 +365,12 @@
+ engine/octarender.o: shared/igame.h engine/world.h engine/octa.h
+ engine/octarender.o: engine/lightmap.h engine/bih.h engine/texture.h
+ engine/octarender.o: engine/model.h
++engine/p1xbraten_version.o: engine/engine.h shared/cube.h shared/tools.h
++engine/p1xbraten_version.o: shared/geom.h shared/ents.h shared/command.h
++engine/p1xbraten_version.o: shared/glexts.h shared/glemu.h shared/iengine.h
++engine/p1xbraten_version.o: shared/igame.h engine/world.h engine/octa.h
++engine/p1xbraten_version.o: engine/lightmap.h engine/bih.h engine/texture.h
++engine/p1xbraten_version.o: engine/model.h
+ engine/physics.o: engine/engine.h shared/cube.h shared/tools.h shared/geom.h
+ engine/physics.o: shared/ents.h shared/command.h shared/glexts.h
+ engine/physics.o: shared/glemu.h shared/iengine.h shared/igame.h
+Index: src/engine/engine.h
+===================================================================
+--- src/engine/engine.h	(revision 6491)
++++ src/engine/engine.h	(working copy)
+@@ -407,7 +407,9 @@
+ extern void checksleep(int millis);
+ extern void clearsleep(bool clearoverrides = true);
+
++extern int naturalsort(const char *a, const char *b);
++
+ // console
+ extern void processtextinput(const char *str, int len);
+ extern void processkey(int code, bool isdown, int modstate = 0);
+ extern int rendercommand(int x, int y, int w);
+@@ -431,6 +434,8 @@
+ };
+ extern int initing, numcpus;
+
++extern void migratep1xbraten();
++
+ enum
+ {
+     CHANGE_GFX   = 1<<0,
 Index: src/engine/main.cpp
 ===================================================================
---- src/engine/main.cpp	(revision 6479)
+--- src/engine/main.cpp	(revision 6491)
 +++ src/engine/main.cpp	(working copy)
 @@ -1325,6 +1325,8 @@
 
      identflags |= IDF_PERSIST;
 
-+    conoutf("p1xbraten version: <git-dev>");
++    migratep1xbraten();
 +
      logoutf("init: mainloop");
 
      if(execfile("once.cfg", false)) remove(findfile("once.cfg", "rb"));
+Index: src/engine/p1xbraten_version.cpp
+===================================================================
+--- src/engine/p1xbraten_version.cpp	(nonexistent)
++++ src/engine/p1xbraten_version.cpp	(working copy)
+@@ -0,0 +1,22 @@
++#include "engine.h"
++
++SVARP(p1xbratenversion, "");
++
++void lockversion()
++{
++    ident *id = getident("p1xbratenversion");
++    if(!id) { conoutf(CON_ERROR, "p1xbratenversion is undefined!"); return; }
++    if(!(id->flags&IDF_READONLY)) id->flags += IDF_READONLY;
++}
++
++void migratep1xbraten()
++{
++    const char *version = "<git-dev>"; // replaced in CI build
++    if(naturalsort(p1xbratenversion, version) == -1)
++    {
++        // we're newer, run migrations
++    }
++    setsvar("p1xbratenversion", version);
++    lockversion();
++    conoutf("p1xbraten version: %s", version);
++}
+Index: src/vcpp/sauerbraten.vcxproj
+===================================================================
+--- src/vcpp/sauerbraten.vcxproj	(revision 6491)
++++ src/vcpp/sauerbraten.vcxproj	(working copy)
+@@ -988,6 +988,20 @@
+       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)engine.pch</PrecompiledHeaderOutputFile>
+       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)engine.pch</PrecompiledHeaderOutputFile>
+     </ClCompile>
++    <ClCompile Include="..\engine\p1xbraten_version.cpp">
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">engine.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">engine.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)engine.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)engine.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">engine.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">engine.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">$(IntDir)engine.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)engine.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">engine.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">engine.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)engine.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)engine.pch</PrecompiledHeaderOutputFile>
++    </ClCompile>
+     <ClCompile Include="..\engine\sound.cpp">
+       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">engine.h</PrecompiledHeaderFile>
+       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">engine.h</PrecompiledHeaderFile>

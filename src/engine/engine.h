@@ -407,6 +407,8 @@ extern void writecfg(const char *name = NULL);
 extern void checksleep(int millis);
 extern void clearsleep(bool clearoverrides = true);
 
+extern int naturalsort(const char *a, const char *b);
+
 // console
 extern void processtextinput(const char *str, int len);
 extern void processkey(int code, bool isdown, int modstate = 0);
@@ -430,6 +432,8 @@ enum
     INIT_RESET
 };
 extern int initing, numcpus;
+
+extern void migratep1xbraten();
 
 enum
 {
