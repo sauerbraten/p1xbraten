@@ -477,6 +477,19 @@ namespace game
     ICOMMAND(unignore, "s", (char *arg), unignore(parseplayer(arg))); 
     ICOMMAND(isignored, "s", (char *arg), intret(isignored(parseplayer(arg)) ? 1 : 0));
 
+    VARFP(zenmode, 0, 0, 1, {
+        if(zenmode)
+        {
+            if(miniconfilter&CON_NONZEN) miniconfilter -= CON_NONZEN;
+            if(confilter&CON_NONZEN) confilter -= CON_NONZEN;
+        }
+        else
+        {
+            if(!(miniconfilter&CON_NONZEN)) miniconfilter += CON_NONZEN;
+            if(!(confilter&CON_NONZEN)) confilter += CON_NONZEN;
+        }
+    });
+
     void setteam(const char *arg1, const char *arg2)
     {
         int i = parseplayer(arg1);
@@ -1369,7 +1382,7 @@ namespace game
                 if(isignored(d->clientnum)) break;
                 if(d->state!=CS_DEAD && d->state!=CS_SPECTATOR)
                     particle_textcopy(d->abovehead(), text, PART_TEXT, 2000, 0x32FF64, 4.0f, -8);
-                conoutf(CON_CHAT, "%s:\f0 %s", chatcolorname(d), text);
+                conoutf(CON_CHAT + (d->state==CS_SPECTATOR ? CON_NONZEN : 0), "%s:\f0 %s", chatcolorname(d), text);
                 break;
             }
 
@@ -1382,7 +1395,7 @@ namespace game
                 if(!t || isignored(t->clientnum)) break;
                 if(t->state!=CS_DEAD && t->state!=CS_SPECTATOR)
                     particle_textcopy(t->abovehead(), text, PART_TEXT, 2000, 0x6496FF, 4.0f, -8);
-                conoutf(CON_TEAMCHAT, "\fs\f8[team]\fr %s: \f8%s", chatcolorname(t), text);
+                conoutf(CON_TEAMCHAT + (d->state==CS_SPECTATOR ? CON_NONZEN : 0), "\fs\f8[team]\fr %s: \f8%s", chatcolorname(t), text);
                 break;
             }
 
@@ -1440,11 +1453,11 @@ namespace game
                 if(d->name[0])          // already connected
                 {
                     if(strcmp(d->name, text) && !isignored(d->clientnum))
-                        conoutf("%s is now known as %s", colorname(d), colorname(d, text));
+                        conoutf(d->state==CS_SPECTATOR ? CON_INFO|CON_NONZEN : 0, "%s is now known as %s", colorname(d), colorname(d, text));
                 }
                 else                    // new client
                 {
-                    conoutf("\f0join:\f7 %s", colorname(d, text));
+                    conoutf(CON_INFO|CON_NONZEN, "\f0join:\f7 %s", colorname(d, text));
                     if(needclipboard >= 0) needclipboard++;
                 }
                 copystring(d->name, text, MAXNAMELEN+1);
@@ -1462,7 +1475,7 @@ namespace game
                     if(!text[0]) copystring(text, "unnamed");
                     if(strcmp(text, d->name))
                     {
-                        if(!isignored(d->clientnum)) conoutf("%s is now known as %s", colorname(d), colorname(d, text));
+                        if(!isignored(d->clientnum)) conoutf(d->state==CS_SPECTATOR ? CON_INFO|CON_NONZEN : 0, "%s is now known as %s", colorname(d), colorname(d, text));
                         copystring(d->name, text, MAXNAMELEN+1);
                     }
                 }
@@ -1834,7 +1847,7 @@ namespace game
 
             case N_SERVMSG:
                 getstring(text, p);
-                conoutf("%s", text);
+                conoutf(CON_INFO|CON_NONZEN, "%s", text);
                 break;
 
             case N_SENDDEMOLIST:

@@ -201,6 +201,7 @@ enum
 };
 
 extern int fullconsole;
+extern int confilter, fullconfilter, miniconfilter;
 
 extern void conoutf(const char *s, ...) PRINTFARGS(1, 2);
 extern void conoutf(int type, const char *s, ...) PRINTFARGS(2, 3);

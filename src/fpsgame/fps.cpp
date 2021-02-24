@@ -588,7 +588,7 @@ namespace game
         unignore(cn);
         fpsent *d = clients[cn];
         if(!d) return;
-        if(notify && d->name[0]) conoutf("\f4leave:\f7 %s", colorname(d));
+        if(notify && d->name[0]) conoutf(d->state==CS_SPECTATOR ? CON_INFO|CON_NONZEN : 0, "\f4leave:\f7 %s", colorname(d));
         removeweapons(d);
         removetrackedparticles(d);
         removetrackeddynlights(d);

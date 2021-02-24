@@ -20,6 +20,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [tex_commands.patch](#tex_commandspatch)
   - [decouple_framedrawing.patch](#decouple_framedrawingpatch)
   - [crosshaircolor.patch](#crosshaircolorpatch)
+  - [zenmode.patch](#zenmodepatch)
 - [Installation](#installation)
   - [Windows](#windows)
   - [macOS](#macos)
@@ -145,6 +146,13 @@ Using `maxfps` and `maxtps`, you can optimize for different goals:
 ### [crosshaircolor.patch](./patches/crosshaircolor.patch)
 
 - adds `crosshaircolor` variable to set a base crosshair color (for example, `/crosshaircolor 0 255 0` for pleasant green)
+
+### [zenmode.patch](./patches/zenmode.patch)
+
+- adds `zenmode` variable: if 1, hides non-essential console messages:
+  - server messages
+  - chat and team chat messages from spectators
+  - joins (all), leaves and renames (of spectators)
 
 ## Installation
 

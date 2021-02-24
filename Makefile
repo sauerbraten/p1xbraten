@@ -38,6 +38,7 @@ apply-patches:
 	$(PATCH) < patches/decouple_framedrawing.patch
 	$(PATCH) < patches/crosshaircolor.patch
 	$(PATCH) < patches/win_builds.patch
+	$(PATCH) < patches/zenmode.patch
 	unix2dos src/vcpp/sauerbraten.nsi
 	unix2dos src/vcpp/sauerbraten.vcxproj
 

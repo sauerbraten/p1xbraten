@@ -1,0 +1,166 @@
+NOTE: builds partly on top of modversion.patch
+
+Index: src/engine/p1xbraten_version.cpp
+===================================================================
+--- src/engine/p1xbraten_version.cpp	(nonexistent)
++++ src/engine/p1xbraten_version.cpp	(working copy)
+@@ -15,6 +15,12 @@
+     if(naturalsort(p1xbratenversion, version) == -1)
+     {
+         // we're newer, run migrations
++        if(naturalsort(p1xbratenversion, "3.0.0") == -1) {
++            // activate CON_NONZEN in all consoles
++            if(!(confilter&(1<<14))) confilter += 1<<14;
++            if(!(fullconfilter&(1<<14))) fullconfilter += 1<<14;
++            if(!(miniconfilter&(1<<14))) miniconfilter += 1<<14;
++        }
+     }
+     setsvar("p1xbratenversion", version);
+     lockversion();
+Index: src/engine/console.cpp
+===================================================================
+--- src/engine/console.cpp	(revision 6491)
++++ src/engine/console.cpp	(working copy)
+@@ -116,7 +116,8 @@
+     {
+         // shuffle backwards to fill if necessary
+         int idx = offset+i < numl ? offset+i : --offset;
+-        if(!(conlines[idx].type&filter)) continue;
++        int flags = conlines[idx].type & CON_FLAGS;
++        if((flags&filter)!=flags) continue;
+         char *line = conlines[idx].line;
+         int width, height;
+         text_bounds(line, width, height, conwidth);
+@@ -127,7 +128,8 @@
+     loopi(numl)
+     {
+         int idx = offset + (dir > 0 ? numl-i-1 : i);
+-        if(!(conlines[idx].type&filter)) continue;
++        int flags = conlines[idx].type & CON_FLAGS;
++        if((flags&filter)!=flags) continue;
+         char *line = conlines[idx].line;
+         int width, height;
+         text_bounds(line, width, height, conwidth);
+Index: src/fpsgame/ai.cpp
+===================================================================
+--- src/fpsgame/ai.cpp	(revision 6491)
++++ src/fpsgame/ai.cpp	(working copy)
+@@ -149,7 +149,7 @@
+         if(!d->name[0])
+         {
+             if(aidebug) conoutf(CON_DEBUG, "%s assigned to %s at skill %d", colorname(d, name), o ? colorname(o) : "?", sk);
+-            else conoutf("\f0join:\f7 %s", colorname(d, name));
++            else conoutf(CON_INFO|CON_NONZEN, "\f0join:\f7 %s", colorname(d, name));
+             resetthisguy = true;
+         }
+         else
+Index: src/fpsgame/client.cpp
+===================================================================
+--- src/fpsgame/client.cpp	(revision 6491)
++++ src/fpsgame/client.cpp	(working copy)
+@@ -445,6 +445,19 @@
+     ICOMMAND(unignore, "s", (char *arg), unignore(parseplayer(arg)));
+     ICOMMAND(isignored, "s", (char *arg), intret(isignored(parseplayer(arg)) ? 1 : 0));
+
++    VARFP(zenmode, 0, 0, 1, {
++        if(zenmode)
++        {
++            if(miniconfilter&CON_NONZEN) miniconfilter -= CON_NONZEN;
++            if(confilter&CON_NONZEN) confilter -= CON_NONZEN;
++        }
++        else
++        {
++            if(!(miniconfilter&CON_NONZEN)) miniconfilter += CON_NONZEN;
++            if(!(confilter&CON_NONZEN)) confilter += CON_NONZEN;
++        }
++    });
++
+     void setteam(const char *arg1, const char *arg2)
+     {
+         int i = parseplayer(arg1);
+@@ -1329,7 +1342,7 @@
+                 if(isignored(d->clientnum)) break;
+                 if(d->state!=CS_DEAD && d->state!=CS_SPECTATOR)
+                     particle_textcopy(d->abovehead(), text, PART_TEXT, 2000, 0x32FF64, 4.0f, -8);
+-                conoutf(CON_CHAT, "%s:\f0 %s", chatcolorname(d), text);
++                conoutf(CON_CHAT + (d->state==CS_SPECTATOR ? CON_NONZEN : 0), "%s:\f0 %s", chatcolorname(d), text);
+                 break;
+             }
+
+@@ -1342,7 +1355,7 @@
+                 if(!t || isignored(t->clientnum)) break;
+                 if(t->state!=CS_DEAD && t->state!=CS_SPECTATOR)
+                     particle_textcopy(t->abovehead(), text, PART_TEXT, 2000, 0x6496FF, 4.0f, -8);
+-                conoutf(CON_TEAMCHAT, "\fs\f8[team]\fr %s: \f8%s", chatcolorname(t), text);
++                conoutf(CON_TEAMCHAT + (d->state==CS_SPECTATOR ? CON_NONZEN : 0), "\fs\f8[team]\fr %s: \f8%s", chatcolorname(t), text);
+                 break;
+             }
+
+@@ -1400,11 +1413,11 @@
+                 if(d->name[0])          // already connected
+                 {
+                     if(strcmp(d->name, text) && !isignored(d->clientnum))
+-                        conoutf("%s is now known as %s", colorname(d), colorname(d, text));
++                        conoutf(d->state==CS_SPECTATOR ? CON_INFO|CON_NONZEN : 0, "%s is now known as %s", colorname(d), colorname(d, text));
+                 }
+                 else                    // new client
+                 {
+-                    conoutf("\f0join:\f7 %s", colorname(d, text));
++                    conoutf(CON_INFO|CON_NONZEN, "\f0join:\f7 %s", colorname(d, text));
+                     if(needclipboard >= 0) needclipboard++;
+                 }
+                 copystring(d->name, text, MAXNAMELEN+1);
+@@ -1422,7 +1435,7 @@
+                     if(!text[0]) copystring(text, "unnamed");
+                     if(strcmp(text, d->name))
+                     {
+-                        if(!isignored(d->clientnum)) conoutf("%s is now known as %s", colorname(d), colorname(d, text));
++                        if(!isignored(d->clientnum)) conoutf(d->state==CS_SPECTATOR ? CON_INFO|CON_NONZEN : 0, "%s is now known as %s", colorname(d), colorname(d, text));
+                         copystring(d->name, text, MAXNAMELEN+1);
+                     }
+                 }
+@@ -1771,7 +1784,7 @@
+
+             case N_SERVMSG:
+                 getstring(text, p);
+-                conoutf("%s", text);
++                conoutf(CON_INFO|CON_NONZEN, "%s", text);
+                 break;
+
+             case N_SENDDEMOLIST:
+Index: src/fpsgame/fps.cpp
+===================================================================
+--- src/fpsgame/fps.cpp	(revision 6491)
++++ src/fpsgame/fps.cpp	(working copy)
+@@ -575,7 +575,7 @@
+         unignore(cn);
+         fpsent *d = clients[cn];
+         if(!d) return;
+-        if(notify && d->name[0]) conoutf("\f4leave:\f7 %s", colorname(d));
++        if(notify && d->name[0]) conoutf(d->state==CS_SPECTATOR ? CON_INFO|CON_NONZEN : 0, "\f4leave:\f7 %s", colorname(d));
+         removeweapons(d);
+         removetrackedparticles(d);
+         removetrackeddynlights(d);
+Index: src/fpsgame/game.h
+===================================================================
+--- src/fpsgame/game.h	(revision 6491)
++++ src/fpsgame/game.h	(working copy)
+@@ -12,7 +12,8 @@
+     CON_GAMEINFO   = 1<<10,
+     CON_FRAG_SELF  = 1<<11,
+     CON_FRAG_OTHER = 1<<12,
+-    CON_TEAMKILL   = 1<<13
++    CON_TEAMKILL   = 1<<13,
++    CON_NONZEN     = 1<<14
+ };
+
+ // network quantization scale
+Index: src/shared/iengine.h
+===================================================================
+--- src/shared/iengine.h	(revision 6491)
++++ src/shared/iengine.h	(working copy)
+@@ -201,3 +201,4 @@
++extern int confilter, fullconfilter, miniconfilter;
+
+ extern void conoutf(const char *s, ...) PRINTFARGS(1, 2);
+ extern void conoutf(int type, const char *s, ...) PRINTFARGS(2, 3);
