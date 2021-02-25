@@ -101,7 +101,7 @@ Index: src/fpsgame/client.cpp
                  {
                      if(strcmp(d->name, text) && !isignored(d->clientnum))
 -                        conoutf("%s is now known as %s", colorname(d), colorname(d, text));
-+                        conoutf(d->state==CS_SPECTATOR ? CON_INFO|CON_NONZEN : 0, "%s is now known as %s", colorname(d), colorname(d, text));
++                        conoutf(CON_INFO + (d->state==CS_SPECTATOR ? CON_NONZEN : 0), "%s is now known as %s", colorname(d), colorname(d, text));
                  }
                  else                    // new client
                  {
@@ -115,7 +115,7 @@ Index: src/fpsgame/client.cpp
                      if(strcmp(text, d->name))
                      {
 -                        if(!isignored(d->clientnum)) conoutf("%s is now known as %s", colorname(d), colorname(d, text));
-+                        if(!isignored(d->clientnum)) conoutf(d->state==CS_SPECTATOR ? CON_INFO|CON_NONZEN : 0, "%s is now known as %s", colorname(d), colorname(d, text));
++                        if(!isignored(d->clientnum)) conoutf(CON_INFO + (d->state==CS_SPECTATOR ? CON_NONZEN : 0), "%s is now known as %s", colorname(d), colorname(d, text));
                          copystring(d->name, text, MAXNAMELEN+1);
                      }
                  }
@@ -137,7 +137,7 @@ Index: src/fpsgame/fps.cpp
          fpsent *d = clients[cn];
          if(!d) return;
 -        if(notify && d->name[0]) conoutf("\f4leave:\f7 %s", colorname(d));
-+        if(notify && d->name[0]) conoutf(d->state==CS_SPECTATOR ? CON_INFO|CON_NONZEN : 0, "\f4leave:\f7 %s", colorname(d));
++        if(notify && d->name[0]) conoutf(CON_INFO + (d->state==CS_SPECTATOR ? CON_NONZEN : 0), "\f4leave:\f7 %s", colorname(d));
          removeweapons(d);
          removetrackedparticles(d);
          removetrackeddynlights(d);

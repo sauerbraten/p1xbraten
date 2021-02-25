@@ -1453,7 +1453,7 @@ namespace game
                 if(d->name[0])          // already connected
                 {
                     if(strcmp(d->name, text) && !isignored(d->clientnum))
-                        conoutf(d->state==CS_SPECTATOR ? CON_INFO|CON_NONZEN : 0, "%s is now known as %s", colorname(d), colorname(d, text));
+                        conoutf(CON_INFO + (d->state==CS_SPECTATOR ? CON_NONZEN : 0), "%s is now known as %s", colorname(d), colorname(d, text));
                 }
                 else                    // new client
                 {
@@ -1475,7 +1475,7 @@ namespace game
                     if(!text[0]) copystring(text, "unnamed");
                     if(strcmp(text, d->name))
                     {
-                        if(!isignored(d->clientnum)) conoutf(d->state==CS_SPECTATOR ? CON_INFO|CON_NONZEN : 0, "%s is now known as %s", colorname(d), colorname(d, text));
+                        if(!isignored(d->clientnum)) conoutf(CON_INFO + (d->state==CS_SPECTATOR ? CON_NONZEN : 0), "%s is now known as %s", colorname(d), colorname(d, text));
                         copystring(d->name, text, MAXNAMELEN+1);
                     }
                 }
