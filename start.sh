@@ -65,6 +65,7 @@ fi
 
 if [ -x ${SAUER_BIN}/${SYSTEM_NAME}${MACHINE_NAME}client ]
 then
+  #exec gdb --args ${SAUER_BIN}/${SYSTEM_NAME}${MACHINE_NAME}client ${SAUER_OPTIONS} "$@"
   exec ${SAUER_BIN}/${SYSTEM_NAME}${MACHINE_NAME}client ${SAUER_OPTIONS} "$@"
 else
   echo "Your platform does not have a pre-compiled Sauerbraten client."
