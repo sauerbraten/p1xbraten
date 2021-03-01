@@ -140,9 +140,9 @@ While vanilla Sauerbraten is truly unlimited after `/maxfps 0`, p1xbraten's main
 
 Using `maxfps` and `maxtps`, you can optimize for different goals:
 
-- for lowest average latency, use `/maxtps 0` and set `maxfps` to your screen refresh rate plus ~10% (to make sure there's always a new frame ready), for example `/maxfps 70`, then `/vsync 1`
-- to use fewer resources and save laptop battery, use `/maxfps 0`, `/maxtps 100` and `/vsync 1`
-- for lowest consistent latency, use `/maxfps 0`, `/vsync 0`, then set `maxtps` to the highest value that gives you a stable fps counter on your system, then `/vsync 1`
+- for lowest average latency, use `/maxtps 0` and `/vsync 0`
+- for lowest consistent latency, use `/maxfps 0`, `/vsync 0`, and set `maxtps` to the highest value that gives you a stable fps counter on your system
+- to use fewer resources and save laptop battery, use `/maxfps 0`, and set `maxtps` to the lowest value that gives you smooth graphics
 
 ### [crosshaircolor.patch](./patches/crosshaircolor.patch)
 
