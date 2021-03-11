@@ -52,18 +52,23 @@ Index: src/fpsgame/fps.cpp
          conoutf("follow off");
      }
 
-@@ -496,6 +500,10 @@
+@@ -496,6 +500,15 @@
              if(d==player1) conoutf(contype, "\f2%s got fragged by %s", dname, aname);
              else conoutf(contype, "\f2%s fragged %s", aname, dname);
          }
-+        if(actor==player1) aname = "\f2you";
-+        if(d==player1) dname = "\f2you";
++        if(hudfragmessagecolors)
++        {
++            if(h==player1 && actor==player1) aname = "\fs\f2you\fr";
++            else aname = colorname(actor, aname, actor==h ? "\fs\f1" : "\fs\f3", "\fr", NULL);
++            if(h==player1 && d==player1) dname = "\fs\f2you\fr";
++            else dname = colorname(d, dname, d==h ? "\fs\f1" : "\fs\f3", "\fr", NULL);
++        }
 +        if(d==actor) addfragmessage(contype, NULL, dname, HICON_TOKEN-HICON_FIST);
 +        else addfragmessage(contype, aname, dname, d->lasthitpushgun);
          deathstate(d);
  		ai::killed(d, actor);
      }
-@@ -1091,6 +1099,7 @@
+@@ -1091,6 +1104,7 @@
          {
              if(gameclock) drawgameclock(w, h);
              if(hudscore) drawhudscore(w, h);
@@ -75,7 +80,7 @@ Index: src/fpsgame/fragmessages.cpp
 ===================================================================
 --- src/fpsgame/fragmessages.cpp	(nonexistent)
 +++ src/fpsgame/fragmessages.cpp	(working copy)
-@@ -0,0 +1,76 @@
+@@ -0,0 +1,77 @@
 +#include "game.h"
 +
 +namespace game {
@@ -90,6 +95,7 @@ Index: src/fpsgame/fragmessages.cpp
 +    FVARP(hudfragmessagescale, 0.1f, 0.5f, 1.0f);
 +    VARP(hudfragmessagestackdir, -1, 0, 1); // -1 = upwards, 1 = downwards
 +    HVARP(hudfragmessagefilter, 0, 0x2800, 0x7FFFFFF); // default: own frags + teamkills
++    VARP(hudfragmessagecolors, 0, 1, 1);
 +
 +    void addfragmessage(int contype, const char *aname, const char *vname, int gun)
 +    {
@@ -156,7 +162,7 @@ Index: src/fpsgame/fragmessages.h
 ===================================================================
 --- src/fpsgame/fragmessages.h	(nonexistent)
 +++ src/fpsgame/fragmessages.h	(working copy)
-@@ -0,0 +1,28 @@
+@@ -0,0 +1,29 @@
 +#ifndef __FRAGMESSAGES_H__
 +#define __FRAGMESSAGES_H__
 +
@@ -179,6 +185,7 @@ Index: src/fpsgame/fragmessages.h
 +
 +    extern vector<fragmessage> fragmessages;
 +    extern int hudfragmessages;
++    extern int hudfragmessagecolors;
 +    extern void addfragmessage(int contype, const char *aname, const char *vname, int gun);
 +    extern void clearfragmessages();
 +    extern void drawfragmessages(int w, int h);

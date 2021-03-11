@@ -12,6 +12,7 @@ namespace game {
     FVARP(hudfragmessagescale, 0.1f, 0.5f, 1.0f);
     VARP(hudfragmessagestackdir, -1, 0, 1); // -1 = upwards, 1 = downwards
     HVARP(hudfragmessagefilter, 0, 0x2800, 0x7FFFFFF); // default: own frags + teamkills
+    VARP(hudfragmessagecolors, 0, 1, 1);
 
     void addfragmessage(int contype, const char *aname, const char *vname, int gun)
     {
