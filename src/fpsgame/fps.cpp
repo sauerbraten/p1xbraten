@@ -506,13 +506,13 @@ namespace game
             if(d==player1) conoutf(contype, "\f2%s got fragged by %s", dname, aname);
             else conoutf(contype, "\f2%s fragged %s", aname, dname);
         }
-        if(hudfragmessagecolors)
+        if(hudfragmessageforcecolors && !m_teammode)
         {
-            if(h==player1 && actor==player1) aname = "\fs\f2you\fr";
-            else aname = colorname(actor, aname, actor==h ? "\fs\f1" : "\fs\f3", "\fr", NULL);
-            if(h==player1 && d==player1) dname = "\fs\f2you\fr";
-            else dname = colorname(d, dname, d==h ? "\fs\f1" : "\fs\f3", "\fr", NULL);
+            dname = colorname(d, NULL, d==h ? "\fs\f1" : "\fs\f3", "\fr", NULL);
+            aname = colorname(actor, NULL, actor==h ? "\fs\f1" : "\fs\f3", "\fr", NULL);
         }
+        if(h==player1 && d==player1) dname = "\fs\f2you\fr";
+        if(h==player1 && actor==player1) aname = "\fs\f2you\fr";
         if(d==actor) addfragmessage(contype, NULL, dname, HICON_TOKEN-HICON_FIST);
         else addfragmessage(contype, aname, dname, d->lasthitpushgun);
         deathstate(d);

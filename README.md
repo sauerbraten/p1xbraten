@@ -95,10 +95,7 @@ a.k.a. Features
     - `hudfragmessagescale`: size of the messages, between 0.0 and 1.0
     - `hudfragmessagestackdir`: direction in which to stack old messages: -1 to stack upwards, 1 to stack downwards, 0 to stack towards the closes edge of the screen depending on `hudfragmessagey`
     - `hudfragmessagefilter`: bitfield filter var (like confilter), e.g. 0x3800 shows all players' frags, suicides, and teamkills
-    - `hudfragmessagecolors`: when 1 (default), uses colored names, even in non-team modes:
-      - yellow: you (while playing)
-      - blue: your team or the player you're spectating
-      - red: anyone else
+    - `hudfragmessageforcecolors`: when 1 (default), uses colored names, even in non-team modes
 
 You can easily configure the hud frag messages using the [improved menu](#menu) (options → hud → adjust hud frag messages).
 
