@@ -10,16 +10,6 @@ Index: src/Makefile
  	fpsgame/monster.o \
  	fpsgame/movable.o \
  	fpsgame/render.o \
-@@ -482,3 +483,4 @@
-+fpsgame/fragmessages.o: fpsgame/game.h fpsgame/fragmessages.h
- fpsgame/monster.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
- fpsgame/monster.o: shared/ents.h shared/command.h shared/glexts.h
- fpsgame/monster.o: shared/glemu.h shared/iengine.h shared/igame.h
-@@ -525,3 +527,4 @@
-+fpsgame/game.h.gch: fpsgame/fragmessages.h
-
- shared/crypto-standalone.o: shared/cube.h shared/tools.h shared/geom.h
- shared/crypto-standalone.o: shared/ents.h shared/command.h shared/iengine.h
 Index: src/fpsgame/fps.cpp
 ===================================================================
 --- src/fpsgame/fps.cpp	(revision 6488)

@@ -41,6 +41,7 @@ apply-patches:
 	$(PATCH) < patches/zenmode.patch
 	unix2dos src/vcpp/sauerbraten.nsi
 	unix2dos src/vcpp/sauerbraten.vcxproj
+	cd src && make depend
 
 gzip-menus:
 	gzip --keep --force --best --no-name data/p1xbraten/menus.cfg && xxd -i - data/p1xbraten/menus.cfg.gz.xxd < data/p1xbraten/menus.cfg.gz

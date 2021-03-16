@@ -473,56 +473,76 @@ engine/worldio.o: engine/texture.h engine/model.h
 fpsgame/ai.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
 fpsgame/ai.o: shared/ents.h shared/command.h shared/glexts.h shared/glemu.h
 fpsgame/ai.o: shared/iengine.h shared/igame.h fpsgame/ai.h
+fpsgame/ai.o: fpsgame/weaponstats_type.h fpsgame/fragmessages.h
 fpsgame/client.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
 fpsgame/client.o: shared/ents.h shared/command.h shared/glexts.h
 fpsgame/client.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
-fpsgame/client.o: fpsgame/capture.h fpsgame/ctf.h fpsgame/collect.h
-fpsgame/client.o: fpsgame/weaponstats.h
+fpsgame/client.o: fpsgame/weaponstats_type.h fpsgame/fragmessages.h
+fpsgame/client.o: fpsgame/weaponstats.h fpsgame/capture.h fpsgame/ctf.h
+fpsgame/client.o: fpsgame/collect.h
 fpsgame/entities.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
 fpsgame/entities.o: shared/ents.h shared/command.h shared/glexts.h
 fpsgame/entities.o: shared/glemu.h shared/iengine.h shared/igame.h
-fpsgame/entities.o: fpsgame/ai.h
+fpsgame/entities.o: fpsgame/ai.h fpsgame/weaponstats_type.h
+fpsgame/entities.o: fpsgame/fragmessages.h
 fpsgame/fps.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
 fpsgame/fps.o: shared/ents.h shared/command.h shared/glexts.h shared/glemu.h
 fpsgame/fps.o: shared/iengine.h shared/igame.h fpsgame/ai.h
-fpsgame/fps.o: fpsgame/weaponstats.h
-fpsgame/fragmessages.o: fpsgame/game.h fpsgame/fragmessages.h
+fpsgame/fps.o: fpsgame/weaponstats_type.h fpsgame/fragmessages.h
+fpsgame/fps.o: fpsgame/weaponstats.h fpsgame/colors.h
+fpsgame/fragmessages.o: fpsgame/game.h shared/cube.h shared/tools.h
+fpsgame/fragmessages.o: shared/geom.h shared/ents.h shared/command.h
+fpsgame/fragmessages.o: shared/glexts.h shared/glemu.h shared/iengine.h
+fpsgame/fragmessages.o: shared/igame.h fpsgame/ai.h
+fpsgame/fragmessages.o: fpsgame/weaponstats_type.h fpsgame/fragmessages.h
 fpsgame/monster.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
 fpsgame/monster.o: shared/ents.h shared/command.h shared/glexts.h
 fpsgame/monster.o: shared/glemu.h shared/iengine.h shared/igame.h
-fpsgame/monster.o: fpsgame/ai.h
+fpsgame/monster.o: fpsgame/ai.h fpsgame/weaponstats_type.h
+fpsgame/monster.o: fpsgame/fragmessages.h
 fpsgame/movable.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
 fpsgame/movable.o: shared/ents.h shared/command.h shared/glexts.h
 fpsgame/movable.o: shared/glemu.h shared/iengine.h shared/igame.h
-fpsgame/movable.o: fpsgame/ai.h
+fpsgame/movable.o: fpsgame/ai.h fpsgame/weaponstats_type.h
+fpsgame/movable.o: fpsgame/fragmessages.h
 fpsgame/p1xbraten_menus.o: shared/cube.h shared/tools.h shared/geom.h
 fpsgame/p1xbraten_menus.o: shared/ents.h shared/command.h shared/glexts.h
 fpsgame/p1xbraten_menus.o: shared/glemu.h shared/iengine.h shared/igame.h
 fpsgame/p1xbraten_menus.o: fpsgame/p1xbraten_menus.h
+fpsgame/p1xbraten_menus.o: ../data/p1xbraten/menus.cfg.gz.xxd
+fpsgame/p1xbraten_menus.o: ../data/p1xbraten/master.cfg.gz.xxd
+fpsgame/p1xbraten_menus.o: ../data/p1xbraten/gamehud.cfg.gz.xxd
 fpsgame/render.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
 fpsgame/render.o: shared/ents.h shared/command.h shared/glexts.h
 fpsgame/render.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
+fpsgame/render.o: fpsgame/weaponstats_type.h fpsgame/fragmessages.h
 fpsgame/scoreboard.o: fpsgame/game.h shared/cube.h shared/tools.h
 fpsgame/scoreboard.o: shared/geom.h shared/ents.h shared/command.h
 fpsgame/scoreboard.o: shared/glexts.h shared/glemu.h shared/iengine.h
-fpsgame/scoreboard.o: shared/igame.h fpsgame/ai.h
-fpsgame/scoreboard.o: fpsgame/weaponstats.h fpsgame/colors.h
+fpsgame/scoreboard.o: shared/igame.h fpsgame/ai.h fpsgame/weaponstats_type.h
+fpsgame/scoreboard.o: fpsgame/fragmessages.h fpsgame/weaponstats.h
+fpsgame/scoreboard.o: fpsgame/colors.h
 fpsgame/server.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
 fpsgame/server.o: shared/ents.h shared/command.h shared/glexts.h
 fpsgame/server.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
+fpsgame/server.o: fpsgame/weaponstats_type.h fpsgame/fragmessages.h
 fpsgame/server.o: fpsgame/capture.h fpsgame/ctf.h fpsgame/collect.h
 fpsgame/server.o: fpsgame/extinfo.h fpsgame/aiman.h
+fpsgame/weaponstats.o: fpsgame/game.h shared/cube.h shared/tools.h
+fpsgame/weaponstats.o: shared/geom.h shared/ents.h shared/command.h
+fpsgame/weaponstats.o: shared/glexts.h shared/glemu.h shared/iengine.h
+fpsgame/weaponstats.o: shared/igame.h fpsgame/ai.h fpsgame/weaponstats_type.h
+fpsgame/weaponstats.o: fpsgame/fragmessages.h fpsgame/weaponstats.h
 fpsgame/waypoint.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
 fpsgame/waypoint.o: shared/ents.h shared/command.h shared/glexts.h
 fpsgame/waypoint.o: shared/glemu.h shared/iengine.h shared/igame.h
-fpsgame/waypoint.o: fpsgame/ai.h
+fpsgame/waypoint.o: fpsgame/ai.h fpsgame/weaponstats_type.h
+fpsgame/waypoint.o: fpsgame/fragmessages.h
 fpsgame/weapon.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
 fpsgame/weapon.o: shared/ents.h shared/command.h shared/glexts.h
 fpsgame/weapon.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
-fpsgame/weaponstats.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
-fpsgame/weaponstats.o: shared/ents.h shared/command.h shared/glexts.h
-fpsgame/weaponstats.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
-fpsgame/weaponstats.o: fpsgame/weaponstats.h
+fpsgame/weapon.o: fpsgame/weaponstats_type.h fpsgame/fragmessages.h
+fpsgame/weapon.o: fpsgame/weaponstats.h
 
 shared/cube.h.gch: shared/tools.h shared/geom.h shared/ents.h
 shared/cube.h.gch: shared/command.h shared/glexts.h shared/glemu.h
@@ -535,8 +555,8 @@ engine/engine.h.gch: engine/texture.h engine/model.h
 fpsgame/game.h.gch: shared/cube.h shared/tools.h shared/geom.h shared/ents.h
 fpsgame/game.h.gch: shared/command.h shared/glexts.h shared/glemu.h
 fpsgame/game.h.gch: shared/iengine.h shared/igame.h fpsgame/ai.h
-fpsgame/game.h.gch: fpsgame/weaponstats_type.h
-fpsgame/game.h.gch: fpsgame/fragmessages.h
+fpsgame/game.h.gch: fpsgame/weaponstats_type.h fpsgame/fragmessages.h
+fpsgame/game.h.gch: fpsgame/game.h
 
 shared/crypto-standalone.o: shared/cube.h shared/tools.h shared/geom.h
 shared/crypto-standalone.o: shared/ents.h shared/command.h shared/iengine.h
@@ -559,12 +579,15 @@ engine/worldio-standalone.o: shared/iengine.h shared/igame.h engine/world.h
 fpsgame/entities-standalone.o: fpsgame/game.h shared/cube.h shared/tools.h
 fpsgame/entities-standalone.o: shared/geom.h shared/ents.h shared/command.h
 fpsgame/entities-standalone.o: shared/iengine.h shared/igame.h fpsgame/ai.h
+fpsgame/entities-standalone.o: fpsgame/weaponstats_type.h
+fpsgame/entities-standalone.o: fpsgame/fragmessages.h
 fpsgame/server-standalone.o: fpsgame/game.h shared/cube.h shared/tools.h
 fpsgame/server-standalone.o: shared/geom.h shared/ents.h shared/command.h
 fpsgame/server-standalone.o: shared/iengine.h shared/igame.h fpsgame/ai.h
-fpsgame/server-standalone.o: fpsgame/capture.h fpsgame/ctf.h
-fpsgame/server-standalone.o: fpsgame/collect.h fpsgame/extinfo.h
-fpsgame/server-standalone.o: fpsgame/aiman.h
+fpsgame/server-standalone.o: fpsgame/weaponstats_type.h
+fpsgame/server-standalone.o: fpsgame/fragmessages.h fpsgame/capture.h
+fpsgame/server-standalone.o: fpsgame/ctf.h fpsgame/collect.h
+fpsgame/server-standalone.o: fpsgame/extinfo.h fpsgame/aiman.h
 engine/master-standalone.o: shared/cube.h shared/tools.h shared/geom.h
 engine/master-standalone.o: shared/ents.h shared/command.h shared/iengine.h
 engine/master-standalone.o: shared/igame.h
