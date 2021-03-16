@@ -17,8 +17,6 @@ namespace game
 
 VAR(regenbluearmour, 0, 1, 1);
 
-extern ENetAddress masteraddress;
-
 namespace server
 {
     struct server_entity            // server side version of "entity" type
@@ -2754,9 +2752,9 @@ namespace server
         return ci && ci->connected;
     }
 
-    clientinfo *findauth(uint id)
+    clientinfo *findauth(uint id, const char *desc)
     {
-        loopv(clients) if(clients[i]->authreq == id) return clients[i];
+        loopv(clients) if(clients[i]->authreq == id && !strcmp(clients[i]->authdesc, desc)) return clients[i];
         return NULL;
     }
 
@@ -2768,29 +2766,31 @@ namespace server
         if(ci->connectauth) disconnect_client(ci->clientnum, ci->connectauth);
     }
 
-    void authfailed(uint id)
+    void authfailed(uint id, const char *desc)
     {
-        authfailed(findauth(id));
+        authfailed(findauth(id, desc));
     }
 
-    void authsucceeded(uint id)
+    void authsucceeded(uint id, const char *desc)
     {
-        clientinfo *ci = findauth(id);
+        clientinfo *ci = findauth(id, desc);
         if(!ci) return;
+        authserver *a = authservers.access(desc);
+        if(!a) return;
         ci->cleanauth(ci->connectauth!=0);
         if(ci->connectauth) connected(ci);
         if(ci->authkickvictim >= 0)
         {
-            if(setmaster(ci, true, "", ci->authname, NULL, PRIV_AUTH, false, true))
-                trykick(ci, ci->authkickvictim, ci->authkickreason, ci->authname, NULL, PRIV_AUTH);    
+            if(setmaster(ci, true, "", ci->authname, ci->authdesc, a->privilege, false, true))
+                trykick(ci, ci->authkickvictim, ci->authkickreason, ci->authname, ci->authdesc, a->privilege);
             ci->cleanauthkick();
         }
-        else setmaster(ci, true, "", ci->authname, NULL, PRIV_AUTH);
+        else setmaster(ci, true, "", ci->authname, ci->authdesc, a->privilege);
     }
 
-    void authchallenged(uint id, const char *val, const char *desc = "")
+    void authchallenged(uint id, const char *val, const char *desc)
     {
-        clientinfo *ci = findauth(id);
+        clientinfo *ci = findauth(id, desc);
         if(!ci) return;
         sendf(ci->clientnum, 1, "risis", N_AUTHCHAL, desc, id, val);
     }
@@ -2804,7 +2804,7 @@ namespace server
         ci->authreq = nextauthreq++;
         filtertext(ci->authname, user, false, false, 100);
         copystring(ci->authdesc, desc);
-        if(ci->authdesc[0])
+        if(desc[0] && !strcmp(desc, serverauth))
         {
             userinfo *u = users.access(userkey(ci->authname, ci->authdesc));
             if(u) 
@@ -2816,7 +2816,7 @@ namespace server
             }
             else ci->cleanauth();
         }
-        else if(!requestmasterf("reqauth %u %s\n", ci->authreq, ci->authname))
+        else if(!requestauthserverf(desc, "reqauth %u %s\n", ci->authreq, ci->authname))
         {
             ci->cleanauth();
             sendf(ci->clientnum, 1, "ris", N_SERVMSG, "not connected to authentication server");
@@ -2837,7 +2837,7 @@ namespace server
         {
             if(!isxdigit(*s)) { *s = '\0'; break; }
         }
-        if(desc[0])
+        if(desc[0] && !strcmp(desc, serverauth))
         {
             if(ci->authchallenge && checkchallenge(val, ci->authchallenge))
             {
@@ -2855,7 +2855,7 @@ namespace server
             }
             ci->cleanauth(); 
         } 
-        else if(!requestmasterf("confauth %u %s\n", id, val))
+        else if(!requestauthserverf(desc, "confauth %u %s\n", id, val))
         {
             ci->cleanauth();
             sendf(ci->clientnum, 1, "ris", N_SERVMSG, "not connected to authentication server");
@@ -2863,32 +2863,32 @@ namespace server
         return ci->authreq || !ci->connectauth;
     }
 
-    void masterconnected()
+    void authserverconnected(const char *keydomain)
     {
     }
 
-    void masterdisconnected()
+    void authserverdisconnected(const char *keydomain)
     {
         loopvrev(clients)
         {
             clientinfo *ci = clients[i];
-            if(ci->authreq) authfailed(ci); 
+            if(ci->authreq && !strcmp(ci->authdesc, keydomain)) authfailed(ci);
         }
     }
 
-    void processmasterinput(const char *cmd, int cmdlen, const char *args)
+    void processauthserverinput(const char *desc, const char *cmd, int cmdlen, const char *args)
     {
         uint id;
         string val;
         if(sscanf(cmd, "failauth %u", &id) == 1)
-            authfailed(id);
+            authfailed(id, desc);
         else if(sscanf(cmd, "succauth %u", &id) == 1)
-            authsucceeded(id);
+            authsucceeded(id, desc);
         else if(sscanf(cmd, "chalauth %u %255s", &id, val) == 2)
-            authchallenged(id, val);
-        else if(matchstring(cmd, cmdlen, "cleargbans"))
+            authchallenged(id, val, desc);
+        else if(matchstring(cmd, cmdlen, "cleargbans") && !desc[0])
             gbans.clear();
-        else if(sscanf(cmd, "addgban %100s", val) == 1)
+        else if(sscanf(cmd, "addgban %100s", val) == 1 && !desc[0])
             gbans.add(val);
     }
 

@@ -124,9 +124,9 @@ namespace server
     extern int serverport(int infoport = -1);
     extern const char *defaultmaster();
     extern int masterport();
-    extern void processmasterinput(const char *cmd, int cmdlen, const char *args);
-    extern void masterconnected();
-    extern void masterdisconnected();
+    extern void authserverconnected(const char *keydomain);
+    extern void processauthserverinput(const char *keydomain, const char *cmd, int cmdlen, const char *args);
+    extern void authserverdisconnected(const char *keydomain);
     extern bool ispaused();
     extern int scaletime(int t);
 }

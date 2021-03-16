@@ -617,6 +617,37 @@ void clearservers(bool full = false)
 
 #define RETRIEVELIMIT 20000
 
+ENetAddress masteraddress = { ENET_HOST_ANY, ENET_PORT_ANY };
+
+ENetSocket connectmaster(bool wait)
+ {
+    if(!mastername[0]) return ENET_SOCKET_NULL;
+    if(masteraddress.host == ENET_HOST_ANY)
+    {
+        if(isdedicatedserver()) logoutf("looking up %s...", mastername);
+        masteraddress.port = masterport;
+        if(!resolverwait(mastername, &masteraddress)) return ENET_SOCKET_NULL;
+    }
+    ENetSocket sock = enet_socket_create(ENET_SOCKET_TYPE_STREAM);
+    if(sock == ENET_SOCKET_NULL)
+    {
+        if(isdedicatedserver()) logoutf("could not open master server socket");
+        return ENET_SOCKET_NULL;
+    }
+    if(wait || serveraddress.host == ENET_HOST_ANY || !enet_socket_bind(sock, &serveraddress))
+    {
+        enet_socket_set_option(sock, ENET_SOCKOPT_NONBLOCK, 1);
+        if(wait)
+        {
+            if(!connectwithtimeout(sock, mastername, masteraddress)) return sock;
+        }
+        else if(!enet_socket_connect(sock, &masteraddress)) return sock;
+    }
+    enet_socket_destroy(sock);
+    if(isdedicatedserver()) logoutf("could not connect to master server");
+    return ENET_SOCKET_NULL;
+}
+
 void retrieveservers(vector<char> &data)
 {
     ENetSocket sock = connectmaster(true);

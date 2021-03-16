@@ -64,5 +64,7 @@
 #include "iengine.h"
 #include "igame.h"
 
+#include "authservers.h"
+
 #endif
 

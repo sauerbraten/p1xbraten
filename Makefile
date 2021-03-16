@@ -9,7 +9,7 @@ endif
 endif
 
 build: update-src apply-patches gzip-menus _include-menus
-	cd src && make client
+	cd src && make
 
 install:
 	cd src && make install
@@ -38,6 +38,7 @@ apply-patches:
 	$(PATCH) < patches/crosshaircolor.patch
 	$(PATCH) < patches/win_builds.patch
 	$(PATCH) < patches/zenmode.patch
+	$(PATCH) < patches/authservers.patch
 	unix2dos src/vcpp/sauerbraten.nsi
 	unix2dos src/vcpp/sauerbraten.vcxproj
 	cd src && make depend

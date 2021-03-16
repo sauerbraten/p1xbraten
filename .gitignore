@@ -4,6 +4,7 @@ src/**/*.o
 src/**/*.orig
 src/sauer_client
 src/sauer_server
+src/Makefile.bak
 patch_drafts
 bin/*
 bin64/*
