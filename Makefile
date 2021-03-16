@@ -30,7 +30,6 @@ apply-patches:
 	$(PATCH) < patches/hudscore.patch
 	$(PATCH) < patches/serverbrowser.patch
 	$(PATCH) < patches/listteams.patch
-	$(PATCH) < patches/no_server_build.patch
 	$(PATCH) < patches/extrapings.patch
 	$(PATCH) < patches/execfile.patch
 	$(PATCH) < patches/include_p1xbraten_menus.patch
