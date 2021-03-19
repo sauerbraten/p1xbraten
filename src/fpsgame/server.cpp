@@ -2785,6 +2785,13 @@ namespace server
                 trykick(ci, ci->authkickvictim, ci->authkickreason, ci->authname, ci->authdesc, a->privilege);
             ci->cleanauthkick();
         }
+        else if(ci->privilege >= a->privilege)
+        {
+            string msg;
+            if(desc && desc[0]) formatstring(msg, "%s authenticated as '\fs\f5%s\fr' [\fs\f0%s\fr]", colorname(ci), ci->authname, desc);
+            else formatstring(msg, "%s authenticated as '\fs\f5%s\fr'", colorname(ci), ci->authname);
+            sendf(-1, 1, "ris", N_SERVMSG, msg);
+        }
         else setmaster(ci, true, "", ci->authname, ci->authdesc, a->privilege);
     }
 

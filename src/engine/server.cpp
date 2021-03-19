@@ -464,7 +464,7 @@ VARN(updatemaster, allowupdatemaster, 0, 1, 1);
 void updatemasterserver()
 {
     if(!masterserver->connected && masterserver->lastconnect && totalmillis-masterserver->lastconnect <= 5*60*1000) return;
-    if(masterserver->name[0] && allowupdatemaster) masterserver->requestf("regserv %d\n", serverport);
+    if(masterserver->hostname[0] && allowupdatemaster) masterserver->requestf("regserv %d\n", serverport);
     masterserver->lastupdate = totalmillis ? totalmillis : 1;
 }
 

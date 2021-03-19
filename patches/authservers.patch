@@ -273,7 +273,7 @@ Index: src/engine/server.cpp
 -    if(mastername[0] && allowupdatemaster) requestmasterf("regserv %d\n", serverport);
 -    lastupdatemaster = totalmillis ? totalmillis : 1;
 +    if(!masterserver->connected && masterserver->lastconnect && totalmillis-masterserver->lastconnect <= 5*60*1000) return;
-+    if(masterserver->name[0] && allowupdatemaster) masterserver->requestf("regserv %d\n", serverport);
++    if(masterserver->hostname[0] && allowupdatemaster) masterserver->requestf("regserv %d\n", serverport);
 +    masterserver->lastupdate = totalmillis ? totalmillis : 1;
  }
 
@@ -397,7 +397,7 @@ Index: src/fpsgame/server.cpp
          return NULL;
      }
 
-@@ -2768,29 +2766,31 @@
+@@ -2768,29 +2766,38 @@
          if(ci->connectauth) disconnect_client(ci->clientnum, ci->connectauth);
      }
 
@@ -426,6 +426,13 @@ Index: src/fpsgame/server.cpp
 +                trykick(ci, ci->authkickvictim, ci->authkickreason, ci->authname, ci->authdesc, a->privilege);
              ci->cleanauthkick();
          }
++        else if(ci->privilege >= a->privilege)
++        {
++            string msg;
++            if(desc && desc[0]) formatstring(msg, "%s authenticated as '\fs\f5%s\fr' [\fs\f0%s\fr]", colorname(ci), ci->authname, desc);
++            else formatstring(msg, "%s authenticated as '\fs\f5%s\fr'", colorname(ci), ci->authname);
++            sendf(-1, 1, "ris", N_SERVMSG, msg);
++        }
 -        else setmaster(ci, true, "", ci->authname, NULL, PRIV_AUTH);
 +        else setmaster(ci, true, "", ci->authname, ci->authdesc, a->privilege);
      }
@@ -438,7 +445,7 @@ Index: src/fpsgame/server.cpp
          if(!ci) return;
          sendf(ci->clientnum, 1, "risis", N_AUTHCHAL, desc, id, val);
      }
-@@ -2804,7 +2804,7 @@
+@@ -2804,7 +2811,7 @@
          ci->authreq = nextauthreq++;
          filtertext(ci->authname, user, false, false, 100);
          copystring(ci->authdesc, desc);
@@ -447,7 +454,7 @@ Index: src/fpsgame/server.cpp
          {
              userinfo *u = users.access(userkey(ci->authname, ci->authdesc));
              if(u)
-@@ -2816,7 +2816,7 @@
+@@ -2816,7 +2823,7 @@
              }
              else ci->cleanauth();
          }
@@ -456,7 +463,7 @@ Index: src/fpsgame/server.cpp
          {
              ci->cleanauth();
              sendf(ci->clientnum, 1, "ris", N_SERVMSG, "not connected to authentication server");
-@@ -2837,7 +2837,7 @@
+@@ -2837,7 +2844,7 @@
          {
              if(!isxdigit(*s)) { *s = '\0'; break; }
          }
@@ -465,7 +472,7 @@ Index: src/fpsgame/server.cpp
          {
              if(ci->authchallenge && checkchallenge(val, ci->authchallenge))
              {
-@@ -2855,7 +2855,7 @@
+@@ -2855,7 +2862,7 @@
              }
              ci->cleanauth();
          }
@@ -474,7 +481,7 @@ Index: src/fpsgame/server.cpp
          {
              ci->cleanauth();
              sendf(ci->clientnum, 1, "ris", N_SERVMSG, "not connected to authentication server");
-@@ -2863,32 +2863,32 @@
+@@ -2863,32 +2870,32 @@
          return ci->authreq || !ci->connectauth;
      }
 
@@ -520,7 +527,7 @@ Index: src/shared/authservers.h
 ===================================================================
 --- src/shared/authservers.h	(nonexistent)
 +++ src/shared/authservers.h	(working copy)
-@@ -0,0 +1,179 @@
+@@ -0,0 +1,183 @@
 +#include "cube.h"
 +
 +extern ENetAddress serveraddress;
@@ -638,7 +645,11 @@ Index: src/shared/authservers.h
 +            int cmdlen = args - input;
 +            while(args < end && iscubespace(*args)) args++;
 +
-+            server::processauthserverinput(name, input, cmdlen, args);
++            if(!name[0] && matchstring(input, cmdlen, "failreg"))
++                conoutf(CON_ERROR, "master server registration failed: %s", args);
++            else if(!name[0] && matchstring(input, cmdlen, "succreg"))
++                conoutf("master server registration succeeded");
++            else server::processauthserverinput(name, input, cmdlen, args);
 +
 +            end++;
 +            inpos = end - in.getbuf();

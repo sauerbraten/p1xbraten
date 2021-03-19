@@ -115,7 +115,11 @@ struct authserver {
             int cmdlen = args - input;
             while(args < end && iscubespace(*args)) args++;
 
-            server::processauthserverinput(name, input, cmdlen, args);
+            if(!name[0] && matchstring(input, cmdlen, "failreg"))
+                conoutf(CON_ERROR, "master server registration failed: %s", args);
+            else if(!name[0] && matchstring(input, cmdlen, "succreg"))
+                conoutf("master server registration succeeded");
+            else server::processauthserverinput(name, input, cmdlen, args);
 
             end++;
             inpos = end - in.getbuf();
