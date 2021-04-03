@@ -216,7 +216,7 @@ namespace game
                     g.poplist(); \
                 }
 
-            #define fgcolor (o==player1 && highlightscore && (multiplayer(false) || demoplayback || players.length() > 1) ? COL_YELLOW : COL_WHITE)
+            #define fgcolor (o==hudplayer() && highlightscore && (multiplayer(false) || demoplayback || players.length() > 1) ? COL_YELLOW : COL_WHITE)
 
             if(sg.team && m_teammode)
             {
