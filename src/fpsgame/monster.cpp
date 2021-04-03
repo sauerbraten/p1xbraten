@@ -122,7 +122,7 @@ namespace game
                 if(targetyaw>yaw) yaw = targetyaw;
             }
             float dist = enemy->o.dist(o);
-            if(monsterstate!=M_SLEEP) pitch = asin((enemy->o.z - o.z) / dist) / RAD; 
+            if(monsterstate!=M_SLEEP) pitch = dist > 0 ? asin((enemy->o.z - o.z) / dist) / RAD : 0;
 
             if(blocked)                                                              // special case: if we run into scenery
             {
