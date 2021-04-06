@@ -39,6 +39,7 @@ apply-patches:
 	$(PATCH) < patches/win_builds.patch
 	$(PATCH) < patches/zenmode.patch
 	$(PATCH) < patches/authservers.patch
+	$(PATCH) < patches/timestamped_serverlogs.patch
 	unix2dos src/vcpp/sauerbraten.nsi
 	unix2dos src/vcpp/sauerbraten.vcxproj
 	cd src && make depend

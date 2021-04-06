@@ -2186,8 +2186,6 @@ VARP(wallclock, 0, 0, 1);
 VARP(wallclock24, 0, 0, 1);
 VARP(wallclocksecs, 0, 0, 1);
 
-static time_t walltime = 0;
-
 VARP(showfps, 0, 1, 1);
 VARP(showfpsrange, 0, 0, 1);
 VAR(showeditstats, 0, 0, 1);

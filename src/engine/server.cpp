@@ -45,11 +45,24 @@ void logoutf(const char *fmt, ...)
     va_end(args);
 }
 
+time_t walltime = 0;
 
 static void writelog(FILE *file, const char *buf)
 {
     static uchar ubuf[512];
     size_t len = strlen(buf), carry = 0;
+    if(isdedicatedserver())
+    {
+        if(!walltime) { walltime = time(NULL); walltime -= totalmillis/1000; if(!walltime) walltime++; }
+        time_t walloffset = walltime + totalmillis/1000;
+        struct tm *localvals = localtime(&walloffset);
+        static string ts;
+        if(localvals)
+        {
+            int tslen = strftime(ts, sizeof(ts), "[%Y-%m-%d %H:%M:%S] ", localvals);
+            if(tslen) fwrite(ts, 1, tslen, file);
+        }
+    }
     while(carry < len)
     {
         size_t numu = encodeutf8(ubuf, sizeof(ubuf)-1, &((const uchar *)buf)[carry], len - carry, &carry);
