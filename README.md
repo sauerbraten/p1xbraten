@@ -22,7 +22,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [crosshaircolor.patch](#crosshaircolorpatch)
   - [zenmode.patch](#zenmodepatch)
   - [authservers.patch](#authserverspatch)
-  - [timestamped_serverlogs.patch](#timestamped_serverlogspatch)
+  - [serverlogging.patch](#serverloggingpatch)
 - [Installation](#installation)
   - [Windows](#windows)
   - [macOS](#macos)
@@ -164,9 +164,12 @@ Using `maxfps` and `maxtps`, you can optimize for different goals:
 
 For example, you can put `addauthserver "p1x.pw" "p1x.pw" 28787 "m"` into your `server-init.cfg` to allow users registered with my master server to claim auth on your server.
 
-### [timestamped_serverlogs.patch](./patches/timestamped_serverlogs.patch)
+### [serverlogging.patch](./patches/serverlogging.patch)
 
 - prepends ISO date and time (e.g. `[2021-04-06 17:12:05]`)to all log messages when running a dedicated server
+- includes CN in connect, disconnect, chat, team chat log messages
+- logs a "join" message including CN and player name
+- logs map changes
 
 ## Installation
 

@@ -1,0 +1,111 @@
+Index: src/engine/rendergl.cpp
+===================================================================
+--- src/engine/rendergl.cpp	(revision 6496)
++++ src/engine/rendergl.cpp	(working copy)
+@@ -2165,8 +2165,6 @@
+ VARP(wallclock24, 0, 0, 1);
+ VARP(wallclocksecs, 0, 0, 1);
+
+-static time_t walltime = 0;
+-
+ VARP(showfps, 0, 1, 1);
+ VARP(showfpsrange, 0, 0, 1);
+ VAR(showeditstats, 0, 0, 1);
+Index: src/engine/server.cpp
+===================================================================
+--- src/engine/server.cpp	(revision 6496)
++++ src/engine/server.cpp	(working copy)
+@@ -45,11 +45,24 @@
+     va_end(args);
+ }
+
++time_t walltime = 0;
+
+ static void writelog(FILE *file, const char *buf)
+ {
+     static uchar ubuf[512];
+     size_t len = strlen(buf), carry = 0;
++    if(isdedicatedserver())
++    {
++        if(!walltime) { walltime = time(NULL); walltime -= totalmillis/1000; if(!walltime) walltime++; }
++        time_t walloffset = walltime + totalmillis/1000;
++        struct tm *localvals = localtime(&walloffset);
++        static string ts;
++        if(localvals)
++        {
++            int tslen = strftime(ts, sizeof(ts), "[%Y-%m-%d %H:%M:%S] ", localvals);
++            if(tslen) fwrite(ts, 1, tslen, file);
++        }
++    }
+     while(carry < len)
+     {
+         size_t numu = encodeutf8(ubuf, sizeof(ubuf)-1, &((const uchar *)buf)[carry], len - carry, &carry);
+@@ -661,7 +674,7 @@
+                 c.peer->data = &c;
+                 string hn;
+                 copystring(c.hostname, (enet_address_get_host_ip(&c.peer->address, hn, sizeof(hn))==0) ? hn : "unknown");
+-                logoutf("client connected (%s)", c.hostname);
++                logoutf("connected: %s (cn %d)", c.hostname, c.num);
+                 int reason = server::clientconnect(c.num, c.peer->address.host);
+                 if(reason) disconnect_client(c.num, reason);
+                 break;
+@@ -677,7 +690,7 @@
+             {
+                 client *c = (client *)event.peer->data;
+                 if(!c) break;
+-                logoutf("disconnected client (%s)", c->hostname);
++                logoutf("disconnected: %s (cn %d)", c->hostname, c->num);
+                 server::clientdisconnect(c->num);
+                 delclient(c);
+                 break;
+Index: src/fpsgame/server.cpp
+===================================================================
+--- src/fpsgame/server.cpp	(revision 6496)
++++ src/fpsgame/server.cpp	(working copy)
+@@ -2089,6 +2089,8 @@
+         }
+
+         if(smode) smode->setup();
++
++        if(isdedicatedserver()) logoutf("started %s on %s", modename(mode, "unknown mode"), smapname);
+     }
+
+     void rotatemap(bool next)
+@@ -2942,6 +2944,7 @@
+         sendwelcome(ci);
+         if(restorescore(ci)) sendresume(ci);
+         sendinitclient(ci);
++        if(isdedicatedserver()) logoutf("join: %s (cn %d)", ci->name, ci->clientnum);
+
+         aiman::addclient(ci);
+
+@@ -3279,7 +3282,7 @@
+                 getstring(text, p);
+                 filtertext(text, text, true, true);
+                 QUEUE_STR(text);
+-                if(isdedicatedserver() && cq) logoutf("%s: %s", colorname(cq), text);
++                if(isdedicatedserver() && cq) logoutf("%s (cn %d): %s", colorname(cq), cq->clientnum, text);
+                 break;
+             }
+
+@@ -3294,7 +3297,7 @@
+                     if(t==cq || t->state.state==CS_SPECTATOR || t->state.aitype != AI_NONE || strcmp(cq->team, t->team)) continue;
+                     sendf(t->clientnum, 1, "riis", N_SAYTEAM, cq->clientnum, text);
+                 }
+-                if(isdedicatedserver() && cq) logoutf("%s <%s>: %s", colorname(cq), cq->team, text);
++                if(isdedicatedserver() && cq) logoutf("%s (cn %d) <%s>: %s", colorname(cq), cq->clientnum, cq->team, text);
+                 break;
+             }
+
+Index: src/shared/iengine.h
+===================================================================
+--- src/shared/iengine.h	(revision 6496)
++++ src/shared/iengine.h	(working copy)
+@@ -6,6 +6,7 @@
+ extern int totalmillis;                 // total elapsed time
+ extern uint totalsecs;
+ extern int gamespeed, paused;
++extern time_t walltime;                 // wall time at engine startup (add totalmillis/1000 for current wall time)
+
+ enum
+ {
