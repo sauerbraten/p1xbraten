@@ -380,10 +380,12 @@ bool requestauthserverf(const char *keydomain, const char *fmt, ...)
 
 authserver *masterserver;
 SVARF(mastername, server::defaultmaster(), {
+    if(!masterserver) return;
     masterserver->disconnect();
     copystring(masterserver->hostname, mastername);
 });
 VARF(masterport, 1, server::masterport(), 0xFFFF, {
+    if(!masterserver) return;
     masterserver->disconnect();
     masterserver->port = masterport;
 });

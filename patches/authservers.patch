@@ -2,7 +2,7 @@ Index: src/engine/server.cpp
 ===================================================================
 --- src/engine/server.cpp	(revision 6491)
 +++ src/engine/server.cpp	(working copy)
-@@ -338,172 +338,43 @@
+@@ -338,172 +338,45 @@
      if(c) process(packet, c->num, chan);
  }
 
@@ -119,10 +119,12 @@ Index: src/engine/server.cpp
 -    if(masterinpos >= masterin.length()) return;
 +authserver *masterserver;
 +SVARF(mastername, server::defaultmaster(), {
++    if(!masterserver) return;
 +    masterserver->disconnect();
 +    copystring(masterserver->hostname, mastername);
 +});
 +VARF(masterport, 1, server::masterport(), 0xFFFF, {
++    if(!masterserver) return;
 +    masterserver->disconnect();
 +    masterserver->port = masterport;
 +});
@@ -201,7 +203,7 @@ Index: src/engine/server.cpp
  static ENetAddress pongaddr;
 
  void sendserverinforeply(ucharbuf &p)
-@@ -523,12 +394,14 @@
+@@ -523,12 +396,14 @@
      ENET_SOCKETSET_EMPTY(writeset);
      ENetSocket maxsock = pongsock;
      ENET_SOCKETSET_ADD(readset, pongsock);
@@ -220,7 +222,7 @@ Index: src/engine/server.cpp
      if(lansock != ENET_SOCKET_NULL)
      {
          maxsock = max(maxsock, lansock);
-@@ -552,28 +425,30 @@
+@@ -552,28 +427,30 @@
          server::serverinforeply(req, p);
      }
 
@@ -261,7 +263,7 @@ Index: src/engine/server.cpp
  }
 
  VAR(serveruprate, 0, 0, INT_MAX);
-@@ -584,11 +459,13 @@
+@@ -584,11 +461,13 @@
  int curtime = 0, lastmillis = 0, elapsedtime = 0, totalmillis = 0;
  #endif
 
@@ -278,7 +280,7 @@ Index: src/engine/server.cpp
  }
 
  uint totalsecs = 0;
-@@ -630,10 +507,11 @@
+@@ -630,10 +509,11 @@
      }
      server::serverupdate();
 
@@ -292,7 +294,7 @@ Index: src/engine/server.cpp
          updatemasterserver();
 
      if(totalmillis-laststatus>60*1000)   // display bandwidth stats, useful for server ops
-@@ -1033,6 +911,8 @@
+@@ -1033,6 +913,8 @@
      return false;
  }
 
@@ -301,7 +303,7 @@ Index: src/engine/server.cpp
  bool setuplistenserver(bool dedicated)
  {
      ENetAddress address = { ENET_HOST_ANY, enet_uint16(serverport <= 0 ? server::serverport() : serverport) };
-@@ -1062,6 +942,7 @@
+@@ -1062,6 +944,7 @@
      }
      if(lansock == ENET_SOCKET_NULL) conoutf(CON_WARN, "WARNING: could not create LAN server info socket");
      else enet_socket_set_option(lansock, ENET_SOCKOPT_NONBLOCK, 1);
@@ -309,7 +311,7 @@ Index: src/engine/server.cpp
      return true;
  }
 
-@@ -1119,6 +1001,7 @@
+@@ -1119,6 +1003,7 @@
  COMMAND(stoplistenserver, "");
  #endif
 
