@@ -1,25 +1,3 @@
-Index: src/fpsgame/fps.cpp
-===================================================================
---- src/fpsgame/fps.cpp	(revision 6291)
-+++ src/fpsgame/fps.cpp	(working copy)
-@@ -1050,6 +1050,8 @@
-         pophudmatrix();
-     }
-
-+    VARP(hidespecfollow, 0, 0, 1);
-+
-     void gameplayhud(int w, int h)
-     {
-         pushhudmatrix();
-@@ -1056,7 +1058,7 @@
-         hudmatrix.scale(h/1800.0f, h/1800.0f, 1);
-         flushhudmatrix();
-
--        if(player1->state==CS_SPECTATOR)
-+        if(player1->state==CS_SPECTATOR && !hidespecfollow)
-         {
-             int pw, ph, tw, th, fw, fh;
-             text_bounds("  ", pw, ph);
 Index: src/fpsgame/render.cpp
 ===================================================================
 --- src/fpsgame/render.cpp	(revision 6291)

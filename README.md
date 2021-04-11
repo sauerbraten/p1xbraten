@@ -23,6 +23,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [zenmode.patch](#zenmodepatch)
   - [authservers.patch](#authserverspatch)
   - [serverlogging.patch](#serverloggingpatch)
+  - [gamehud.patch](#gamehudpatch)
 - [Installation](#installation)
   - [Windows](#windows)
   - [macOS](#macos)
@@ -38,7 +39,6 @@ a.k.a. Features
 
 ### [moviehud.patch](./patches/moviehud.patch)
 
-- adds `hidespecfollow` toggle: when 1, hides the "SPECTATOR" and player name in the lower right of the screen when spectating
 - adds `namesabovehead` toggle: when 0, hides the names above players' models (usually rendered as particle text), while keeping status icons for health boost, armor and quad
 
 ### [scoreboard.patch](./patches/scoreboard.patch)
@@ -79,14 +79,11 @@ a.k.a. Features
 
   All of the new damage-related commands (as well as `getaccuracy`) default to showing `hudplayer`'s stats across all weapons. However, they all take two optional integer arguments to query stats of a certain player and optionally for a specific weapon: `/<cmd> [cn] [weapon]` (use -1 as CN to query specific weapon stats about `hudplayer`).
 
-  To show comed-like statistics in the lower right corner, run `/exec data/p1xbraten/gamehud.cfg.gz`.
+  To show comed-like statistics in the lower right corner, copy the contents of [`stats_gamehud.cfg`](./data/p1xbraten/stats_gamehud.cfg) into your `autoexec.cfg`.
 
 ### [hudfragmessages.patch](./patches/hudfragmessages.patch)
 
 - enables frag messages showing the weapon used to complete the frag (on by default)
-
-  ![fragmessages](https://i.imgur.com/K4GL6oB.png)
-
 - adds the following variables:
     - `hudfragmessages`: 0 disables all frag messages, 1 enables them for all modes, 2 enables them for non-insta modes only
     - `maxhudfragmessages`: how many messages to show at most (between 1 and 10)
@@ -100,6 +97,8 @@ a.k.a. Features
     - `hudfragmessageforcecolors`: when 1 (default), uses colored names, even in non-team modes
 
 You can easily configure the hud frag messages using the [improved menu](#menu) (options → hud → adjust hud frag messages).
+
+![fragmessages](https://i.imgur.com/K4GL6oB.png)
 
 ### [fullconsole.patch](./patches/fullconsole.patch)
 
@@ -170,6 +169,14 @@ For example, you can put `addauthserver "p1x.pw" "p1x.pw" 28787 "m"` into your `
 - includes CN in connect, disconnect, chat, team chat log messages
 - logs a "join" message including CN and player name
 - logs map changes
+
+### [gamehud.patch](./patches/gamehud.patch)
+
+- properly right-justifies gamehud, wallclock, showfps, and/or showfpsrange lines
+- adds a useful playerlist showing who's alive vs. dead when spectating in the lower right corner
+- adds `isdead <cn>` command to check if a player is currently dead (only works when you are spectating)
+
+<div align="center"><img alt="gamehud with player state" src="https://i.imgur.com/eDzdrWp.png" /></div>
 
 ## Installation
 

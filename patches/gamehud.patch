@@ -1,0 +1,134 @@
+Index: src/engine/main.cpp
+===================================================================
+--- src/engine/main.cpp	(revision 6496)
++++ src/engine/main.cpp	(working copy)
+@@ -1299,3 +1299,4 @@
++    execfile("data/p1xbraten/gamehud.cfg.gz");
+
+     identflags |= IDF_PERSIST;
+
+Index: src/engine/rendergl.cpp
+===================================================================
+--- src/engine/rendergl.cpp	(revision 6496)
++++ src/engine/rendergl.cpp	(working copy)
+@@ -2256,8 +2256,12 @@
+                 int nextfps[3];
+                 getfps(nextfps[0], nextfps[1], nextfps[2]);
+                 loopi(3) if(prevfps[i]==curfps[i]) curfps[i] = nextfps[i];
+-                if(showfpsrange) draw_textf("fps %d+%d-%d", conw-7*FONTH, conh-FONTH*3/2, curfps[0], curfps[1], curfps[2]);
+-                else draw_textf("fps %d", conw-5*FONTH, conh-FONTH*3/2, curfps[0]);
++                static string buf;
++                if(showfpsrange) formatstring(buf, "(+%d-%d) %d fps", curfps[1], curfps[2], curfps[0]);
++                else formatstring(buf, "%d fps", curfps[0]);
++                int tw, th;
++                text_bounds(buf, tw, th);
++                draw_text(buf, conw-tw-FONTH, conh-FONTH*3/2);
+                 roffset += FONTH;
+             }
+
+@@ -2267,7 +2271,7 @@
+                 time_t walloffset = walltime + totalmillis/1000;
+                 struct tm *localvals = localtime(&walloffset);
+                 static string buf;
+-                if(localvals && strftime(buf, sizeof(buf), wallclocksecs ? (wallclock24 ? "%H:%M:%S" : "%I:%M:%S%p") : (wallclock24 ? "%H:%M" : "%I:%M%p"), localvals))
++                if(localvals && strftime(buf, sizeof(buf), wallclocksecs ? (wallclock24 ? "%H:%M:%S" : "%I:%M:%S %p") : (wallclock24 ? "%H:%M" : "%I:%M %p"), localvals))
+                 {
+                     // hack because not all platforms (windows) support %P lowercase option
+                     // also strip leading 0 from 12 hour time
+@@ -2274,12 +2278,14 @@
+                     char *dst = buf;
+                     const char *src = &buf[!wallclock24 && buf[0]=='0' ? 1 : 0];
+                     while(*src) *dst++ = tolower(*src++);
+-                    *dst++ = '\0';
+-                    draw_text(buf, conw-5*FONTH, conh-FONTH*3/2-roffset);
++                    *dst++ = '\0';
++                    int tw, th;
++                    text_bounds(buf, tw, th);
++                    draw_text(buf, conw-tw-FONTH, conh-FONTH*3/2-roffset);
+                     roffset += FONTH;
+                 }
+             }
+-
++
+             if(editmode || showeditstats)
+             {
+                 static int laststats = 0, prevstats[8] = { 0, 0, 0, 0, 0, 0, 0 }, curstats[8] = { 0, 0, 0, 0, 0, 0, 0 };
+@@ -2325,7 +2331,7 @@
+                     DELETEA(editinfo);
+                 }
+             }
+-            else if(char *gameinfo = execidentstr("gamehud"))
++            else if(char *gameinfo = execidentstr("p1xbratengamehud"))
+             {
+                 if(gameinfo[0])
+                 {
+@@ -2333,8 +2339,21 @@
+                     text_bounds(gameinfo, tw, th);
+                     th += FONTH-1; th -= th%FONTH;
+                     roffset += max(th, FONTH);
+-                    draw_text(gameinfo, conw-max(5*FONTH, 2*FONTH+tw), conh-FONTH/2-roffset);
++                    int thoffset = 0;
++                    char *line = gameinfo, *lineend = line;
++                    while(*line && *lineend)
++                    {
++                        while(*lineend && *lineend!='\n') lineend++;
++                        bool atend = !*lineend;
++                        *lineend = '\0';
++                        int lw, lh;
++                        text_bounds(line, lw, lh);
++                        draw_text(line, conw-lw-FONTH, conh-FONTH/2-roffset+thoffset);
++                        thoffset += max(lh, FONTH);
++                        if(atend) break;
++                        line = lineend = lineend+1;
+                 }
++                }
+                 DELETEA(gameinfo);
+             }
+
+Index: src/fpsgame/client.cpp
+===================================================================
+--- src/fpsgame/client.cpp	(revision 6496)
++++ src/fpsgame/client.cpp	(working copy)
+@@ -332,6 +332,14 @@
+     ICOMMAND(getmastermode, "", (), intret(mastermode));
+     ICOMMAND(mastermodename, "i", (int *mm), result(server::mastermodename(*mm, "")));
+
++    bool isdead(int cn)
++    {
++        if(player1->state != CS_SPECTATOR) return false;
++        fpsent *d = getclient(cn);
++        return d && d->state==CS_DEAD;
++    }
++    ICOMMAND(isdead, "i", (int *cn), intret(isdead(*cn) ? 1 : 0));
++
+     bool isspectator(int cn)
+     {
+         fpsent *d = getclient(cn);
+Index: src/fpsgame/fps.cpp
+===================================================================
+--- src/fpsgame/fps.cpp	(revision 6496)
++++ src/fpsgame/fps.cpp	(working copy)
+@@ -1056,23 +1056,6 @@
+         hudmatrix.scale(h/1800.0f, h/1800.0f, 1);
+         flushhudmatrix();
+
+-        if(player1->state==CS_SPECTATOR)
+-        {
+-            int pw, ph, tw, th, fw, fh;
+-            text_bounds("  ", pw, ph);
+-            text_bounds("SPECTATOR", tw, th);
+-            th = max(th, ph);
+-            fpsent *f = followingplayer();
+-            text_bounds(f ? colorname(f) : " ", fw, fh);
+-            fh = max(fh, ph);
+-            draw_text("SPECTATOR", w*1800/h - tw - pw, 1650 - th - fh);
+-            if(f)
+-            {
+-                int color = statuscolor(f, 0xFFFFFF);
+-                draw_text(colorname(f), w*1800/h - fw - pw, 1650 - fh, (color>>16)&0xFF, (color>>8)&0xFF, color&0xFF);
+-            }
+-        }
+-
+         fpsent *d = hudplayer();
+         if(d->state!=CS_EDITING)
+         {

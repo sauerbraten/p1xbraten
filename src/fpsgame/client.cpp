@@ -334,6 +334,14 @@ namespace game
     ICOMMAND(getmastermode, "", (), intret(mastermode));
     ICOMMAND(mastermodename, "i", (int *mm), result(server::mastermodename(*mm, "")));
 
+    bool isdead(int cn)
+    {
+        if(player1->state != CS_SPECTATOR) return false;
+        fpsent *d = getclient(cn);
+        return d && d->state==CS_DEAD;
+    }
+    ICOMMAND(isdead, "i", (int *cn), intret(isdead(*cn) ? 1 : 0));
+
     bool isspectator(int cn)
     {
         fpsent *d = getclient(cn);

@@ -40,6 +40,7 @@ apply-patches:
 	$(PATCH) < patches/zenmode.patch
 	$(PATCH) < patches/authservers.patch
 	$(PATCH) < patches/serverlogging.patch
+	$(PATCH) < patches/gamehud.patch
 	unix2dos src/vcpp/sauerbraten.nsi
 	unix2dos src/vcpp/sauerbraten.vcxproj
 	cd src && make depend

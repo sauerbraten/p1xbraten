@@ -2277,8 +2277,12 @@ void gl_drawhud()
                 int nextfps[3];
                 getfps(nextfps[0], nextfps[1], nextfps[2]);
                 loopi(3) if(prevfps[i]==curfps[i]) curfps[i] = nextfps[i];
-                if(showfpsrange) draw_textf("fps %d+%d-%d", conw-7*FONTH, conh-FONTH*3/2, curfps[0], curfps[1], curfps[2]);
-                else draw_textf("fps %d", conw-5*FONTH, conh-FONTH*3/2, curfps[0]);
+                static string buf;
+                if(showfpsrange) formatstring(buf, "(+%d-%d) %d fps", curfps[1], curfps[2], curfps[0]);
+                else formatstring(buf, "%d fps", curfps[0]);
+                int tw, th;
+                text_bounds(buf, tw, th);
+                draw_text(buf, conw-tw-FONTH, conh-FONTH*3/2);
                 roffset += FONTH;
             }
 
@@ -2288,19 +2292,21 @@ void gl_drawhud()
                 time_t walloffset = walltime + totalmillis/1000;
                 struct tm *localvals = localtime(&walloffset);
                 static string buf;
-                if(localvals && strftime(buf, sizeof(buf), wallclocksecs ? (wallclock24 ? "%H:%M:%S" : "%I:%M:%S%p") : (wallclock24 ? "%H:%M" : "%I:%M%p"), localvals))
+                if(localvals && strftime(buf, sizeof(buf), wallclocksecs ? (wallclock24 ? "%H:%M:%S" : "%I:%M:%S %p") : (wallclock24 ? "%H:%M" : "%I:%M %p"), localvals))
                 {
                     // hack because not all platforms (windows) support %P lowercase option
                     // also strip leading 0 from 12 hour time
                     char *dst = buf;
                     const char *src = &buf[!wallclock24 && buf[0]=='0' ? 1 : 0];
                     while(*src) *dst++ = tolower(*src++);
-                    *dst++ = '\0'; 
-                    draw_text(buf, conw-5*FONTH, conh-FONTH*3/2-roffset);
+                    *dst++ = '\0';
+                    int tw, th;
+                    text_bounds(buf, tw, th);
+                    draw_text(buf, conw-tw-FONTH, conh-FONTH*3/2-roffset);
                     roffset += FONTH;
                 }
             }
-                       
+
             if(editmode || showeditstats)
             {
                 static int laststats = 0, prevstats[8] = { 0, 0, 0, 0, 0, 0, 0 }, curstats[8] = { 0, 0, 0, 0, 0, 0, 0 };
@@ -2346,7 +2352,7 @@ void gl_drawhud()
                     DELETEA(editinfo);
                 }
             }
-            else if(char *gameinfo = execidentstr("gamehud"))
+            else if(char *gameinfo = execidentstr("p1xbratengamehud"))
             {
                 if(gameinfo[0])
                 {
@@ -2354,7 +2360,20 @@ void gl_drawhud()
                     text_bounds(gameinfo, tw, th);
                     th += FONTH-1; th -= th%FONTH;
                     roffset += max(th, FONTH);
-                    draw_text(gameinfo, conw-max(5*FONTH, 2*FONTH+tw), conh-FONTH/2-roffset);
+                    int thoffset = 0;
+                    char *line = gameinfo, *lineend = line;
+                    while(*line && *lineend)
+                    {
+                        while(*lineend && *lineend!='\n') lineend++;
+                        bool atend = !*lineend;
+                        *lineend = '\0';
+                        int lw, lh;
+                        text_bounds(line, lw, lh);
+                        draw_text(line, conw-lw-FONTH, conh-FONTH/2-roffset+thoffset);
+                        thoffset += max(lh, FONTH);
+                        if(atend) break;
+                        line = lineend = lineend+1;
+                }
                 }
                 DELETEA(gameinfo);
             }

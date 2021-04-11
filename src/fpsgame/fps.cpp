@@ -1070,30 +1070,11 @@ namespace game
         pophudmatrix();
     }
 
-    VARP(hidespecfollow, 0, 0, 1);
-
     void gameplayhud(int w, int h)
     {
         pushhudmatrix();
         hudmatrix.scale(h/1800.0f, h/1800.0f, 1);
         flushhudmatrix();
-
-        if(player1->state==CS_SPECTATOR && !hidespecfollow)
-        {
-            int pw, ph, tw, th, fw, fh;
-            text_bounds("  ", pw, ph);
-            text_bounds("SPECTATOR", tw, th);
-            th = max(th, ph);
-            fpsent *f = followingplayer();
-            text_bounds(f ? colorname(f) : " ", fw, fh);
-            fh = max(fh, ph);
-            draw_text("SPECTATOR", w*1800/h - tw - pw, 1650 - th - fh);
-            if(f)
-            {
-                int color = statuscolor(f, 0xFFFFFF);
-                draw_text(colorname(f), w*1800/h - fw - pw, 1650 - fh, (color>>16)&0xFF, (color>>8)&0xFF, color&0xFF);
-            }
-        }
 
         fpsent *d = hudplayer();
         if(d->state!=CS_EDITING)
