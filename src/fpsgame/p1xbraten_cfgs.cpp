@@ -1,5 +1,5 @@
 #include "cube.h"
-#include "p1xbraten_menus.h"
+#include "p1xbraten_cfgs.h"
 
 namespace game {
     struct embeddedfile<16060> menuscfg = {
@@ -45,17 +45,8 @@ namespace game {
         return 0;
     }
 
-    extern int usep1xbratenmenus;
-
-    void executep1xbratenmenufiles()
+    int writep1xbratencfgs()
     {
-        if(usep1xbratenmenus) execfile(menuscfg.name);
-    }
-
-    int writep1xbratenmenufiles()
-    {
-        if(!usep1xbratenmenus) return 1;
-
         int err = update(&menuscfg);
         if(err) { conoutf("\f6error updating %s (error code %d)!", menuscfg.name, err); return err; }
 
@@ -69,11 +60,7 @@ namespace game {
     }
 
     VARFP(usep1xbratenmenus, 0, 1, 1, {
-        if(usep1xbratenmenus)
-        {
-            writep1xbratenmenufiles();
-            executep1xbratenmenufiles();
-        }
+        if(usep1xbratenmenus) execfile(menuscfg.name);
         else execfile("data/menus.cfg");
     });
 }

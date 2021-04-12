@@ -1,22 +1,34 @@
 Index: src/Makefile
 ===================================================================
---- src/Makefile	(revision 6490)
+--- src/Makefile	(revision 6496)
 +++ src/Makefile	(working copy)
 @@ -127,6 +127,7 @@
  	fpsgame/fps.o \
  	fpsgame/monster.o \
  	fpsgame/movable.o \
-+	fpsgame/p1xbraten_menus.o \
++	fpsgame/p1xbraten_cfgs.o \
  	fpsgame/render.o \
  	fpsgame/scoreboard.o \
  	fpsgame/server.o \
-Index: src/fpsgame/p1xbraten_menus.cpp
+Index: src/engine/main.cpp
 ===================================================================
---- src/fpsgame/p1xbraten_menus.cpp	(nonexistent)
-+++ src/fpsgame/p1xbraten_menus.cpp	(working copy)
-@@ -0,0 +1,79 @@
+--- src/engine/main.cpp	(revision 6496)
++++ src/engine/main.cpp	(working copy)
+@@ -1299,6 +1299,7 @@
+     defformatstring(gamecfgname, "data/game_%s.cfg", game::gameident());
+     execfile(gamecfgname);
+     if(game::savedservers()) execfile(game::savedservers(), false);
++    game::writep1xbratencfgs();
+
+     identflags |= IDF_PERSIST;
+
+Index: src/fpsgame/p1xbraten_cfgs.cpp
+===================================================================
+--- src/fpsgame/p1xbraten_cfgs.cpp	(nonexistent)
++++ src/fpsgame/p1xbraten_cfgs.cpp	(working copy)
+@@ -0,0 +1,66 @@
 +#include "cube.h"
-+#include "p1xbraten_menus.h"
++#include "p1xbraten_cfgs.h"
 +
 +namespace game {
 +    struct embeddedfile<0> menuscfg = {
@@ -62,17 +74,8 @@ Index: src/fpsgame/p1xbraten_menus.cpp
 +        return 0;
 +    }
 +
-+    extern int usep1xbratenmenus;
-+
-+    void executep1xbratenmenufiles()
++    int writep1xbratencfgs()
 +    {
-+        if(usep1xbratenmenus) execfile(menuscfg.name);
-+    }
-+
-+    int writep1xbratenmenufiles()
-+    {
-+        if(!usep1xbratenmenus) return 1;
-+
 +        int err = update(&menuscfg);
 +        if(err) { conoutf("\f6error updating %s (error code %d)!", menuscfg.name, err); return err; }
 +
@@ -86,18 +89,14 @@ Index: src/fpsgame/p1xbraten_menus.cpp
 +    }
 +
 +    VARFP(usep1xbratenmenus, 0, 1, 1, {
-+        if(usep1xbratenmenus)
-+        {
-+            writep1xbratenmenufiles();
-+            executep1xbratenmenufiles();
-+        }
++        if(usep1xbratenmenus) execfile(menuscfg.name);
 +        else execfile("data/menus.cfg");
 +    });
 +}
-Index: src/fpsgame/p1xbraten_menus.h
+Index: src/fpsgame/p1xbraten_cfgs.h
 ===================================================================
---- src/fpsgame/p1xbraten_menus.h	(nonexistent)
-+++ src/fpsgame/p1xbraten_menus.h	(working copy)
+--- src/fpsgame/p1xbraten_cfgs.h	(nonexistent)
++++ src/fpsgame/p1xbraten_cfgs.h	(working copy)
 @@ -0,0 +1,10 @@
 +#include "cube.h"
 +
@@ -112,20 +111,19 @@ Index: src/fpsgame/p1xbraten_menus.h
 \ No newline at end of file
 Index: src/shared/igame.h
 ===================================================================
---- src/shared/igame.h	(revision 6490)
+--- src/shared/igame.h	(revision 6496)
 +++ src/shared/igame.h	(working copy)
-@@ -48,6 +48,8 @@
+@@ -48,6 +48,7 @@
      extern const char *autoexec();
      extern const char *savedservers();
      extern void loadconfigs();
-+    extern int writep1xbratenmenufiles();
-+    extern void executep1xbratenmenufiles();
++    extern int writep1xbratencfgs();
 
      extern void updateworld();
      extern void initclient();
 Index: src/shared/stream.cpp
 ===================================================================
---- src/shared/stream.cpp	(revision 6490)
+--- src/shared/stream.cpp	(revision 6496)
 +++ src/shared/stream.cpp	(working copy)
 @@ -853,7 +853,15 @@
          return true;
@@ -146,13 +144,13 @@ Index: src/shared/stream.cpp
      {
 Index: src/vcpp/sauerbraten.vcxproj
 ===================================================================
---- src/vcpp/sauerbraten.vcxproj	(revision 6490)
+--- src/vcpp/sauerbraten.vcxproj	(revision 6496)
 +++ src/vcpp/sauerbraten.vcxproj	(working copy)
 @@ -1132,6 +1132,20 @@
        <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)2.obj</ObjectFileName>
        <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)2.obj</ObjectFileName>
      </ClCompile>
-+    <ClCompile Include="..\fpsgame\p1xbraten_menus.cpp">
++    <ClCompile Include="..\fpsgame\p1xbraten_cfgs.cpp">
 +      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">cube.h</PrecompiledHeaderFile>
 +      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">cube.h</PrecompiledHeaderFile>
 +      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)cube.pch</PrecompiledHeaderOutputFile>

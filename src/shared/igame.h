@@ -48,8 +48,7 @@ namespace game
     extern const char *autoexec();
     extern const char *savedservers();
     extern void loadconfigs();
-    extern int writep1xbratenmenufiles();
-    extern void executep1xbratenmenufiles();
+    extern int writep1xbratencfgs();
 
     extern void updateworld();
     extern void initclient();

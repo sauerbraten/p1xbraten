@@ -129,7 +129,7 @@ CLIENT_OBJS= \
 	fpsgame/fragmessages.o \
 	fpsgame/monster.o \
 	fpsgame/movable.o \
-	fpsgame/p1xbraten_menus.o \
+	fpsgame/p1xbraten_cfgs.o \
 	fpsgame/render.o \
 	fpsgame/scoreboard.o \
 	fpsgame/server.o \
@@ -529,13 +529,13 @@ fpsgame/movable.o: shared/ents.h shared/command.h shared/glexts.h
 fpsgame/movable.o: shared/glemu.h shared/iengine.h shared/igame.h
 fpsgame/movable.o: shared/authservers.h fpsgame/ai.h
 fpsgame/movable.o: fpsgame/weaponstats_type.h fpsgame/fragmessages.h
-fpsgame/p1xbraten_menus.o: shared/cube.h shared/tools.h shared/geom.h
-fpsgame/p1xbraten_menus.o: shared/ents.h shared/command.h shared/glexts.h
-fpsgame/p1xbraten_menus.o: shared/glemu.h shared/iengine.h shared/igame.h
-fpsgame/p1xbraten_menus.o: shared/authservers.h fpsgame/p1xbraten_menus.h
-fpsgame/p1xbraten_menus.o: ../data/p1xbraten/menus.cfg.gz.xxd
-fpsgame/p1xbraten_menus.o: ../data/p1xbraten/master.cfg.gz.xxd
-fpsgame/p1xbraten_menus.o: ../data/p1xbraten/gamehud.cfg.gz.xxd
+fpsgame/p1xbraten_cfgs.o: shared/cube.h shared/tools.h shared/geom.h
+fpsgame/p1xbraten_cfgs.o: shared/ents.h shared/command.h shared/glexts.h
+fpsgame/p1xbraten_cfgs.o: shared/glemu.h shared/iengine.h shared/igame.h
+fpsgame/p1xbraten_cfgs.o: shared/authservers.h fpsgame/p1xbraten_cfgs.h
+fpsgame/p1xbraten_cfgs.o: ../data/p1xbraten/menus.cfg.gz.xxd
+fpsgame/p1xbraten_cfgs.o: ../data/p1xbraten/master.cfg.gz.xxd
+fpsgame/p1xbraten_cfgs.o: ../data/p1xbraten/gamehud.cfg.gz.xxd
 fpsgame/render.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
 fpsgame/render.o: shared/ents.h shared/command.h shared/glexts.h
 fpsgame/render.o: shared/glemu.h shared/iengine.h shared/igame.h

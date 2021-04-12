@@ -1315,6 +1315,7 @@ int main(int argc, char **argv)
     defformatstring(gamecfgname, "data/game_%s.cfg", game::gameident());
     execfile(gamecfgname);
     if(game::savedservers()) execfile(game::savedservers(), false);
+    game::writep1xbratencfgs();
     
     identflags |= IDF_PERSIST;
     

@@ -32,7 +32,7 @@ apply-patches:
 	$(PATCH) < patches/listteams.patch
 	$(PATCH) < patches/extrapings.patch
 	$(PATCH) < patches/execfile.patch
-	$(PATCH) < patches/include_p1xbraten_menus.patch
+	$(PATCH) < patches/include_p1xbraten_cfgs.patch
 	$(PATCH) < patches/tex_commands.patch
 	$(PATCH) < patches/decouple_framedrawing.patch
 	$(PATCH) < patches/crosshaircolor.patch
@@ -50,12 +50,12 @@ gzip-menus:
 	gzip --keep --force --best --no-name data/p1xbraten/gamehud.cfg && xxd -i - data/p1xbraten/gamehud.cfg.gz.xxd < data/p1xbraten/gamehud.cfg.gz
 
 _include-menus:
-	sed -i "s/0,\/\/menuscrc/0x$(shell crc32 data/p1xbraten/menus.cfg),/" src/fpsgame/p1xbraten_menus.cpp
-	sed -i "s/embeddedfile<0> menuscfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/menus.cfg.gz)> menuscfg/" src/fpsgame/p1xbraten_menus.cpp
-	sed -i "s/0,\/\/mastercrc/0x$(shell crc32 data/p1xbraten/master.cfg),/" src/fpsgame/p1xbraten_menus.cpp
-	sed -i "s/embeddedfile<0> mastercfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/master.cfg.gz)> mastercfg/" src/fpsgame/p1xbraten_menus.cpp
-	sed -i "s/0,\/\/gamehudcrc/0x$(shell crc32 data/p1xbraten/gamehud.cfg),/" src/fpsgame/p1xbraten_menus.cpp
-	sed -i "s/embeddedfile<0> gamehudcfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/gamehud.cfg.gz)> gamehudcfg/" src/fpsgame/p1xbraten_menus.cpp
+	sed -i "s/0,\/\/menuscrc/0x$(shell crc32 data/p1xbraten/menus.cfg),/" src/fpsgame/p1xbraten_cfgs.cpp
+	sed -i "s/embeddedfile<0> menuscfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/menus.cfg.gz)> menuscfg/" src/fpsgame/p1xbraten_cfgs.cpp
+	sed -i "s/0,\/\/mastercrc/0x$(shell crc32 data/p1xbraten/master.cfg),/" src/fpsgame/p1xbraten_cfgs.cpp
+	sed -i "s/embeddedfile<0> mastercfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/master.cfg.gz)> mastercfg/" src/fpsgame/p1xbraten_cfgs.cpp
+	sed -i "s/0,\/\/gamehudcrc/0x$(shell crc32 data/p1xbraten/gamehud.cfg),/" src/fpsgame/p1xbraten_cfgs.cpp
+	sed -i "s/embeddedfile<0> gamehudcfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/gamehud.cfg.gz)> gamehudcfg/" src/fpsgame/p1xbraten_cfgs.cpp
 
 clean-sauer: check-env
 	cd $(SAUER_DIR) && \
