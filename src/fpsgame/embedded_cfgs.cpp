@@ -1,5 +1,5 @@
 #include "cube.h"
-#include "p1xbraten_cfgs.h"
+#include "embedded_cfgs.h"
 
 namespace game {
     struct embeddedfile<16060> menuscfg = {
@@ -26,6 +26,14 @@ namespace game {
         }
     };
 
+    struct embeddedfile<843> keymapcfg = {
+        "data/p1xbraten/keymap.cfg.gz",
+        0xdb3d498e,
+        {
+            #include "../../data/p1xbraten/keymap.cfg.gz.xxd"
+        }
+    };
+
     template<size_t N>
     int update(embeddedfile<N> *i)
     {
@@ -45,7 +53,7 @@ namespace game {
         return 0;
     }
 
-    int writep1xbratencfgs()
+    int writeembeddedcfgs()
     {
         int err = update(&menuscfg);
         if(err) { conoutf("\f6error updating %s (error code %d)!", menuscfg.name, err); return err; }
@@ -55,6 +63,9 @@ namespace game {
 
         err = update(&gamehudcfg);
         if(err) { conoutf("\f6error updating %s(error code %d)!", gamehudcfg.name, err); return err; }
+
+        err = update(&keymapcfg);
+        if(err) { conoutf("\f6error updating %s(error code %d)!", keymapcfg.name, err); return err; }
 
         return 0;
     }
