@@ -40,8 +40,8 @@ Index: src/vcpp/sauerbraten.nsi
 +  VanillaFound:
 
 -  WriteRegStr HKLM SOFTWARE\Sauerbraten "Install_Dir" "$INSTDIR"
-+  File "/oname=bin\p1xbraten.exe" "..\..\bin\p1xbraten_x86.exe"
-+  File "/oname=bin64\p1xbraten.exe" "..\..\bin\p1xbraten_x64.exe"
++  File "/oname=bin\p1xbraten.exe" "..\..\bin\p1xbraten.exe"
++  File "/oname=bin64\p1xbraten.exe" "..\..\bin64\p1xbraten.exe"
 +  File "..\..\p1xbraten.bat"
 
 -  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Sauerbraten" "DisplayName" "Sauerbraten"
@@ -101,17 +101,18 @@ Index: src/vcpp/sauerbraten.vcxproj
 ===================================================================
 --- src/vcpp/sauerbraten.vcxproj	(revision 6490)
 +++ src/vcpp/sauerbraten.vcxproj	(working copy)
-@@ -110,8 +110,7 @@
+@@ -110,8 +110,8 @@
    <PropertyGroup Label="UserMacros" />
    <PropertyGroup>
      <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
 -    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\bin\</OutDir>
 -    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">..\..\bin64\</OutDir>
-+    <OutDir>..\..\bin\</OutDir>
++    <OutDir Condition="'$(Platform)'=='Win32'">..\..\bin\</OutDir>
++    <OutDir Condition="'$(Platform)'=='x64'">..\..\bin64\</OutDir>
      <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\</IntDir>
      <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\Release64\</IntDir>
      <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
-@@ -118,24 +117,20 @@
+@@ -118,24 +118,20 @@
      <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
      <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</GenerateManifest>
      <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</GenerateManifest>
@@ -133,12 +134,12 @@ Index: src/vcpp/sauerbraten.vcxproj
 -    <TargetName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">sauerbraten</TargetName>
 -    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">sauerbraten</TargetName>
 -    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">sauerbraten</TargetName>
-+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">p1xbraten_x86_debug</TargetName>
-+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">p1xbraten_x64_debug</TargetName>
-+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">p1xbraten_x86</TargetName>
-+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">p1xbraten_x64</TargetName>
-+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">p1xbraten_x86</TargetName>
-+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">p1xbraten_x64</TargetName>
++    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">p1xbraten_debug</TargetName>
++    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">p1xbraten_debug</TargetName>
++    <TargetName Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">p1xbraten</TargetName>
++    <TargetName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">p1xbraten</TargetName>
++    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">p1xbraten</TargetName>
++    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">p1xbraten</TargetName>
    </PropertyGroup>
    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
      <ClCompile>
