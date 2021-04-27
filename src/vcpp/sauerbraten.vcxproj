@@ -110,7 +110,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
-    <OutDir>..\..\bin\</OutDir>
+    <OutDir Condition="'$(Platform)'=='Win32'">..\..\bin\</OutDir>
+    <OutDir Condition="'$(Platform)'=='x64'">..\..\bin64\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\</IntDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\Release64\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
@@ -125,12 +126,12 @@
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Profile64\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">false</LinkIncremental>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">false</LinkIncremental>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">p1xbraten_x86_debug</TargetName>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">p1xbraten_x64_debug</TargetName>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">p1xbraten_x86</TargetName>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">p1xbraten_x64</TargetName>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">p1xbraten_x86</TargetName>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">p1xbraten_x64</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">p1xbraten_debug</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">p1xbraten_debug</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">p1xbraten</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">p1xbraten</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">p1xbraten</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">p1xbraten</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>

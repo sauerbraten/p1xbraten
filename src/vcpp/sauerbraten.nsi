@@ -27,8 +27,8 @@ Section "p1xbraten (required)"
     Abort "Vanilla Sauerbraten files not found in installation directory!"
   VanillaFound:
   
-  File "/oname=bin\p1xbraten.exe" "..\..\bin\p1xbraten_x86.exe"
-  File "/oname=bin64\p1xbraten.exe" "..\..\bin\p1xbraten_x64.exe"
+  File "/oname=bin\p1xbraten.exe" "..\..\bin\p1xbraten.exe"
+  File "/oname=bin64\p1xbraten.exe" "..\..\bin64\p1xbraten.exe"
   File "..\..\p1xbraten.bat"
   
   WriteRegStr HKLM SOFTWARE\p1xbraten "Install_Dir" "$INSTDIR"
