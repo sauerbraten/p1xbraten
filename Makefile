@@ -1,4 +1,4 @@
-.PHONY: build install clean apply-patches gzip-menus _include-menus clean-sauer update-src apply-to-vanilla check-env
+.PHONY: build install clean apply-patches gzip-cfgs embed-cfgs clean-sauer update-src apply-to-vanilla check-env
 
 PATCH=patch --strip=0 --remove-empty-files --ignore-whitespace
 
@@ -8,7 +8,7 @@ ifneq (,$(wildcard ~/sauerbraten-code))
 endif
 endif
 
-build: update-src apply-patches gzip-menus _include-menus
+build: update-src apply-patches embed-cfgs
 	cd src && make
 
 install:
@@ -32,7 +32,7 @@ apply-patches:
 	$(PATCH) < patches/listteams.patch
 	$(PATCH) < patches/extrapings.patch
 	$(PATCH) < patches/execfile.patch
-	$(PATCH) < patches/include_p1xbraten_cfgs.patch
+	$(PATCH) < patches/embedded_cfgs.patch
 	$(PATCH) < patches/tex_commands.patch
 	$(PATCH) < patches/decouple_framedrawing.patch
 	$(PATCH) < patches/crosshaircolor.patch
@@ -45,18 +45,21 @@ apply-patches:
 	unix2dos src/vcpp/sauerbraten.vcxproj
 	cd src && make depend
 
-gzip-menus:
+gzip-cfgs:
 	gzip --keep --force --best --no-name data/p1xbraten/menus.cfg && xxd -i - data/p1xbraten/menus.cfg.gz.xxd < data/p1xbraten/menus.cfg.gz
 	gzip --keep --force --best --no-name data/p1xbraten/master.cfg && xxd -i - data/p1xbraten/master.cfg.gz.xxd < data/p1xbraten/master.cfg.gz
 	gzip --keep --force --best --no-name data/p1xbraten/gamehud.cfg && xxd -i - data/p1xbraten/gamehud.cfg.gz.xxd < data/p1xbraten/gamehud.cfg.gz
+	gzip --keep --force --best --no-name data/p1xbraten/keymap.cfg && xxd -i - data/p1xbraten/keymap.cfg.gz.xxd < data/p1xbraten/keymap.cfg.gz
 
-_include-menus:
-	sed -i "s/0,\/\/menuscrc/0x$(shell crc32 data/p1xbraten/menus.cfg),/" src/fpsgame/p1xbraten_cfgs.cpp
-	sed -i "s/embeddedfile<0> menuscfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/menus.cfg.gz)> menuscfg/" src/fpsgame/p1xbraten_cfgs.cpp
-	sed -i "s/0,\/\/mastercrc/0x$(shell crc32 data/p1xbraten/master.cfg),/" src/fpsgame/p1xbraten_cfgs.cpp
-	sed -i "s/embeddedfile<0> mastercfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/master.cfg.gz)> mastercfg/" src/fpsgame/p1xbraten_cfgs.cpp
-	sed -i "s/0,\/\/gamehudcrc/0x$(shell crc32 data/p1xbraten/gamehud.cfg),/" src/fpsgame/p1xbraten_cfgs.cpp
-	sed -i "s/embeddedfile<0> gamehudcfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/gamehud.cfg.gz)> gamehudcfg/" src/fpsgame/p1xbraten_cfgs.cpp
+embed-cfgs: gzip-cfgs
+	sed -i "s/0,\/\/menuscrc/0x$(shell crc32 data/p1xbraten/menus.cfg),/" src/fpsgame/embedded_cfgs.cpp
+	sed -i "s/embeddedfile<0> menuscfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/menus.cfg.gz)> menuscfg/" src/fpsgame/embedded_cfgs.cpp
+	sed -i "s/0,\/\/mastercrc/0x$(shell crc32 data/p1xbraten/master.cfg),/" src/fpsgame/embedded_cfgs.cpp
+	sed -i "s/embeddedfile<0> mastercfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/master.cfg.gz)> mastercfg/" src/fpsgame/embedded_cfgs.cpp
+	sed -i "s/0,\/\/gamehudcrc/0x$(shell crc32 data/p1xbraten/gamehud.cfg),/" src/fpsgame/embedded_cfgs.cpp
+	sed -i "s/embeddedfile<0> gamehudcfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/gamehud.cfg.gz)> gamehudcfg/" src/fpsgame/embedded_cfgs.cpp
+	sed -i "s/0,\/\/keymapcrc/0x$(shell crc32 data/p1xbraten/keymap.cfg),/" src/fpsgame/embedded_cfgs.cpp
+	sed -i "s/embeddedfile<0> keymapcfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/keymap.cfg.gz)> keymapcfg/" src/fpsgame/embedded_cfgs.cpp
 
 clean-sauer: check-env
 	cd $(SAUER_DIR) && \

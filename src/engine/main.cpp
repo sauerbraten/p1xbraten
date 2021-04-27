@@ -1310,8 +1310,9 @@ int main(int argc, char **argv)
     initsound();
 
     logoutf("init: cfg");
+    game::writeembeddedcfgs();
     initing = INIT_LOAD;
-    execfile("data/keymap.cfg");
+    execfile("data/p1xbraten/keymap.cfg.gz");
     execfile("data/stdedit.cfg");
     execfile("data/sounds.cfg");
     execfile("data/menus.cfg");
@@ -1320,7 +1321,6 @@ int main(int argc, char **argv)
     defformatstring(gamecfgname, "data/game_%s.cfg", game::gameident());
     execfile(gamecfgname);
     if(game::savedservers()) execfile(game::savedservers(), false);
-    game::writep1xbratencfgs();
     execfile("data/p1xbraten/gamehud.cfg.gz");
     
     identflags |= IDF_PERSIST;

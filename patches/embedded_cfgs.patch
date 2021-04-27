@@ -6,7 +6,7 @@ Index: src/Makefile
  	fpsgame/fps.o \
  	fpsgame/monster.o \
  	fpsgame/movable.o \
-+	fpsgame/p1xbraten_cfgs.o \
++	fpsgame/embedded_cfgs.o \
  	fpsgame/render.o \
  	fpsgame/scoreboard.o \
  	fpsgame/server.o \
@@ -14,21 +14,24 @@ Index: src/engine/main.cpp
 ===================================================================
 --- src/engine/main.cpp	(revision 6496)
 +++ src/engine/main.cpp	(working copy)
-@@ -1299,6 +1299,7 @@
-     defformatstring(gamecfgname, "data/game_%s.cfg", game::gameident());
-     execfile(gamecfgname);
-     if(game::savedservers()) execfile(game::savedservers(), false);
-+    game::writep1xbratencfgs();
+@@ -1294,8 +1294,9 @@
+     initsound();
 
-     identflags |= IDF_PERSIST;
-
-Index: src/fpsgame/p1xbraten_cfgs.cpp
+     logoutf("init: cfg");
++    game::writeembeddedcfgs();
+     initing = INIT_LOAD;
+-    execfile("data/keymap.cfg");
++    execfile("data/p1xbraten/keymap.cfg.gz");
+     execfile("data/stdedit.cfg");
+     execfile("data/sounds.cfg");
+     execfile("data/menus.cfg");
+Index: src/fpsgame/embedded_cfgs.cpp
 ===================================================================
---- src/fpsgame/p1xbraten_cfgs.cpp	(nonexistent)
-+++ src/fpsgame/p1xbraten_cfgs.cpp	(working copy)
-@@ -0,0 +1,66 @@
+--- src/fpsgame/embedded_cfgs.cpp	(nonexistent)
++++ src/fpsgame/embedded_cfgs.cpp	(working copy)
+@@ -0,0 +1,77 @@
 +#include "cube.h"
-+#include "p1xbraten_cfgs.h"
++#include "embedded_cfgs.h"
 +
 +namespace game {
 +    struct embeddedfile<0> menuscfg = {
@@ -55,6 +58,14 @@ Index: src/fpsgame/p1xbraten_cfgs.cpp
 +        }
 +    };
 +
++    struct embeddedfile<0> keymapcfg = {
++        "data/p1xbraten/keymap.cfg.gz",
++        0,//keymapcrc
++        {
++            #include "../../data/p1xbraten/keymap.cfg.gz.xxd"
++        }
++    };
++
 +    template<size_t N>
 +    int update(embeddedfile<N> *i)
 +    {
@@ -74,7 +85,7 @@ Index: src/fpsgame/p1xbraten_cfgs.cpp
 +        return 0;
 +    }
 +
-+    int writep1xbratencfgs()
++    int writeembeddedcfgs()
 +    {
 +        int err = update(&menuscfg);
 +        if(err) { conoutf("\f6error updating %s (error code %d)!", menuscfg.name, err); return err; }
@@ -85,6 +96,9 @@ Index: src/fpsgame/p1xbraten_cfgs.cpp
 +        err = update(&gamehudcfg);
 +        if(err) { conoutf("\f6error updating %s(error code %d)!", gamehudcfg.name, err); return err; }
 +
++        err = update(&keymapcfg);
++        if(err) { conoutf("\f6error updating %s(error code %d)!", keymapcfg.name, err); return err; }
++
 +        return 0;
 +    }
 +
@@ -93,10 +107,10 @@ Index: src/fpsgame/p1xbraten_cfgs.cpp
 +        else execfile("data/menus.cfg");
 +    });
 +}
-Index: src/fpsgame/p1xbraten_cfgs.h
+Index: src/fpsgame/embedded_cfgs.h
 ===================================================================
---- src/fpsgame/p1xbraten_cfgs.h	(nonexistent)
-+++ src/fpsgame/p1xbraten_cfgs.h	(working copy)
+--- src/fpsgame/embedded_cfgs.h	(nonexistent)
++++ src/fpsgame/embedded_cfgs.h	(working copy)
 @@ -0,0 +1,10 @@
 +#include "cube.h"
 +
@@ -117,7 +131,7 @@ Index: src/shared/igame.h
      extern const char *autoexec();
      extern const char *savedservers();
      extern void loadconfigs();
-+    extern int writep1xbratencfgs();
++    extern int writeembeddedcfgs();
 
      extern void updateworld();
      extern void initclient();
@@ -150,7 +164,7 @@ Index: src/vcpp/sauerbraten.vcxproj
        <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)2.obj</ObjectFileName>
        <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)2.obj</ObjectFileName>
      </ClCompile>
-+    <ClCompile Include="..\fpsgame\p1xbraten_cfgs.cpp">
++    <ClCompile Include="..\fpsgame\embedded_cfgs.cpp">
 +      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">cube.h</PrecompiledHeaderFile>
 +      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">cube.h</PrecompiledHeaderFile>
 +      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)cube.pch</PrecompiledHeaderOutputFile>
