@@ -57,13 +57,15 @@ ifneq (,$(STRIP))
   STRIP= $(TOOLCHAIN)strip
 endif
 endif
+CC= gcc-8 # gcc because of https://github.com/sauerbraten/p1xbraten/issues/26, 8 because that's the latest version available on AppVeyor
+CXX= gcc-8
 OSXMIN= 10.9
 override CC+= -arch x86_64 -mmacosx-version-min=$(OSXMIN)
 override CXX+= -arch x86_64 -mmacosx-version-min=$(OSXMIN)
 CLIENT_INCLUDES= $(INCLUDES) -Iinclude
 CLIENT_LIBS= -F../sauerbraten.app/Contents/Frameworks/ -framework SDL2 -framework SDL2_image
 CLIENT_LIBS+= -framework SDL2_mixer -framework CoreAudio -framework AudioToolbox
-CLIENT_LIBS+= -framework AudioUnit -framework OpenGL -framework Cocoa -lz -Lenet -lenet
+CLIENT_LIBS+= -framework AudioUnit -framework OpenGL -framework Cocoa -lz -Lenet -lenet -lc++
 else
 CLIENT_INCLUDES= $(INCLUDES) -I/usr/X11R6/include `sdl2-config --cflags`
 CLIENT_LIBS= -Lenet -lenet -L/usr/X11R6/lib -lX11 `sdl2-config --libs` -lSDL2_image -lSDL2_mixer -lz -lGL
@@ -146,6 +148,9 @@ MASTER_LIBS= $(STD_LIBS) -L$(WINBIN) -L$(WINLIB) -lzlib1 -lenet -lws2_32 -lwinmm
 else
 SERVER_INCLUDES= -DSTANDALONE $(INCLUDES)
 SERVER_LIBS= -Lenet -lenet -lz
+ifneq (,$(findstring DARWIN,$(PLATFORM)))
+SERVER_LIBS+= -lc++
+endif
 MASTER_LIBS= $(SERVER_LIBS)
 endif
 SERVER_OBJS= \

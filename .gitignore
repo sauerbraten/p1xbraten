@@ -12,3 +12,4 @@ bin_unix/*
 sauerbraten.app/Contents/MacOS/*
 !/**/.gitkeep
 data/p1xbraten/*gz
+.vscode
