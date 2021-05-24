@@ -38,7 +38,7 @@ for:
 deploy:
 - provider: GitHub
   auth_token:
-    secure: CFYvYuxU2ihMXihnUfV4covPTRzzKgbgVk/I+ZEqVu39uLIJlMAGqhNXfGm1BNEv
+    secure: yDysOWfcinINQUWASZ4xbRXqpwxMOcre9EZZMQPxYnqkGoHDV1tKeRqkV8QxgEMB
   force_update: true
   on:
     APPVEYOR_REPO_TAG: true
