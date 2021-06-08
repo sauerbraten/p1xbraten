@@ -24,6 +24,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [authservers.patch](#authserverspatch)
   - [serverlogging.patch](#serverloggingpatch)
   - [gamehud.patch](#gamehudpatch)
+  - [chat_highlight_words.patch](#chat_highlight_wordspatch)
 - [Installation](#installation)
   - [Windows](#windows)
   - [macOS](#macos)
@@ -176,7 +177,13 @@ For example, you can put `addauthserver "p1x.pw" "p1x.pw" 28787 "m"` into your `
 - adds a useful playerlist showing who's alive vs. dead when spectating in the lower right corner
 - adds `isdead <cn>` command to check if a player is currently dead (only works when you are spectating)
 
-<div align="center"><img alt="gamehud with player state" src="https://i.imgur.com/eDzdrWp.png" /></div>
+<div align="center"><img alt="gamehud with player state" src="https://i.imgur.com/8kfmhSK.gif" /></div>
+
+### [chat_highlight_words.patch](./patches/chat_highlight_words.patch)
+
+- lets you define words that trigger a sound when they appear in chat or team chat
+- adds `addchathighlightword <word>` command (for example, put `addchathighlightword pix` and `addchathighlightword p1x` into autoexec.cfg to receive a highlight on both spellings)
+- adds `chathighlightsound` variable to set the sound to play (default: `free/itempick`)
 
 ## Installation
 

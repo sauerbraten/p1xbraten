@@ -983,6 +983,10 @@ namespace game
 
     ICOMMAND(servcmd, "C", (char *cmd), addmsg(N_SERVCMD, "rs", cmd));
 
+    SVARP(chathighlightsound, "free/itempick");
+    vector<const char *> chathighlightwords;
+    ICOMMAND(addchathighlightword, "s", (char *text), chathighlightwords.add(newstring(text)));
+
     static void sendposition(fpsent *d, packetbuf &q)
     {
         putint(q, N_POS);
@@ -1391,6 +1395,7 @@ namespace game
                 if(d->state!=CS_DEAD && d->state!=CS_SPECTATOR)
                     particle_textcopy(d->abovehead(), text, PART_TEXT, 2000, 0x32FF64, 4.0f, -8);
                 conoutf(CON_CHAT + (d->state==CS_SPECTATOR ? CON_NONZEN : 0), "%s:\f0 %s", chatcolorname(d), text);
+                if(!focused) loopv(chathighlightwords) if(strstr(text, chathighlightwords[i])) { playsoundname(chathighlightsound); break; }
                 break;
             }
 
@@ -1404,6 +1409,7 @@ namespace game
                 if(t->state!=CS_DEAD && t->state!=CS_SPECTATOR)
                     particle_textcopy(t->abovehead(), text, PART_TEXT, 2000, 0x6496FF, 4.0f, -8);
                 conoutf(CON_TEAMCHAT + (t->state==CS_SPECTATOR ? CON_NONZEN : 0), "\fs\f8[team]\fr %s: \f8%s", chatcolorname(t), text);
+                if(!focused) loopv(chathighlightwords) if(strstr(text, chathighlightwords[i])) { playsoundname(chathighlightsound); break; }
                 break;
             }
 

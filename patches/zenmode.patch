@@ -78,24 +78,16 @@ Index: src/fpsgame/client.cpp
      void setteam(const char *arg1, const char *arg2)
      {
          int i = parseplayer(arg1);
-@@ -1329,7 +1342,7 @@
-                 if(isignored(d->clientnum)) break;
+@@ -1329,3 +1342,3 @@
                  if(d->state!=CS_DEAD && d->state!=CS_SPECTATOR)
                      particle_textcopy(d->abovehead(), text, PART_TEXT, 2000, 0x32FF64, 4.0f, -8);
 -                conoutf(CON_CHAT, "%s:\f0 %s", chatcolorname(d), text);
 +                conoutf(CON_CHAT + (d->state==CS_SPECTATOR ? CON_NONZEN : 0), "%s:\f0 %s", chatcolorname(d), text);
-                 break;
-             }
-
-@@ -1342,7 +1355,7 @@
-                 if(!t || isignored(t->clientnum)) break;
+@@ -1342,3 +1355,3 @@
                  if(t->state!=CS_DEAD && t->state!=CS_SPECTATOR)
                      particle_textcopy(t->abovehead(), text, PART_TEXT, 2000, 0x6496FF, 4.0f, -8);
 -                conoutf(CON_TEAMCHAT, "\fs\f8[team]\fr %s: \f8%s", chatcolorname(t), text);
 +                conoutf(CON_TEAMCHAT + (t->state==CS_SPECTATOR ? CON_NONZEN : 0), "\fs\f8[team]\fr %s: \f8%s", chatcolorname(t), text);
-                 break;
-             }
-
 @@ -1400,11 +1413,11 @@
                  if(d->name[0])          // already connected
                  {

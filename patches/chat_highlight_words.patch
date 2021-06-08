@@ -1,0 +1,61 @@
+Index: src/engine/main.cpp
+===================================================================
+--- src/engine/main.cpp	(revision 6502)
++++ src/engine/main.cpp	(working copy)
+@@ -909,12 +909,12 @@
+     }
+ }
+
++int focused = 0;
+ void checkinput()
+ {
+     if(interceptkeysym) clearinterceptkey();
+     //int lasttype = 0, lastbut = 0;
+     bool mousemoved = false;
+-    int focused = 0;
+     while(pumpevents(events))
+     {
+         SDL_Event &event = events.remove();
+Index: src/fpsgame/client.cpp
+===================================================================
+--- src/fpsgame/client.cpp	(revision 6502)
++++ src/fpsgame/client.cpp	(working copy)
+@@ -930,6 +930,10 @@
+
+     ICOMMAND(servcmd, "C", (char *cmd), addmsg(N_SERVCMD, "rs", cmd));
+
++    SVARP(chathighlightsound, "free/itempick");
++    vector<const char *> chathighlightwords;
++    ICOMMAND(addchathighlightword, "s", (char *text), chathighlightwords.add(newstring(text)));
++
+     static void sendposition(fpsent *d, packetbuf &q)
+     {
+         putint(q, N_POS);
+@@ -1330,6 +1334,7 @@
+                 if(d->state!=CS_DEAD && d->state!=CS_SPECTATOR)
+                     particle_textcopy(d->abovehead(), text, PART_TEXT, 2000, 0x32FF64, 4.0f, -8);
+                 conoutf(CON_CHAT, "%s:\f0 %s", chatcolorname(d), text);
++                if(!focused) loopv(chathighlightwords) if(strstr(text, chathighlightwords[i])) { playsoundname(chathighlightsound); break; }
+                 break;
+             }
+
+@@ -1343,6 +1348,7 @@
+                 if(t->state!=CS_DEAD && t->state!=CS_SPECTATOR)
+                     particle_textcopy(t->abovehead(), text, PART_TEXT, 2000, 0x6496FF, 4.0f, -8);
+                 conoutf(CON_TEAMCHAT, "\fs\f8[team]\fr %s: \f8%s", chatcolorname(t), text);
++                if(!focused) loopv(chathighlightwords) if(strstr(text, chathighlightwords[i])) { playsoundname(chathighlightsound); break; }
+                 break;
+             }
+
+Index: src/shared/iengine.h
+===================================================================
+--- src/shared/iengine.h	(revision 6502)
++++ src/shared/iengine.h	(working copy)
+@@ -248,6 +248,7 @@
+
+ // main
+ extern void fatal(const char *s, ...) PRINTFARGS(1, 2);
++extern int focused; // whether or not the application is in focus
+
+ // rendertext
+ extern bool setfont(const char *name);

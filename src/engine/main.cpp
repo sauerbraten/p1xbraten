@@ -909,12 +909,12 @@ static void checkmousemotion(int &dx, int &dy)
     }
 }
 
+int focused = 0;
 void checkinput()
 {
     if(interceptkeysym) clearinterceptkey();
     //int lasttype = 0, lastbut = 0;
     bool mousemoved = false;
-    int focused = 0;
     while(pumpevents(events))
     {
         SDL_Event &event = events.remove();

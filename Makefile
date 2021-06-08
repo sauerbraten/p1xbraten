@@ -37,6 +37,7 @@ apply-patches:
 	$(PATCH) < patches/decouple_framedrawing.patch
 	$(PATCH) < patches/crosshaircolor.patch
 	$(PATCH) < patches/win_builds.patch
+	$(PATCH) < patches/chat_highlight_words.patch
 	$(PATCH) < patches/zenmode.patch
 	$(PATCH) < patches/authservers.patch
 	$(PATCH) < patches/serverlogging.patch
