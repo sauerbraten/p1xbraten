@@ -2,20 +2,31 @@ Index: src/engine/main.cpp
 ===================================================================
 --- src/engine/main.cpp	(revision 6502)
 +++ src/engine/main.cpp	(working copy)
-@@ -909,12 +909,12 @@
-     }
- }
+@@ -464,7 +464,7 @@
+ VARNP(relativemouse, userelativemouse, 0, 1, 1);
+ #endif
 
-+int focused = 0;
- void checkinput()
- {
-     if(interceptkeysym) clearinterceptkey();
-     //int lasttype = 0, lastbut = 0;
-     bool mousemoved = false;
--    int focused = 0;
-     while(pumpevents(events))
-     {
-         SDL_Event &event = events.remove();
+-bool shouldgrab = false, grabinput = false, minimized = false, canrelativemouse = true, relativemouse = false;
++bool shouldgrab = false, grabinput = false, minimized = false, hasfocus = true, canrelativemouse = true, relativemouse = false;
+
+ #ifdef SDL_VIDEO_DRIVER_X11
+ VAR(sdl_xgrab_bug, 0, 0, 1);
+@@ -951,6 +951,7 @@
+
+                     case SDL_WINDOWEVENT_FOCUS_GAINED:
+                         shouldgrab = true;
++                        hasfocus = true;
+                         break;
+                     case SDL_WINDOWEVENT_ENTER:
+                         shouldgrab = false;
+@@ -961,6 +962,7 @@
+                     case SDL_WINDOWEVENT_FOCUS_LOST:
+                         shouldgrab = false;
+                         focused = -1;
++                        hasfocus = false;
+                         break;
+
+                     case SDL_WINDOWEVENT_MINIMIZED:
 Index: src/fpsgame/client.cpp
 ===================================================================
 --- src/fpsgame/client.cpp	(revision 6502)
@@ -24,7 +35,7 @@ Index: src/fpsgame/client.cpp
 
      ICOMMAND(servcmd, "C", (char *cmd), addmsg(N_SERVCMD, "rs", cmd));
 
-+    SVARP(chathighlightsound, "free/itempick");
++    SVARP(chathighlightsound, "aard/tak");
 +    vector<const char *> chathighlightwords;
 +    ICOMMAND(addchathighlightword, "s", (char *text), chathighlightwords.add(newstring(text)));
 +
@@ -35,7 +46,7 @@ Index: src/fpsgame/client.cpp
                  if(d->state!=CS_DEAD && d->state!=CS_SPECTATOR)
                      particle_textcopy(d->abovehead(), text, PART_TEXT, 2000, 0x32FF64, 4.0f, -8);
                  conoutf(CON_CHAT, "%s:\f0 %s", chatcolorname(d), text);
-+                if(!focused) loopv(chathighlightwords) if(strstr(text, chathighlightwords[i])) { playsoundname(chathighlightsound); break; }
++                if(!hasfocus) loopv(chathighlightwords) if(strstr(text, chathighlightwords[i])) { playsoundname(chathighlightsound); break; }
                  break;
              }
 
@@ -43,7 +54,7 @@ Index: src/fpsgame/client.cpp
                  if(t->state!=CS_DEAD && t->state!=CS_SPECTATOR)
                      particle_textcopy(t->abovehead(), text, PART_TEXT, 2000, 0x6496FF, 4.0f, -8);
                  conoutf(CON_TEAMCHAT, "\fs\f8[team]\fr %s: \f8%s", chatcolorname(t), text);
-+                if(!focused) loopv(chathighlightwords) if(strstr(text, chathighlightwords[i])) { playsoundname(chathighlightsound); break; }
++                if(!hasfocus) loopv(chathighlightwords) if(strstr(text, chathighlightwords[i])) { playsoundname(chathighlightsound); break; }
                  break;
              }
 
@@ -55,7 +66,7 @@ Index: src/shared/iengine.h
 
  // main
  extern void fatal(const char *s, ...) PRINTFARGS(1, 2);
-+extern int focused; // whether or not the application is in focus
++extern bool hasfocus;
 
  // rendertext
  extern bool setfont(const char *name);
