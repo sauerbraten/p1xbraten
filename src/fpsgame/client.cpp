@@ -983,7 +983,7 @@ namespace game
 
     ICOMMAND(servcmd, "C", (char *cmd), addmsg(N_SERVCMD, "rs", cmd));
 
-    SVARP(chathighlightsound, "aard/tak");
+    SVARP(chathighlightsound, "free/tick");
     vector<const char *> chathighlightwords;
     ICOMMAND(addchathighlightword, "s", (char *text), chathighlightwords.add(newstring(text)));
 
