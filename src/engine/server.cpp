@@ -46,12 +46,13 @@ void logoutf(const char *fmt, ...)
 }
 
 time_t walltime = 0;
+VARP(logtime, 0, 1, 1);
 
 static void writelog(FILE *file, const char *buf)
 {
     static uchar ubuf[512];
     size_t len = strlen(buf), carry = 0;
-    if(isdedicatedserver())
+    if(isdedicatedserver() && logtime)
     {
         if(!walltime) { walltime = time(NULL); walltime -= totalmillis/1000; if(!walltime) walltime++; }
         time_t walloffset = walltime + totalmillis/1000;

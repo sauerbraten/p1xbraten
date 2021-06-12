@@ -1,6 +1,6 @@
 Index: src/engine/rendergl.cpp
 ===================================================================
---- src/engine/rendergl.cpp	(revision 6496)
+--- src/engine/rendergl.cpp	(revision 6502)
 +++ src/engine/rendergl.cpp	(working copy)
 @@ -2165,8 +2165,6 @@
  VARP(wallclock24, 0, 0, 1);
@@ -13,19 +13,20 @@ Index: src/engine/rendergl.cpp
  VAR(showeditstats, 0, 0, 1);
 Index: src/engine/server.cpp
 ===================================================================
---- src/engine/server.cpp	(revision 6496)
+--- src/engine/server.cpp	(revision 6502)
 +++ src/engine/server.cpp	(working copy)
-@@ -45,11 +45,24 @@
+@@ -45,11 +45,25 @@
      va_end(args);
  }
 
 +time_t walltime = 0;
++VARP(logtime, 0, 1, 1);
 
  static void writelog(FILE *file, const char *buf)
  {
      static uchar ubuf[512];
      size_t len = strlen(buf), carry = 0;
-+    if(isdedicatedserver())
++    if(isdedicatedserver() && logtime)
 +    {
 +        if(!walltime) { walltime = time(NULL); walltime -= totalmillis/1000; if(!walltime) walltime++; }
 +        time_t walloffset = walltime + totalmillis/1000;
@@ -40,7 +41,7 @@ Index: src/engine/server.cpp
      while(carry < len)
      {
          size_t numu = encodeutf8(ubuf, sizeof(ubuf)-1, &((const uchar *)buf)[carry], len - carry, &carry);
-@@ -661,7 +674,7 @@
+@@ -661,7 +675,7 @@
                  c.peer->data = &c;
                  string hn;
                  copystring(c.hostname, (enet_address_get_host_ip(&c.peer->address, hn, sizeof(hn))==0) ? hn : "unknown");
@@ -49,7 +50,7 @@ Index: src/engine/server.cpp
                  int reason = server::clientconnect(c.num, c.peer->address.host);
                  if(reason) disconnect_client(c.num, reason);
                  break;
-@@ -677,7 +690,7 @@
+@@ -677,7 +691,7 @@
              {
                  client *c = (client *)event.peer->data;
                  if(!c) break;
@@ -60,9 +61,35 @@ Index: src/engine/server.cpp
                  break;
 Index: src/fpsgame/server.cpp
 ===================================================================
---- src/fpsgame/server.cpp	(revision 6496)
+--- src/fpsgame/server.cpp	(revision 6502)
 +++ src/fpsgame/server.cpp	(working copy)
-@@ -2089,6 +2089,8 @@
+@@ -1486,10 +1486,22 @@
+         string msg;
+         if(val && authname)
+         {
+-            if(authdesc && authdesc[0]) formatstring(msg, "%s claimed %s as '\fs\f5%s\fr' [\fs\f0%s\fr]", colorname(ci), name, authname, authdesc);
+-            else formatstring(msg, "%s claimed %s as '\fs\f5%s\fr'", colorname(ci), name, authname);
++            if(authdesc && authdesc[0])
++            {
++                formatstring(msg, "%s claimed %s as '\fs\f5%s\fr' [\fs\f0%s\fr]", colorname(ci), name, authname, authdesc);
++                if(isdedicatedserver()) logoutf("privilege: %s (cn: %d) claimed %s as '%s' [%s]", ci->name, ci->clientnum, name, authname, authdesc);
+         }
+-        else formatstring(msg, "%s %s %s", colorname(ci), val ? "claimed" : "relinquished", name);
++            else
++            {
++                formatstring(msg, "%s claimed %s as '\fs\f5%s\fr'", colorname(ci), name, authname);
++                if(isdedicatedserver()) logoutf("privilege: %s (cn: %d) claimed %s as '%s'", ci->name, ci->clientnum, name, authname);
++            }
++        }
++        else
++        {
++            formatstring(msg, "%s %s %s", colorname(ci), val ? "claimed" : "relinquished", name);
++            if(isdedicatedserver()) logoutf("privilege: %s (cn: %d) %s %s", ci->name, ci->clientnum, val ? "claimed" : "relinquished", name);
++        }
+         packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
+         putint(p, N_SERVMSG);
+         sendstring(msg, p);
+@@ -2089,6 +2101,8 @@
          }
 
          if(smode) smode->setup();
@@ -71,7 +98,7 @@ Index: src/fpsgame/server.cpp
      }
 
      void rotatemap(bool next)
-@@ -2942,6 +2944,7 @@
+@@ -2942,6 +2956,7 @@
          sendwelcome(ci);
          if(restorescore(ci)) sendresume(ci);
          sendinitclient(ci);
@@ -79,7 +106,7 @@ Index: src/fpsgame/server.cpp
 
          aiman::addclient(ci);
 
-@@ -3279,7 +3282,7 @@
+@@ -3279,7 +3294,7 @@
                  getstring(text, p);
                  filtertext(text, text, true, true);
                  QUEUE_STR(text);
@@ -88,7 +115,7 @@ Index: src/fpsgame/server.cpp
                  break;
              }
 
-@@ -3294,7 +3297,7 @@
+@@ -3294,7 +3309,7 @@
                      if(t==cq || t->state.state==CS_SPECTATOR || t->state.aitype != AI_NONE || strcmp(cq->team, t->team)) continue;
                      sendf(t->clientnum, 1, "riis", N_SAYTEAM, cq->clientnum, text);
                  }
@@ -99,7 +126,7 @@ Index: src/fpsgame/server.cpp
 
 Index: src/shared/iengine.h
 ===================================================================
---- src/shared/iengine.h	(revision 6496)
+--- src/shared/iengine.h	(revision 6502)
 +++ src/shared/iengine.h	(working copy)
 @@ -6,6 +6,7 @@
  extern int totalmillis;                 // total elapsed time

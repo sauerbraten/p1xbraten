@@ -166,10 +166,13 @@ For example, you can put `addauthserver "p1x.pw" "p1x.pw" 28787 "m"` into your `
 
 ### [serverlogging.patch](./patches/serverlogging.patch)
 
-- prepends ISO date and time (e.g. `[2021-04-06 17:12:05]`)to all log messages when running a dedicated server
+Improves logging when running a dedicated server:
+
+- adds `logtime` variable: if 1, all log messages are prepended with ISO date and time (e.g. `[2021-04-06 17:12:05]`)
 - includes CN in connect, disconnect, chat, team chat log messages
 - logs a "join" message including CN and player name
 - logs map changes
+- logs all privilege changes
 
 ### [gamehud.patch](./patches/gamehud.patch)
 
