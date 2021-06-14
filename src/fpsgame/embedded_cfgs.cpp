@@ -10,9 +10,9 @@ namespace game {
         }
     };
 
-    struct embeddedfile<1029> mastercfg = {
+    struct embeddedfile<1042> mastercfg = {
         "data/p1xbraten/master.cfg.gz",
-        0xe6bf7248,
+        0x629e73bb,
         {
             #include "../../data/p1xbraten/master.cfg.gz.xxd"
         }
