@@ -25,6 +25,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [serverlogging.patch](#serverloggingpatch)
   - [gamehud.patch](#gamehudpatch)
   - [chat_highlight_words.patch](#chat_highlight_wordspatch)
+  - [server_ogzs.patch](#server_ogzspatch)
 - [Installation](#installation)
   - [Windows](#windows)
   - [macOS](#macos)
@@ -187,6 +188,10 @@ Improves logging when running a dedicated server:
 - lets you define words that trigger a sound when they appear in chat or team chat
 - adds `addchathighlightword <word>` command (for example, put `addchathighlightword pix` and `addchathighlightword p1x` into autoexec.cfg to receive a highlight on both spellings)
 - adds `chathighlightsound` variable to set the sound to play (default: `free/itempick`)
+
+### [server_ogzs.patch](./patches/server_ogzs.patch)
+
+- allows using slim .ogz files on the server that don't include lightmaps, blendmaps, and the octree without getting `checkmaps` errors
 
 ## Installation
 

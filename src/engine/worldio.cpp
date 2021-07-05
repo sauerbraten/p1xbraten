@@ -158,7 +158,7 @@ bool loadents(const char *fname, vector<entity> &ents, uint *crc)
         }
     }
 
-    if(crc)
+    if(crc && !f->end()) // only use CRC if we have the full map file
     {
         f->seek(0, SEEK_END);
         *crc = f->getcrc();
