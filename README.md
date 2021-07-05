@@ -191,7 +191,7 @@ Improves logging when running a dedicated server:
 
 ### [server_ogzs.patch](./patches/server_ogzs.patch)
 
-- allows using slim .ogz files on the server that don't include lightmaps, blendmaps, and the octree without getting `checkmaps` errors
+- allows using slim .ogz files (see https://github.com/sauerbraten/genserverogz) on the server without getting `checkmaps` errors
 
 ## Installation
 
