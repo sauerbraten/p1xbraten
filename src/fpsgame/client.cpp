@@ -120,6 +120,7 @@ namespace game
     bool senditemstoserver = false, sendcrc = false; // after a map change, since server doesn't have map data
     int lastping = 0;
     int lastextraping = 0;
+    VARP(enablep1xbratendetection, 0, 1, 1);
 
     bool connected = false, remote = false, demoplayback = false, gamepaused = false;
     int sessionid = 0, mastermode = MM_OPEN, gamespeed = 100;
@@ -1105,10 +1106,11 @@ namespace game
             lastping = totalmillis;
             lastextraping = totalmillis;
         }
-        else if(totalmillis-lastextraping>99) // send two extra N_PING packets between each normal one
+        else if(totalmillis-lastextraping>99) // send two extra N_CLIENTPING packets between each normal one
         {
-            putint(p, N_PING);
-            putint(p, (totalmillis-lastping)/99); // 1, 2, 1, 2, ...
+            putint(p, N_CLIENTPING);
+            int delta = ((totalmillis-lastping)/99)%2 ? -1 : 2;
+            putint(p, player1->ping+delta); // others will see 3 N_CLIENTPINGs from us within 250ms: ping (0ms), ping-1 (99ms), ping+2 (198ms)
             lastextraping = totalmillis;
         }
         sendclientpacket(p.finalize(), 1);
@@ -1825,33 +1827,29 @@ namespace game
             }
 
             case N_PONG:
-            {
-                int pong = getint(p);
-                if(pong<3) // extra N_PING response
-                {
-                    int sign = pong%2 ? -1 : 1;
-                    addmsg(N_CLIENTPING, "i", player1->ping+(sign*pong));
-                }
-                else addmsg(N_CLIENTPING, "i", player1->ping = (player1->ping*5+totalmillis-pong)/6);
+                addmsg(N_CLIENTPING, "i", player1->ping = (player1->ping*5+totalmillis-getint(p))/6);
                 break;
-            }
+
             case N_CLIENTPING:
             {
                 if(!d) return;
-                int ping = getint(p);
-                d->extrapings++;
-                int sign = (d->extrapings)%2 ? -1 : 1;
-                if(ping==d->ping+sign*(d->extrapings))
-                {
-                    d->p1xbratenconfidence += d->extrapings * 2;
-                    d->p1xbratenconfidence = min(d->p1xbratenconfidence, 1000);
-                }
+                if(!enablep1xbratendetection) d->ping = getint(p);
                 else
                 {
-                    d->ping = ping;
-                    d->p1xbratenconfidence -= d->extrapings;
-                    d->p1xbratenconfidence = max(d->p1xbratenconfidence, -1000);
-                    d->extrapings = 0;
+                    int ping = getint(p);
+                    int expecteddelta = (d->extrapings+1)%3 ? ((d->extrapings+1)%2 ? -1 : 2) : 0; // 0, -1, 2, 0 -1, 2, ...
+                    if(expecteddelta && ping==d->ping+expecteddelta)
+                    {
+                        d->extrapings++;
+                        d->p1xbratenconfidence += d->extrapings * 2;
+                        d->p1xbratenconfidence = min(d->p1xbratenconfidence, 1000);
+                    }
+                    else
+                    {
+                        d->ping = ping;
+                        if(expecteddelta) d->p1xbratenconfidence = max(d->p1xbratenconfidence-2, 0);
+                        d->extrapings = 0;
+                    }
                 }
                 break;
             }
