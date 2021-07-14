@@ -62,8 +62,8 @@ enum
 struct fpsentity : extentity
 {
     int triggerstate, lasttrigger;
-    
-    fpsentity() : triggerstate(TRIGGER_RESET), lasttrigger(0) {} 
+
+    fpsentity() : triggerstate(TRIGGER_RESET), lasttrigger(0) {}
 };
 
 enum { GUN_FIST = 0, GUN_SG, GUN_CG, GUN_RL, GUN_RIFLE, GUN_GL, GUN_PISTOL, GUN_FIREBALL, GUN_ICEBALL, GUN_SLIMEBALL, GUN_BITE, GUN_BARREL, NUMGUNS };
@@ -209,7 +209,7 @@ enum
     S_CHAINSAW_IDLE,
 
     S_HIT,
-    
+
     S_FLAGFAIL
 };
 
@@ -279,7 +279,7 @@ static const int msgsizes[] =               // size inclusive message token, 0 f
 #define SAUERBRATEN_SERVER_PORT 28785
 #define SAUERBRATEN_SERVINFO_PORT 28786
 #define SAUERBRATEN_MASTER_PORT 28787
-#define PROTOCOL_VERSION 260            // bump when protocol changes
+#define PROTOCOL_VERSION 1260            // bump when protocol changes
 #define DEMO_VERSION 1                  // bump when demo format changes
 #define DEMO_MAGIC "SAUERBRATEN_DEMO"
 
@@ -500,7 +500,7 @@ struct fpsstate
         }
         else if(m_sp)
         {
-            if(m_dmsp) 
+            if(m_dmsp)
             {
                 armourtype = A_BLUE;
                 armour = 25;

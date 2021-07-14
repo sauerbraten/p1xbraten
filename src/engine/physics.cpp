@@ -13,7 +13,7 @@ static int clipcacheversion = -2;
 static inline clipplanes &getclipplanes(const cube &c, const ivec &o, int size, bool collide = true, int offset = 0)
 {
     clipplanes &p = clipcache[int(&c - worldroot)&(MAXCLIPPLANES-1)];
-    if(p.owner != &c || p.version != clipcacheversion+offset) 
+    if(p.owner != &c || p.version != clipcacheversion+offset)
     {
         p.owner = &c;
         p.version = clipcacheversion+offset;
@@ -359,8 +359,8 @@ ShadowRayCache *newshadowraycache() { return new ShadowRayCache; }
 
 void freeshadowraycache(ShadowRayCache *&cache) { delete cache; cache = NULL; }
 
-void resetshadowraycache(ShadowRayCache *cache) 
-{ 
+void resetshadowraycache(ShadowRayCache *cache)
+{
     cache->version++;
     if(!cache->version)
     {
@@ -838,7 +838,7 @@ static inline bool clampcollide(const clipplanes &p, const E &entvol, const plan
     }
     return false;
 }
-    
+
 template<class E>
 static bool fuzzycollideplanes(physent *d, const vec &dir, float cutoff, const cube &c, const ivec &co, int size) // collide with deformed cube geometry
 {
@@ -1212,7 +1212,7 @@ bool trystepdown(physent *d, vec &dir, float step, float xy, float z, bool init 
             stepfloor.normalize();
             if(d->physstate >= PHYS_SLOPE && d->floor != stepfloor)
             {
-                // prevent alternating step-down/step-up states if player would keep bumping into the same floor 
+                // prevent alternating step-down/step-up states if player would keep bumping into the same floor
                 vec stepped(d->o);
                 d->o.z -= 0.5f;
                 d->zmargin = -0.5f;
@@ -1492,14 +1492,14 @@ bool droptofloor(vec &o, float radius, float height)
 {
     static struct dropent : physent
     {
-        dropent() 
-        { 
-            type = ENT_BOUNCE; 
+        dropent()
+        {
+            type = ENT_BOUNCE;
             vel = vec(0, 0, -1);
         }
     } d;
     d.o = o;
-    if(!insideworld(d.o)) 
+    if(!insideworld(d.o))
     {
         if(d.o.z < worldsize) return false;
         d.o.z = worldsize - 1e-3f;
@@ -1573,6 +1573,7 @@ VARP(maxroll, 0, 0, 20);
 FVAR(straferoll, 0, 0.033f, 90);
 FVAR(faderoll, 0, 0.95f, 1);
 VAR(floatspeed, 1, 100, 10000);
+VAR(playervel, 0, 0, -1);
 
 void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curtime)
 {
@@ -1618,18 +1619,37 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
         m.normalize();
     }
 
-    vec d(m);
-    d.mul(pl->maxspeed);
-    if(pl->type==ENT_PLAYER)
+    vec d;
+
+    if(pl->physstate==PHYS_FALL) // when in the air, use logic from https://github.com/id-Software/Quake-III-Arena/blob/dbe4ddb10315479fc00086f08e25d968b4b43c49/code/game/bg_pmove.c#L240
     {
-        if(floating)
-        {
-            if(pl==player) d.mul(floatspeed/100.0f);
-        }
-        else if(!water && allowmove) d.mul((pl->move && !pl->strafe ? 1.3f : 1.0f) * (pl->physstate < PHYS_SLOPE ? 1.3f : 1.0f));
+        // m ~ Quake's wishdir
+        const float maxspeed = pl->maxspeed*1.3f*1.3f; // Quake's wishspeed (set to vanilla's maximum speed, i.e. when jumping straight forward, see below)
+        d = vec(pl->vel.x, pl->vel.y, 0); // ~ Quake's pm->ps->velocity
+        float projspeed = d.dot2(m); // ~ Quake's currentspeed
+        float addspeed = clamp(maxspeed-projspeed, 0.0f, maxspeed);
+        // change X and Y using this logic, but let vanilla gravity to its thing to Z
+        m.x*=addspeed;
+        m.y*=addspeed;
+        d.add(m);
     }
+    else
+    {
+        d = vec(m);
+        d.mul(pl->maxspeed);
+        if(pl->type==ENT_PLAYER)
+        {
+            if(floating)
+            {
+                if(pl==player) d.mul(floatspeed/100.0f);
+            }
+            else if(!water && allowmove) d.mul((pl->move && !pl->strafe ? 1.3f : 1.0f) * (pl->physstate < PHYS_SLOPE ? 1.3f : 1.0f));
+        }
+    }
+
     float fric = water && !floating ? 20.0f : (pl->physstate >= PHYS_SLOPE || floating ? 6.0f : 30.0f);
     pl->vel.lerp(d, pl->vel, pow(1 - 1/fric, curtime/20.0f));
+    playervel = int(pl->vel.magnitude2());
 // old fps friction
 //    float friction = water && !floating ? 20.0f : (pl->physstate >= PHYS_SLOPE || floating ? 6.0f : 30.0f);
 //    float fpsfric = min(curtime/(20.0f*friction), 1.0f);
