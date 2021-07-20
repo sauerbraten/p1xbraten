@@ -1404,5 +1404,45 @@ struct ipmask
     bool check(enet_uint32 host) const { return (host & mask) == ip; }
 };
 
+struct semver {
+    uchar maj = 0, min = 0, patch = 0;
+
+    semver(uchar maj, uchar min, uchar patch) : maj(maj), min(min), patch(patch)
+    {
+        //
+    }
+
+    semver(const char *version)
+    {
+        char *v = newstring(version);
+        const char *numstart = v;
+
+        while(isdigit(*v)) v++;
+        if(*v!='.') return;
+        *v = '\0';
+        maj = uchar(strtoul(numstart, NULL, 0));
+        *v = '.';
+        v++;
+
+        numstart = v;
+        while(isdigit(*v)) v++;
+        if(*v!='.') return;
+        *v = '\0';
+        min = uchar(strtoul(numstart, NULL, 0));
+        *v = '.';
+        v++;
+        if(!*v) return;
+
+        numstart = v;
+        patch = uchar(strtoul(numstart, NULL, 0));
+    }
+
+    char *tostring()
+    {
+        defformatstring(s, "%d.%d.%d", maj, min, patch);
+        return newstring(s);
+    }
+};
+
 #endif
 

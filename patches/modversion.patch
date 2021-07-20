@@ -1,6 +1,6 @@
 Index: src/Makefile
 ===================================================================
---- src/Makefile	(revision 6491)
+--- src/Makefile	(revision 6502)
 +++ src/Makefile	(working copy)
 @@ -104,6 +104,7 @@
  	engine/octa.o \
@@ -10,11 +10,19 @@ Index: src/Makefile
  	engine/physics.o \
  	engine/pvs.o \
  	engine/rendergl.o \
+@@ -127,6 +128,7 @@
+ 	fpsgame/fps.o \
+ 	fpsgame/monster.o \
+ 	fpsgame/movable.o \
++	fpsgame/p1xbraten_detection.o \
+ 	fpsgame/render.o \
+ 	fpsgame/scoreboard.o \
+ 	fpsgame/server.o \
 Index: src/engine/engine.h
 ===================================================================
---- src/engine/engine.h	(revision 6491)
+--- src/engine/engine.h	(revision 6502)
 +++ src/engine/engine.h	(working copy)
-@@ -407,7 +407,9 @@
+@@ -407,6 +407,8 @@
  extern void checksleep(int millis);
  extern void clearsleep(bool clearoverrides = true);
 
@@ -23,8 +31,7 @@ Index: src/engine/engine.h
  // console
  extern void processtextinput(const char *str, int len);
  extern void processkey(int code, bool isdown, int modstate = 0);
- extern int rendercommand(int x, int y, int w);
-@@ -431,6 +434,8 @@
+@@ -431,6 +433,8 @@
  };
  extern int initing, numcpus;
 
@@ -35,9 +42,9 @@ Index: src/engine/engine.h
      CHANGE_GFX   = 1<<0,
 Index: src/engine/main.cpp
 ===================================================================
---- src/engine/main.cpp	(revision 6491)
+--- src/engine/main.cpp	(revision 6502)
 +++ src/engine/main.cpp	(working copy)
-@@ -1325,6 +1325,8 @@
+@@ -1330,6 +1330,8 @@
 
      identflags |= IDF_PERSIST;
 
@@ -73,9 +80,165 @@ Index: src/engine/p1xbraten_version.cpp
 +    lockversion();
 +    conoutf("p1xbraten version: %s", version);
 +}
+Index: src/fpsgame/client.cpp
+===================================================================
+--- src/fpsgame/client.cpp	(revision 6502)
++++ src/fpsgame/client.cpp	(working copy)
+@@ -308,6 +308,14 @@
+     }
+     ICOMMAND(getclienticon, "i", (int *cn), result(getclienticon(*cn)));
+
++    const char *getclientp1xbratenversion(int cn)
++    {
++        fpsent *d = getclient(cn);
++        if(d==player1) return p1xbratenversion;
++        return d ? d->p1xbratenversion.tostring() : "";
++    }
++    ICOMMAND(getclientp1xbratenversion, "i", (int *cn), result(getclientp1xbratenversion(*cn)));
++
+     bool ismaster(int cn)
+     {
+         fpsent *d = getclient(cn);
+@@ -1086,6 +1094,7 @@
+             sendstring("", p);
+         }
+         sendclientpacket(p.finalize(), 1);
++        broadcastp1xbratenversion();
+     }
+
+     void updatepos(fpsent *d)
+@@ -1406,6 +1415,7 @@
+                 {
+                     conoutf("\f0join:\f7 %s", colorname(d, text));
+                     if(needclipboard >= 0) needclipboard++;
++                    broadcastp1xbratenversion();
+                 }
+                 copystring(d->name, text, MAXNAMELEN+1);
+                 getstring(text, p);
+@@ -1433,6 +1443,7 @@
+                 int model = getint(p);
+                 if(d)
+                 {
++                    if(setp1xbratenversion(d, model)) break;
+                     d->playermodel = model;
+                     if(d->ragdoll) cleanragdoll(d);
+                 }
+Index: src/fpsgame/game.h
+===================================================================
+--- src/fpsgame/game.h	(revision 6502)
++++ src/fpsgame/game.h	(working copy)
+@@ -557,10 +557,11 @@
+     int playermodel;
+     ai::aiinfo *ai;
+     int ownernum, lastnode;
++    semver p1xbratenversion;
+
+     vec muzzle;
+
+-    fpsent() : weight(100), clientnum(-1), privilege(PRIV_NONE), lastupdate(0), plag(0), ping(0), lifesequence(0), respawned(-1), suicided(-1), lastpain(0), attacksound(-1), attackchan(-1), idlesound(-1), idlechan(-1), frags(0), flags(0), deaths(0), totaldamage(0), totalshots(0), edit(NULL), smoothmillis(-1), playermodel(-1), ai(NULL), ownernum(-1), muzzle(-1, -1, -1)
++    fpsent() : weight(100), clientnum(-1), privilege(PRIV_NONE), lastupdate(0), plag(0), ping(0), lifesequence(0), respawned(-1), suicided(-1), lastpain(0), attacksound(-1), attackchan(-1), idlesound(-1), idlechan(-1), frags(0), flags(0), deaths(0), totaldamage(0), totalshots(0), edit(NULL), smoothmillis(-1), playermodel(-1), ai(NULL), ownernum(-1), p1xbratenversion(0, 0, 0), muzzle(-1, -1, -1)
+     {
+         name[0] = team[0] = info[0] = 0;
+         respawn();
+@@ -764,6 +765,8 @@
+     extern void forceintermission();
+     extern void c2sinfo(bool force = false);
+     extern void sendposition(fpsent *d, bool reliable = false);
++    extern void broadcastp1xbratenversion();
++    extern bool setp1xbratenversion(fpsent *d, int version);
+
+     // monster
+     struct monster;
+Index: src/fpsgame/p1xbraten_detection.cpp
+===================================================================
+--- src/fpsgame/p1xbraten_detection.cpp	(nonexistent)
++++ src/fpsgame/p1xbraten_detection.cpp	(working copy)
+@@ -0,0 +1,23 @@
++#include "game.h"
++
++namespace game {
++    #define P1XBRATEN_VERSION_PREFIX (uchar(69))
++
++    VARP(enablep1xbratendetection, 0, 1, 1);
++
++    void broadcastp1xbratenversion()
++    {
++        if(!enablep1xbratendetection) return;
++        static const semver v(p1xbratenversion);
++        addmsg(N_SWITCHMODEL, "ri", P1XBRATEN_VERSION_PREFIX<<24 | int(v.maj) << 16 | int(v.min) << 8 | int(v.patch));
++        addmsg(N_SWITCHMODEL, "ri", player1->playermodel);
++    }
++
++    bool setp1xbratenversion(fpsent *d, int version)
++    {
++        if((version>>24)!=P1XBRATEN_VERSION_PREFIX) return false;
++        if(!enablep1xbratendetection) return true;
++        d->p1xbratenversion = semver((version>>16)&0xF, (version>>8)&0xF, version&0xF);
++        return true;
++    }
++}
+Index: src/shared/iengine.h
+===================================================================
+--- src/shared/iengine.h	(revision 6502)
++++ src/shared/iengine.h	(working copy)
+@@ -581,3 +581,4 @@
+ extern void g3d_resetcursor();
+ extern void g3d_limitscale(float scale);
+
++extern char *p1xbratenversion;
+Index: src/shared/tools.h
+===================================================================
+--- src/shared/tools.h	(revision 6502)
++++ src/shared/tools.h	(working copy)
+@@ -1404,5 +1404,45 @@
+     bool check(enet_uint32 host) const { return (host & mask) == ip; }
+ };
+
++struct semver {
++    uchar maj = 0, min = 0, patch = 0;
++
++    semver(uchar maj, uchar min, uchar patch) : maj(maj), min(min), patch(patch)
++    {
++        //
++    }
++
++    semver(const char *version)
++    {
++        char *v = newstring(version);
++        const char *numstart = v;
++
++        while(isdigit(*v)) v++;
++        if(*v!='.') return;
++        *v = '\0';
++        maj = uchar(strtoul(numstart, NULL, 0));
++        *v = '.';
++        v++;
++
++        numstart = v;
++        while(isdigit(*v)) v++;
++        if(*v!='.') return;
++        *v = '\0';
++        min = uchar(strtoul(numstart, NULL, 0));
++        *v = '.';
++        v++;
++        if(!*v) return;
++
++        numstart = v;
++        patch = uchar(strtoul(numstart, NULL, 0));
++    }
++
++    char *tostring()
++    {
++        defformatstring(s, "%d.%d.%d", maj, min, patch);
++        return newstring(s);
++    }
++};
++
+ #endif
+
 Index: src/vcpp/sauerbraten.vcxproj
 ===================================================================
---- src/vcpp/sauerbraten.vcxproj	(revision 6491)
+--- src/vcpp/sauerbraten.vcxproj	(revision 6502)
 +++ src/vcpp/sauerbraten.vcxproj	(working copy)
 @@ -988,6 +988,20 @@
        <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)engine.pch</PrecompiledHeaderOutputFile>
@@ -98,3 +261,24 @@ Index: src/vcpp/sauerbraten.vcxproj
      <ClCompile Include="..\engine\sound.cpp">
        <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">engine.h</PrecompiledHeaderFile>
        <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">engine.h</PrecompiledHeaderFile>
+@@ -1132,6 +1146,20 @@
+       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)2.obj</ObjectFileName>
+       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)2.obj</ObjectFileName>
+     </ClCompile>
++    <ClCompile Include="..\fpsgame\p1xbraten_detection.cpp">
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++    </ClCompile>
+     <ClCompile Include="..\fpsgame\render.cpp">
+       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">game.h</PrecompiledHeaderFile>
+       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">game.h</PrecompiledHeaderFile>

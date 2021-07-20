@@ -586,3 +586,4 @@ extern void g3d_cursorpos(float &x, float &y);
 extern void g3d_resetcursor();
 extern void g3d_limitscale(float scale);
 
+extern char *p1xbratenversion;

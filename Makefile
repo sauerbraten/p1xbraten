@@ -30,7 +30,6 @@ apply-patches:
 	$(PATCH) < patches/hudscore.patch
 	$(PATCH) < patches/serverbrowser.patch
 	$(PATCH) < patches/listteams.patch
-	$(PATCH) < patches/extrapings.patch
 	$(PATCH) < patches/execfile.patch
 	$(PATCH) < patches/embedded_cfgs.patch
 	$(PATCH) < patches/tex_commands.patch

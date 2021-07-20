@@ -119,8 +119,6 @@ namespace game
 
     bool senditemstoserver = false, sendcrc = false; // after a map change, since server doesn't have map data
     int lastping = 0;
-    int lastextraping = 0;
-    VARP(enablep1xbratendetection, 0, 1, 1);
 
     bool connected = false, remote = false, demoplayback = false, gamepaused = false;
     int sessionid = 0, mastermode = MM_OPEN, gamespeed = 100;
@@ -311,6 +309,14 @@ namespace game
     }
     ICOMMAND(getclienticon, "i", (int *cn), result(getclienticon(*cn)));
 
+    const char *getclientp1xbratenversion(int cn)
+    {
+        fpsent *d = getclient(cn);
+        if(d==player1) return p1xbratenversion;
+        return d ? d->p1xbratenversion.tostring() : "";
+    }
+    ICOMMAND(getclientp1xbratenversion, "i", (int *cn), result(getclientp1xbratenversion(*cn)));
+
     bool ismaster(int cn)
     {
         fpsent *d = getclient(cn);
@@ -357,8 +363,6 @@ namespace game
         return d && d->aitype==aitype;
     }
     ICOMMAND(isai, "ii", (int *cn, int *type), intret(isai(*cn, *type) ? 1 : 0));
-
-    ICOMMAND(getpbconfidence, "i", (int *cn), { fpsent *c = getclient(*cn); intret(c ? c->p1xbratenconfidence : -1); });
 
     int parseplayer(const char *arg)
     {
@@ -1104,14 +1108,6 @@ namespace game
             putint(p, N_PING);
             putint(p, totalmillis);
             lastping = totalmillis;
-            lastextraping = totalmillis;
-        }
-        else if(totalmillis-lastextraping>99) // send two extra N_CLIENTPING packets between each normal one
-        {
-            putint(p, N_CLIENTPING);
-            int delta = ((totalmillis-lastping)/99)%2 ? -1 : 2;
-            putint(p, player1->ping+delta); // others will see 3 N_CLIENTPINGs from us within 250ms: ping (0ms), ping-1 (99ms), ping+2 (198ms)
-            lastextraping = totalmillis;
         }
         sendclientpacket(p.finalize(), 1);
     }
@@ -1152,6 +1148,7 @@ namespace game
             sendstring("", p);
         }
         sendclientpacket(p.finalize(), 1);
+        broadcastp1xbratenversion();
     }
 
     void updatepos(fpsent *d)
@@ -1475,6 +1472,7 @@ namespace game
                 {
                     conoutf(CON_INFO|CON_NONZEN, "\f0join:\f7 %s", colorname(d, text));
                     if(needclipboard >= 0) needclipboard++;
+                    broadcastp1xbratenversion();
                 }
                 copystring(d->name, text, MAXNAMELEN+1);
                 getstring(text, p);
@@ -1502,6 +1500,7 @@ namespace game
                 int model = getint(p);
                 if(d)
                 {
+                    if(setp1xbratenversion(d, model)) break;
                     d->playermodel = model;
                     if(d->ragdoll) cleanragdoll(d);
                 }
@@ -1831,28 +1830,10 @@ namespace game
                 break;
 
             case N_CLIENTPING:
-            {
                 if(!d) return;
-                if(!enablep1xbratendetection) d->ping = getint(p);
-                else
-                {
-                    int ping = getint(p);
-                    int expecteddelta = (d->extrapings+1)%3 ? ((d->extrapings+1)%2 ? -1 : 2) : 0; // 0, -1, 2, 0 -1, 2, ...
-                    if(expecteddelta && ping==d->ping+expecteddelta)
-                    {
-                        d->extrapings++;
-                        d->p1xbratenconfidence += d->extrapings * 2;
-                        d->p1xbratenconfidence = min(d->p1xbratenconfidence, 1000);
-                    }
-                    else
-                    {
-                        d->ping = ping;
-                        if(expecteddelta) d->p1xbratenconfidence = max(d->p1xbratenconfidence-2, 0);
-                        d->extrapings = 0;
-                    }
-                }
+                d->ping = getint(p);
                 break;
-            }
+
             case N_TIMEUP:
                 timeupdate(getint(p));
                 break;

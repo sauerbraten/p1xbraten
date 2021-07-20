@@ -26,7 +26,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [gamehud.patch](#gamehudpatch)
   - [chat_highlight_words.patch](#chat_highlight_wordspatch)
   - [server_ogzs.patch](#server_ogzspatch)
-  - [extrapings.patch](#extrapingspatch)
+  - [modversion.patch](#modversionpatch)
 - [Installation](#installation)
   - [Windows](#windows)
   - [macOS](#macos)
@@ -194,12 +194,16 @@ Improves logging when running a dedicated server:
 
 - allows using slim .ogz files (see https://github.com/sauerbraten/genserverogz) on the server without getting `checkmaps` errors
 
-### [extrapings.patch](./patches/extrapings.patch)
+### [modversion.patch](./patches/modversion.patch)
 
-- adds the `getpbconfidence <cn>` command: returns a number between 0 and 1000, where 1000 means the player is almost certainly running p1xbraten, and 0 means the player is almost certainly not running p1xbraten (the confidence starts at 0 for all clients and increases the longer you are connected; usually 1000 is reached in less than one minute)
-- adds the `enablep1xbratendetection` variable: set to 0 to disable broadcasting that you use p1xbraten (and detecting other p1xbraten players yourself)
+- adds the `p1xbratenversion` variable (read-only): contains the version of your installation as a string
+- adds the `getclientp1xbratenversion <cn>` command: returns the version of p1xbraten the player is running
+- adds the `enablep1xbratendetection` variable: set to 0 to disable broadcasting your p1xbraten version (and detecting other p1xbraten players yourself)
 
-This lets you detect other p1xbraten users connected to the same server as you. It relies on p1xbraten clients sending additional packets to the server, which the server then broadcasts to all other clients. This means you receive this information about other players, and it also means the other players can tell you're using p1xbraten. No information other than "I use p1xbraten" is sent. The information is not sent to me (p1x) or any third party, just the server you're playing on and the other players on it. Opt out if you are firefly!
+This lets you see wether a player connected to the same server as you is using p1xbraten, and what version. It relies on p1xbraten clients sending additional packets to the server, which the server then broadcasts to all other clients. This means other players can tell you're using p1xbraten (and what version). No information other than "I use p1xbraten, version X.Y.Z" is sent. No information is sent to me (p1x) or any third party. Opt out if you are firefly!
+
+For an overview of who uses p1xbraten, you can run `/showgui p1xbratenusage`.
+
 
 ## Installation
 

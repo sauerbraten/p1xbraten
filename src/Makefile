@@ -126,12 +126,13 @@ CLIENT_OBJS= \
 	engine/worldio.o \
 	fpsgame/ai.o \
 	fpsgame/client.o \
+	fpsgame/embedded_cfgs.o \
 	fpsgame/entities.o \
 	fpsgame/fps.o \
 	fpsgame/fragmessages.o \
 	fpsgame/monster.o \
 	fpsgame/movable.o \
-	fpsgame/embedded_cfgs.o \
+	fpsgame/p1xbraten_detection.o \
 	fpsgame/render.o \
 	fpsgame/scoreboard.o \
 	fpsgame/server.o \
@@ -509,6 +510,14 @@ fpsgame/client.o: shared/authservers.h fpsgame/ai.h
 fpsgame/client.o: fpsgame/weaponstats_type.h fpsgame/fragmessages.h
 fpsgame/client.o: fpsgame/weaponstats.h fpsgame/capture.h fpsgame/ctf.h
 fpsgame/client.o: fpsgame/collect.h
+fpsgame/embedded_cfgs.o: shared/cube.h shared/tools.h shared/geom.h
+fpsgame/embedded_cfgs.o: shared/ents.h shared/command.h shared/glexts.h
+fpsgame/embedded_cfgs.o: shared/glemu.h shared/iengine.h shared/igame.h
+fpsgame/embedded_cfgs.o: shared/authservers.h fpsgame/embedded_cfgs.h
+fpsgame/embedded_cfgs.o: ../data/p1xbraten/menus.cfg.gz.xxd
+fpsgame/embedded_cfgs.o: ../data/p1xbraten/master.cfg.gz.xxd
+fpsgame/embedded_cfgs.o: ../data/p1xbraten/gamehud.cfg.gz.xxd
+fpsgame/embedded_cfgs.o: ../data/p1xbraten/keymap.cfg.gz.xxd
 fpsgame/entities.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
 fpsgame/entities.o: shared/ents.h shared/command.h shared/glexts.h
 fpsgame/entities.o: shared/glemu.h shared/iengine.h shared/igame.h
@@ -534,14 +543,13 @@ fpsgame/movable.o: shared/ents.h shared/command.h shared/glexts.h
 fpsgame/movable.o: shared/glemu.h shared/iengine.h shared/igame.h
 fpsgame/movable.o: shared/authservers.h fpsgame/ai.h
 fpsgame/movable.o: fpsgame/weaponstats_type.h fpsgame/fragmessages.h
-fpsgame/embedded_cfgs.o: shared/cube.h shared/tools.h shared/geom.h
-fpsgame/embedded_cfgs.o: shared/ents.h shared/command.h shared/glexts.h
-fpsgame/embedded_cfgs.o: shared/glemu.h shared/iengine.h shared/igame.h
-fpsgame/embedded_cfgs.o: shared/authservers.h fpsgame/embedded_cfgs.h
-fpsgame/embedded_cfgs.o: ../data/p1xbraten/menus.cfg.gz.xxd
-fpsgame/embedded_cfgs.o: ../data/p1xbraten/master.cfg.gz.xxd
-fpsgame/embedded_cfgs.o: ../data/p1xbraten/gamehud.cfg.gz.xxd
-fpsgame/embedded_cfgs.o: ../data/p1xbraten/keymap.cfg.gz.xxd
+fpsgame/p1xbraten_detection.o: fpsgame/game.h shared/cube.h shared/tools.h
+fpsgame/p1xbraten_detection.o: shared/geom.h shared/ents.h shared/command.h
+fpsgame/p1xbraten_detection.o: shared/glexts.h shared/glemu.h
+fpsgame/p1xbraten_detection.o: shared/iengine.h shared/igame.h
+fpsgame/p1xbraten_detection.o: shared/authservers.h fpsgame/ai.h
+fpsgame/p1xbraten_detection.o: fpsgame/weaponstats_type.h
+fpsgame/p1xbraten_detection.o: fpsgame/fragmessages.h
 fpsgame/render.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
 fpsgame/render.o: shared/ents.h shared/command.h shared/glexts.h
 fpsgame/render.o: shared/glemu.h shared/iengine.h shared/igame.h
