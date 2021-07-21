@@ -2724,6 +2724,22 @@ namespace server
         }
     } ipbans, gbans; 
 
+    bool processmasterserverinput(const char *input, int cmdlen, const char *args)
+    {
+        string val;
+        if(matchstring(input, cmdlen, "cleargbans"))
+        {
+            gbans.clear();
+            return true;
+        }
+        else if(sscanf(input, "addgban %100s", val) == 1)
+        {
+            gbans.add(val);
+            return true;
+        }
+        return false;
+    }
+
     bool checkbans(uint ip)
     {
         loopv(bannedips) if(bannedips[i].ip==ip) return true;
@@ -2766,6 +2782,33 @@ namespace server
         return ci && ci->connected;
     }
 
+    authserver *addauthserver(const char *keydomain, const char *hostname, int *port, const char *priv = "m")
+    {
+        authserver &a = authservers[keydomain];
+        copystring(a.name, keydomain);
+        copystring(a.hostname, hostname);
+        a.port = *port;
+        switch(priv[0])
+        {
+            case 'a': case 'A': a.privilege = PRIV_ADMIN; break;
+            case 'm': case 'M': default: a.privilege = PRIV_AUTH; break;
+            case 'n': case 'N': a.privilege = PRIV_NONE; break;
+        }
+        masterlikeservers.add(&a);
+        return &a;
+    }
+    COMMAND(addauthserver, "ssisi");
+
+    bool requestauthserverf(const char *keydomain, const char *fmt, ...)
+    {
+        keydomain = newstring(keydomain);
+        authserver *a = authservers.access(keydomain);
+        if(!a) conoutf("no auth server for domain '%s'", keydomain);
+        if(!a) return false;
+        defvformatstring(req, fmt, fmt);
+        return a->request(req);
+    }
+
     clientinfo *findauth(uint id, const char *desc)
     {
         loopv(clients) if(clients[i]->authreq == id && !strcmp(clients[i]->authdesc, desc)) return clients[i];
@@ -2805,7 +2848,7 @@ namespace server
             if(desc && desc[0]) formatstring(msg, "%s authenticated as '\fs\f5%s\fr' [\fs\f0%s\fr]", colorname(ci), ci->authname, desc);
             else formatstring(msg, "%s authenticated as '\fs\f5%s\fr'", colorname(ci), ci->authname);
             sendf(-1, 1, "ris", N_SERVMSG, msg);
-        }
+    }
         else setmaster(ci, true, "", ci->authname, ci->authdesc, a->privilege);
     }
 
@@ -2884,9 +2927,7 @@ namespace server
         return ci->authreq || !ci->connectauth;
     }
 
-    void authserverconnected(const char *keydomain)
-    {
-    }
+    void authserverconnected(const char *keydomain) {}
 
     void authserverdisconnected(const char *keydomain)
     {
@@ -2907,10 +2948,6 @@ namespace server
             authsucceeded(id, desc);
         else if(sscanf(cmd, "chalauth %u %255s", &id, val) == 2)
             authchallenged(id, val, desc);
-        else if(matchstring(cmd, cmdlen, "cleargbans") && !desc[0])
-            gbans.clear();
-        else if(sscanf(cmd, "addgban %100s", val) == 1 && !desc[0])
-            gbans.add(val);
     }
 
     void receivefile(int sender, uchar *data, int len)

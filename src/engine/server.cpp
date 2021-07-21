@@ -352,44 +352,19 @@ void localclienttoserver(int chan, ENetPacket *packet)
     if(c) process(packet, c->num, chan);
 }
 
-hashnameset<authserver> authservers;
-
-authserver *addauthserver(const char *keydomain, const char *hostname, int *port, const char *priv)
-{
-    authserver &a = authservers[keydomain];
-    copystring(a.name, keydomain);
-    copystring(a.hostname, hostname);
-    a.port = *port;
-    switch(priv[0])
-{
-        case 'a': case 'A': a.privilege = PRIV_ADMIN; break;
-        case 'm': case 'M': default: a.privilege = PRIV_AUTH; break;
-        case 'n': case 'N': a.privilege = PRIV_NONE; break;
-    }
-    return &a;
-}
-COMMAND(addauthserver, "ssis");
-
-bool requestauthserverf(const char *keydomain, const char *fmt, ...)
-{
-    keydomain = newstring(keydomain);
-    authserver *a = authservers.access(keydomain);
-    if(!a) return false;
-    defvformatstring(req, fmt, fmt);
-    return a->request(req);
-}
-
-authserver *masterserver;
+vector<masterserver *> masterlikeservers; // used for socket servicing; contains master and additional auth servers
+authserver *master;
 SVARF(mastername, server::defaultmaster(), {
-    if(!masterserver) return;
-    masterserver->disconnect();
-    copystring(masterserver->hostname, mastername);
+    if(!master) return;
+    master->disconnect();
+    copystring(master->hostname, mastername);
 });
 VARF(masterport, 1, server::masterport(), 0xFFFF, {
-    if(!masterserver) return;
-    masterserver->disconnect();
-    masterserver->port = masterport;
+    if(!master) return;
+    master->disconnect();
+    master->port = masterport;
 });
+hashnameset<authserver> authservers;
 
 static ENetAddress pongaddr;
 
@@ -410,14 +385,16 @@ void checkserversockets()        // reply all server info requests
     ENET_SOCKETSET_EMPTY(writeset);
     ENetSocket maxsock = pongsock;
     ENET_SOCKETSET_ADD(readset, pongsock);
-    enumerate(authservers, authserver, a, {
-        if(a.sock != ENET_SOCKET_NULL)
+    loopv(masterlikeservers)
     {
-            maxsock = max(maxsock, a.sock);
-            ENET_SOCKETSET_ADD(readset, a.sock);
-            if(!a.connected) ENET_SOCKETSET_ADD(writeset, a.sock);
+        masterserver *m = masterlikeservers[i];
+        if(m->sock != ENET_SOCKET_NULL)
+        {
+            maxsock = max(maxsock, m->sock);
+            ENET_SOCKETSET_ADD(readset, m->sock);
+            if(!m->connected) ENET_SOCKETSET_ADD(writeset, m->sock);
     }
-    });
+    }
     if(lansock != ENET_SOCKET_NULL)
     {
         maxsock = max(maxsock, lansock);
@@ -441,30 +418,32 @@ void checkserversockets()        // reply all server info requests
         server::serverinforeply(req, p);
     }
 
-    enumerate(authservers, authserver, a, {
-        if(a.sock != ENET_SOCKET_NULL)
+    loopv(masterlikeservers)
     {
-            if(!a.connected)
+        masterserver *m = masterlikeservers[i];
+        if(m->sock != ENET_SOCKET_NULL)
         {
-                if(ENET_SOCKETSET_CHECK(readset, a.sock) || ENET_SOCKETSET_CHECK(writeset, a.sock))
+            if(!m->connected)
             { 
-                int error = 0;
-                    if(enet_socket_get_option(a.sock, ENET_SOCKOPT_ERROR, &error) < 0 || error)
+                if(ENET_SOCKETSET_CHECK(readset, m->sock) || ENET_SOCKETSET_CHECK(writeset, m->sock))
                 {
-                        logoutf("could not connect to auth server (before flushinput), error: %d", error);
-                        a.disconnect();
+                int error = 0;
+                    if(enet_socket_get_option(m->sock, ENET_SOCKOPT_ERROR, &error) < 0 || error)
+                {
+                        logoutf("could not connect to %s:%d (before flushinput), error: %d", m->hostname, m->port, error);
+                        m->disconnect();
                 }
                 else
                 {
-                        a.connecting = 0;
-                        a.connected = totalmillis ? totalmillis : 1;
-                        server::authserverconnected(a.name);
+                        m->connecting = 0;
+                        m->connected = totalmillis ? totalmillis : 1;
+                        m->notifygameconnected();
                 }
             }
         }
-            if(a.sock != ENET_SOCKET_NULL && ENET_SOCKETSET_CHECK(readset, a.sock)) a.flushinput();
+            if(ENET_SOCKETSET_CHECK(readset, m->sock)) m->flushinput();
     }
-    });
+}
 }
 
 VAR(serveruprate, 0, 0, INT_MAX);
@@ -479,9 +458,9 @@ VARN(updatemaster, allowupdatemaster, 0, 1, 1);
 
 void updatemasterserver()
 {
-    if(!masterserver->connected && masterserver->lastconnect && totalmillis-masterserver->lastconnect <= 5*60*1000) return;
-    if(masterserver->hostname[0] && allowupdatemaster) masterserver->requestf("regserv %d\n", serverport);
-    masterserver->lastupdate = totalmillis ? totalmillis : 1;
+    if(!master->connected && master->lastconnect && totalmillis-master->lastconnect <= 5*60*1000) return;
+    if(master->hostname[0] && allowupdatemaster) master->requestf("regserv %d\n", serverport);
+    master->lastupdate = totalmillis ? totalmillis : 1;
 }
 
 uint totalsecs = 0;
@@ -523,11 +502,11 @@ void serverslice(bool dedicated, uint timeout)   // main server update, called f
     }
     server::serverupdate();
 
-    enumerate(authservers, authserver, a, { a.flushoutput(); });
+    loopv(masterlikeservers) masterlikeservers[i]->flushoutput();
 
     checkserversockets();
 
-    if(!masterserver->lastupdate || totalmillis-masterserver->lastupdate>60*60*1000)       // send alive signal to masterserver every hour of uptime
+    if(!master->lastupdate || totalmillis-master->lastupdate>60*60*1000)       // send alive signal to master every hour of uptime
         updatemasterserver();
     
     if(totalmillis-laststatus>60*1000)   // display bandwidth stats, useful for server ops
@@ -958,7 +937,14 @@ bool setuplistenserver(bool dedicated)
     }
     if(lansock == ENET_SOCKET_NULL) conoutf(CON_WARN, "WARNING: could not create LAN server info socket");
     else enet_socket_set_option(lansock, ENET_SOCKOPT_NONBLOCK, 1);
-    if(!masterserver) masterserver = addauthserver("", mastername, &masterport, "m");
+    if(!master && mastername && masterport)
+    {
+        master = &authservers[""];
+        copystring(master->hostname, mastername);
+        master->port = masterport;
+        master->privilege = PRIV_AUTH;
+        masterlikeservers.add(master);
+    }
     return true;
 }
 

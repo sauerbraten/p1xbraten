@@ -1,8 +1,8 @@
 Index: src/engine/server.cpp
 ===================================================================
---- src/engine/server.cpp	(revision 6491)
+--- src/engine/server.cpp	(revision 6502)
 +++ src/engine/server.cpp	(working copy)
-@@ -338,172 +338,45 @@
+@@ -338,172 +338,20 @@
      if(c) process(packet, c->num, chan);
  }
 
@@ -11,11 +11,22 @@ Index: src/engine/server.cpp
 -{
 -    return enet_address_set_host(address, name) >= 0;
 -}
++vector<masterserver *> masterlikeservers; // used for socket servicing; contains master and additional auth servers
++authserver *master;
++SVARF(mastername, server::defaultmaster(), {
++    if(!master) return;
++    master->disconnect();
++    copystring(master->hostname, mastername);
++});
++VARF(masterport, 1, server::masterport(), 0xFFFF, {
++    if(!master) return;
++    master->disconnect();
++    master->port = masterport;
++});
 +hashnameset<authserver> authservers;
 
 -int connectwithtimeout(ENetSocket sock, const char *hostname, const ENetAddress &remoteaddress)
-+authserver *addauthserver(const char *keydomain, const char *hostname, int *port, const char *priv)
- {
+-{
 -    return enet_socket_connect(sock, &remoteaddress);
 -}
 -#endif
@@ -28,21 +39,13 @@ Index: src/engine/server.cpp
 -VARN(updatemaster, allowupdatemaster, 0, 1, 1);
 -
 -void disconnectmaster()
-+    authserver &a = authservers[keydomain];
-+    copystring(a.name, keydomain);
-+    copystring(a.hostname, hostname);
-+    a.port = *port;
-+    switch(priv[0])
- {
+-{
 -    if(mastersock != ENET_SOCKET_NULL)
 -    {
 -        server::masterdisconnected();
 -        enet_socket_destroy(mastersock);
 -        mastersock = ENET_SOCKET_NULL;
-+        case 'a': case 'A': a.privilege = PRIV_ADMIN; break;
-+        case 'm': case 'M': default: a.privilege = PRIV_AUTH; break;
-+        case 'n': case 'N': a.privilege = PRIV_NONE; break;
-     }
+-    }
 -
 -    masterout.setsize(0);
 -    masterin.setsize(0);
@@ -52,16 +55,13 @@ Index: src/engine/server.cpp
 -    masteraddress.port = ENET_PORT_ANY;
 -
 -    lastupdatemaster = masterconnecting = masterconnected = 0;
-+    return &a;
- }
-+COMMAND(addauthserver, "ssis");
-
+-}
+-
 -SVARF(mastername, server::defaultmaster(), disconnectmaster());
 -VARF(masterport, 1, server::masterport(), 0xFFFF, disconnectmaster());
 -
 -ENetSocket connectmaster(bool wait)
-+bool requestauthserverf(const char *keydomain, const char *fmt, ...)
- {
+-{
 -    if(!mastername[0]) return ENET_SOCKET_NULL;
 -    if(masteraddress.host == ENET_HOST_ANY)
 -    {
@@ -106,29 +106,14 @@ Index: src/engine/server.cpp
 -
 -bool requestmasterf(const char *fmt, ...)
 -{
-+    keydomain = newstring(keydomain);
-+    authserver *a = authservers.access(keydomain);
-+    if(!a) return false;
-     defvformatstring(req, fmt, fmt);
+-    defvformatstring(req, fmt, fmt);
 -    return requestmaster(req);
-+    return a->request(req);
- }
-
+-}
+-
 -void processmasterinput()
 -{
 -    if(masterinpos >= masterin.length()) return;
-+authserver *masterserver;
-+SVARF(mastername, server::defaultmaster(), {
-+    if(!masterserver) return;
-+    masterserver->disconnect();
-+    copystring(masterserver->hostname, mastername);
-+});
-+VARF(masterport, 1, server::masterport(), 0xFFFF, {
-+    if(!masterserver) return;
-+    masterserver->disconnect();
-+    masterserver->port = masterport;
-+});
-
+-
 -    char *input = &masterin[masterinpos], *end = (char *)memchr(input, '\n', masterin.length() - masterinpos);
 -    while(end)
 -    {
@@ -203,67 +188,72 @@ Index: src/engine/server.cpp
  static ENetAddress pongaddr;
 
  void sendserverinforeply(ucharbuf &p)
-@@ -523,12 +396,14 @@
+@@ -523,12 +371,16 @@
      ENET_SOCKETSET_EMPTY(writeset);
      ENetSocket maxsock = pongsock;
      ENET_SOCKETSET_ADD(readset, pongsock);
 -    if(mastersock != ENET_SOCKET_NULL)
-+    enumerate(authservers, authserver, a, {
-+        if(a.sock != ENET_SOCKET_NULL)
++    loopv(masterlikeservers)
      {
 -        maxsock = max(maxsock, mastersock);
 -        ENET_SOCKETSET_ADD(readset, mastersock);
 -        if(!masterconnected) ENET_SOCKETSET_ADD(writeset, mastersock);
-+            maxsock = max(maxsock, a.sock);
-+            ENET_SOCKETSET_ADD(readset, a.sock);
-+            if(!a.connected) ENET_SOCKETSET_ADD(writeset, a.sock);
++        masterserver *m = masterlikeservers[i];
++        if(m->sock != ENET_SOCKET_NULL)
++        {
++            maxsock = max(maxsock, m->sock);
++            ENET_SOCKETSET_ADD(readset, m->sock);
++            if(!m->connected) ENET_SOCKETSET_ADD(writeset, m->sock);
      }
-+    });
++    }
      if(lansock != ENET_SOCKET_NULL)
      {
          maxsock = max(maxsock, lansock);
-@@ -552,28 +427,30 @@
+@@ -552,29 +404,33 @@
          server::serverinforeply(req, p);
      }
 
 -    if(mastersock != ENET_SOCKET_NULL)
-+    enumerate(authservers, authserver, a, {
-+        if(a.sock != ENET_SOCKET_NULL)
++    loopv(masterlikeservers)
      {
 -        if(!masterconnected)
-+            if(!a.connected)
++        masterserver *m = masterlikeservers[i];
++        if(m->sock != ENET_SOCKET_NULL)
          {
 -            if(ENET_SOCKETSET_CHECK(readset, mastersock) || ENET_SOCKETSET_CHECK(writeset, mastersock))
-+                if(ENET_SOCKETSET_CHECK(readset, a.sock) || ENET_SOCKETSET_CHECK(writeset, a.sock))
++            if(!m->connected)
              {
++                if(ENET_SOCKETSET_CHECK(readset, m->sock) || ENET_SOCKETSET_CHECK(writeset, m->sock))
++                {
                  int error = 0;
 -                if(enet_socket_get_option(mastersock, ENET_SOCKOPT_ERROR, &error) < 0 || error)
-+                    if(enet_socket_get_option(a.sock, ENET_SOCKOPT_ERROR, &error) < 0 || error)
++                    if(enet_socket_get_option(m->sock, ENET_SOCKOPT_ERROR, &error) < 0 || error)
                  {
 -                    logoutf("could not connect to master server");
 -                    disconnectmaster();
-+                        logoutf("could not connect to auth server (before flushinput), error: %d", error);
-+                        a.disconnect();
++                        logoutf("could not connect to %s:%d (before flushinput), error: %d", m->hostname, m->port, error);
++                        m->disconnect();
                  }
                  else
                  {
 -                    masterconnecting = 0;
 -                    masterconnected = totalmillis ? totalmillis : 1;
 -                    server::masterconnected();
-+                        a.connecting = 0;
-+                        a.connected = totalmillis ? totalmillis : 1;
-+                        server::authserverconnected(a.name);
++                        m->connecting = 0;
++                        m->connected = totalmillis ? totalmillis : 1;
++                        m->notifygameconnected();
                  }
              }
          }
 -        if(mastersock != ENET_SOCKET_NULL && ENET_SOCKETSET_CHECK(readset, mastersock)) flushmasterinput();
-+            if(a.sock != ENET_SOCKET_NULL && ENET_SOCKETSET_CHECK(readset, a.sock)) a.flushinput();
++            if(ENET_SOCKETSET_CHECK(readset, m->sock)) m->flushinput();
      }
-+    });
  }
++}
 
  VAR(serveruprate, 0, 0, INT_MAX);
-@@ -584,11 +461,13 @@
+ SVAR(serverip, "");
+@@ -584,11 +440,13 @@
  int curtime = 0, lastmillis = 0, elapsedtime = 0, totalmillis = 0;
  #endif
 
@@ -274,27 +264,27 @@ Index: src/engine/server.cpp
 -    if(!masterconnected && lastconnectmaster && totalmillis-lastconnectmaster <= 5*60*1000) return;
 -    if(mastername[0] && allowupdatemaster) requestmasterf("regserv %d\n", serverport);
 -    lastupdatemaster = totalmillis ? totalmillis : 1;
-+    if(!masterserver->connected && masterserver->lastconnect && totalmillis-masterserver->lastconnect <= 5*60*1000) return;
-+    if(masterserver->hostname[0] && allowupdatemaster) masterserver->requestf("regserv %d\n", serverport);
-+    masterserver->lastupdate = totalmillis ? totalmillis : 1;
++    if(!master->connected && master->lastconnect && totalmillis-master->lastconnect <= 5*60*1000) return;
++    if(master->hostname[0] && allowupdatemaster) master->requestf("regserv %d\n", serverport);
++    master->lastupdate = totalmillis ? totalmillis : 1;
  }
 
  uint totalsecs = 0;
-@@ -630,10 +509,11 @@
+@@ -630,10 +488,11 @@
      }
      server::serverupdate();
 
 -    flushmasteroutput();
-+    enumerate(authservers, authserver, a, { a.flushoutput(); });
++    loopv(masterlikeservers) masterlikeservers[i]->flushoutput();
 +
      checkserversockets();
 
 -    if(!lastupdatemaster || totalmillis-lastupdatemaster>60*60*1000)       // send alive signal to masterserver every hour of uptime
-+    if(!masterserver->lastupdate || totalmillis-masterserver->lastupdate>60*60*1000)       // send alive signal to masterserver every hour of uptime
++    if(!master->lastupdate || totalmillis-master->lastupdate>60*60*1000)       // send alive signal to master every hour of uptime
          updatemasterserver();
 
      if(totalmillis-laststatus>60*1000)   // display bandwidth stats, useful for server ops
-@@ -1033,6 +913,8 @@
+@@ -1033,6 +892,8 @@
      return false;
  }
 
@@ -303,15 +293,22 @@ Index: src/engine/server.cpp
  bool setuplistenserver(bool dedicated)
  {
      ENetAddress address = { ENET_HOST_ANY, enet_uint16(serverport <= 0 ? server::serverport() : serverport) };
-@@ -1062,6 +944,7 @@
+@@ -1062,6 +923,14 @@
      }
      if(lansock == ENET_SOCKET_NULL) conoutf(CON_WARN, "WARNING: could not create LAN server info socket");
      else enet_socket_set_option(lansock, ENET_SOCKOPT_NONBLOCK, 1);
-+    if(!masterserver) masterserver = addauthserver("", mastername, &masterport, "m");
++    if(!master && mastername && masterport)
++    {
++        master = &authservers[""];
++        copystring(master->hostname, mastername);
++        master->port = masterport;
++        master->privilege = PRIV_AUTH;
++        masterlikeservers.add(master);
++    }
      return true;
  }
 
-@@ -1119,6 +1003,7 @@
+@@ -1119,6 +988,7 @@
  COMMAND(stoplistenserver, "");
  #endif
 
@@ -321,7 +318,7 @@ Index: src/engine/server.cpp
      switch(opt[1])
 Index: src/engine/serverbrowser.cpp
 ===================================================================
---- src/engine/serverbrowser.cpp	(revision 6491)
+--- src/engine/serverbrowser.cpp	(revision 6502)
 +++ src/engine/serverbrowser.cpp	(working copy)
 @@ -617,6 +617,37 @@
 
@@ -363,7 +360,7 @@ Index: src/engine/serverbrowser.cpp
      ENetSocket sock = connectmaster(true);
 Index: src/fpsgame/game.h
 ===================================================================
---- src/fpsgame/game.h	(revision 6491)
+--- src/fpsgame/game.h	(revision 6502)
 +++ src/fpsgame/game.h	(working copy)
 @@ -214,8 +214,6 @@
 
@@ -376,7 +373,7 @@ Index: src/fpsgame/game.h
      N_CONNECT = 0, N_SERVINFO, N_WELCOME, N_INITCLIENT, N_POS, N_TEXT, N_SOUND, N_CDIS,
 Index: src/fpsgame/server.cpp
 ===================================================================
---- src/fpsgame/server.cpp	(revision 6491)
+--- src/fpsgame/server.cpp	(revision 6502)
 +++ src/fpsgame/server.cpp	(working copy)
 @@ -17,8 +17,6 @@
 
@@ -387,19 +384,69 @@ Index: src/fpsgame/server.cpp
  namespace server
  {
      struct server_entity            // server side version of "entity" type
-@@ -2754,9 +2752,9 @@
+@@ -2712,6 +2710,22 @@
+         }
+     } ipbans, gbans;
+
++    bool processmasterserverinput(const char *input, int cmdlen, const char *args)
++    {
++        string val;
++        if(matchstring(input, cmdlen, "cleargbans"))
++        {
++            gbans.clear();
++            return true;
++        }
++        else if(sscanf(input, "addgban %100s", val) == 1)
++        {
++            gbans.add(val);
++            return true;
++        }
++        return false;
++    }
++
+     bool checkbans(uint ip)
+     {
+         loopv(bannedips) if(bannedips[i].ip==ip) return true;
+@@ -2754,9 +2768,36 @@
          return ci && ci->connected;
      }
 
 -    clientinfo *findauth(uint id)
-+    clientinfo *findauth(uint id, const char *desc)
++    authserver *addauthserver(const char *keydomain, const char *hostname, int *port, const char *priv = "m")
      {
 -        loopv(clients) if(clients[i]->authreq == id) return clients[i];
++        authserver &a = authservers[keydomain];
++        copystring(a.name, keydomain);
++        copystring(a.hostname, hostname);
++        a.port = *port;
++        switch(priv[0])
++        {
++            case 'a': case 'A': a.privilege = PRIV_ADMIN; break;
++            case 'm': case 'M': default: a.privilege = PRIV_AUTH; break;
++            case 'n': case 'N': a.privilege = PRIV_NONE; break;
++        }
++        masterlikeservers.add(&a);
++        return &a;
++    }
++    COMMAND(addauthserver, "ssisi");
++
++    bool requestauthserverf(const char *keydomain, const char *fmt, ...)
++    {
++        keydomain = newstring(keydomain);
++        authserver *a = authservers.access(keydomain);
++        if(!a) conoutf("no auth server for domain '%s'", keydomain);
++        if(!a) return false;
++        defvformatstring(req, fmt, fmt);
++        return a->request(req);
++    }
++
++    clientinfo *findauth(uint id, const char *desc)
++    {
 +        loopv(clients) if(clients[i]->authreq == id && !strcmp(clients[i]->authdesc, desc)) return clients[i];
          return NULL;
      }
 
-@@ -2768,29 +2766,38 @@
+@@ -2768,29 +2809,38 @@
          if(ci->connectauth) disconnect_client(ci->clientnum, ci->connectauth);
      }
 
@@ -428,16 +475,16 @@ Index: src/fpsgame/server.cpp
 +                trykick(ci, ci->authkickvictim, ci->authkickreason, ci->authname, ci->authdesc, a->privilege);
              ci->cleanauthkick();
          }
+-        else setmaster(ci, true, "", ci->authname, NULL, PRIV_AUTH);
 +        else if(ci->privilege >= a->privilege)
 +        {
 +            string msg;
 +            if(desc && desc[0]) formatstring(msg, "%s authenticated as '\fs\f5%s\fr' [\fs\f0%s\fr]", colorname(ci), ci->authname, desc);
 +            else formatstring(msg, "%s authenticated as '\fs\f5%s\fr'", colorname(ci), ci->authname);
 +            sendf(-1, 1, "ris", N_SERVMSG, msg);
-+        }
--        else setmaster(ci, true, "", ci->authname, NULL, PRIV_AUTH);
-+        else setmaster(ci, true, "", ci->authname, ci->authdesc, a->privilege);
      }
++        else setmaster(ci, true, "", ci->authname, ci->authdesc, a->privilege);
++    }
 
 -    void authchallenged(uint id, const char *val, const char *desc = "")
 +    void authchallenged(uint id, const char *val, const char *desc)
@@ -447,7 +494,7 @@ Index: src/fpsgame/server.cpp
          if(!ci) return;
          sendf(ci->clientnum, 1, "risis", N_AUTHCHAL, desc, id, val);
      }
-@@ -2804,7 +2811,7 @@
+@@ -2804,7 +2854,7 @@
          ci->authreq = nextauthreq++;
          filtertext(ci->authname, user, false, false, 100);
          copystring(ci->authdesc, desc);
@@ -456,7 +503,7 @@ Index: src/fpsgame/server.cpp
          {
              userinfo *u = users.access(userkey(ci->authname, ci->authdesc));
              if(u)
-@@ -2816,7 +2823,7 @@
+@@ -2816,7 +2866,7 @@
              }
              else ci->cleanauth();
          }
@@ -465,7 +512,7 @@ Index: src/fpsgame/server.cpp
          {
              ci->cleanauth();
              sendf(ci->clientnum, 1, "ris", N_SERVMSG, "not connected to authentication server");
-@@ -2837,7 +2844,7 @@
+@@ -2837,7 +2887,7 @@
          {
              if(!isxdigit(*s)) { *s = '\0'; break; }
          }
@@ -474,7 +521,7 @@ Index: src/fpsgame/server.cpp
          {
              if(ci->authchallenge && checkchallenge(val, ci->authchallenge))
              {
-@@ -2855,7 +2862,7 @@
+@@ -2855,7 +2905,7 @@
              }
              ci->cleanauth();
          }
@@ -483,14 +530,14 @@ Index: src/fpsgame/server.cpp
          {
              ci->cleanauth();
              sendf(ci->clientnum, 1, "ris", N_SERVMSG, "not connected to authentication server");
-@@ -2863,32 +2870,32 @@
+@@ -2863,33 +2913,27 @@
          return ci->authreq || !ci->connectauth;
      }
 
 -    void masterconnected()
-+    void authserverconnected(const char *keydomain)
-     {
-     }
+-    {
+-    }
++    void authserverconnected(const char *keydomain) {}
 
 -    void masterdisconnected()
 +    void authserverdisconnected(const char *keydomain)
@@ -517,19 +564,95 @@ Index: src/fpsgame/server.cpp
          else if(sscanf(cmd, "chalauth %u %255s", &id, val) == 2)
 -            authchallenged(id, val);
 -        else if(matchstring(cmd, cmdlen, "cleargbans"))
-+            authchallenged(id, val, desc);
-+        else if(matchstring(cmd, cmdlen, "cleargbans") && !desc[0])
-             gbans.clear();
+-            gbans.clear();
 -        else if(sscanf(cmd, "addgban %100s", val) == 1)
-+        else if(sscanf(cmd, "addgban %100s", val) == 1 && !desc[0])
-             gbans.add(val);
+-            gbans.add(val);
++            authchallenged(id, val, desc);
      }
 
+     void receivefile(int sender, uchar *data, int len)
 Index: src/shared/authservers.h
 ===================================================================
 --- src/shared/authservers.h	(nonexistent)
 +++ src/shared/authservers.h	(working copy)
-@@ -0,0 +1,183 @@
+@@ -0,0 +1,28 @@
++#include "masterserver.h"
++
++enum { PRIV_NONE = 0, PRIV_MASTER, PRIV_AUTH, PRIV_ADMIN };
++
++struct authserver : masterserver {
++    string name; // = key domain
++    int privilege = PRIV_NONE;
++
++    void notifygameconnected()
++    {
++        server::authserverconnected(name);
++    }
++
++    void notifygamedisconnected()
++    {
++        server::authserverdisconnected(name);
++    }
++
++    bool notifygameinput(const char *input, int cmdlen, const char *args)
++    {
++        if(!name[0] && masterserver::notifygameinput(input, cmdlen, args)) return true; // master registration, gbans
++        server::processauthserverinput(name, input, cmdlen, args);
++        return true;
++    }
++};
++
++extern authserver *master;
++extern hashnameset<authserver> authservers;
+\ No newline at end of file
+Index: src/shared/cube.h
+===================================================================
+--- src/shared/cube.h	(revision 6502)
++++ src/shared/cube.h	(working copy)
+@@ -64,5 +64,7 @@
+ #include "iengine.h"
+ #include "igame.h"
+
++#include "authservers.h"
++
+ #endif
+
+Index: src/shared/iengine.h
+===================================================================
+--- src/shared/iengine.h	(revision 6502)
++++ src/shared/iengine.h	(working copy)
+@@ -473,8 +473,6 @@
+ extern bool hasnonlocalclients();
+ extern bool haslocalclients();
+ extern void sendserverinforeply(ucharbuf &p);
+-extern bool requestmaster(const char *req);
+-extern bool requestmasterf(const char *fmt, ...) PRINTFARGS(1, 2);
+ extern bool isdedicatedserver();
+
+ // client
+Index: src/shared/igame.h
+===================================================================
+--- src/shared/igame.h	(revision 6502)
++++ src/shared/igame.h	(working copy)
+@@ -121,9 +121,10 @@
+     extern int serverport(int infoport = -1);
+     extern const char *defaultmaster();
+     extern int masterport();
+-    extern void processmasterinput(const char *cmd, int cmdlen, const char *args);
+-    extern void masterconnected();
+-    extern void masterdisconnected();
++    extern bool processmasterserverinput(const char *input, int cmdlen, const char *args);
++    extern void authserverconnected(const char *keydomain);
++    extern void processauthserverinput(const char *keydomain, const char *input, int cmdlen, const char *args);
++    extern void authserverdisconnected(const char *keydomain);
+     extern bool ispaused();
+     extern int scaletime(int t);
+ }
+Index: src/shared/masterserver.h
+===================================================================
+--- src/shared/masterserver.h	(nonexistent)
++++ src/shared/masterserver.h	(working copy)
+@@ -0,0 +1,186 @@
 +#include "cube.h"
 +
 +extern ENetAddress serveraddress;
@@ -543,34 +666,31 @@ Index: src/shared/authservers.h
 +}
 +#endif
 +
-+enum { PRIV_NONE = 0, PRIV_MASTER, PRIV_AUTH, PRIV_ADMIN };
-+
-+struct authserver {
-+    string name; // = key domain
++struct masterserver {
 +    string hostname;
-+    int port, privilege;
++    int port;
 +    ENetAddress address;
 +    ENetSocket sock;
 +    int connecting, connected, lastconnect, lastupdate;
 +    vector<char> in, out;
 +    int inpos, outpos;
 +
-+    authserver() : port(0), privilege(PRIV_NONE),
++    masterserver() : port(0),
 +#ifdef __clang__
-+                   address((ENetAddress){ENET_HOST_ANY, ENET_PORT_ANY}),
++        address((ENetAddress){ENET_HOST_ANY, ENET_PORT_ANY}),
 +#else
-+                   address({ENET_HOST_ANY, ENET_PORT_ANY}),
++        address({ENET_HOST_ANY, ENET_PORT_ANY}),
 +#endif
-+                   sock(ENET_SOCKET_NULL), connecting(0), connected(0), lastconnect(0), lastupdate(0), inpos(0), outpos(0)
++        sock(ENET_SOCKET_NULL), connecting(0), connected(0), lastconnect(0), lastupdate(0), inpos(0), outpos(0)
 +    {
-+        name[0] = hostname[0] = 0;
++        hostname[0] = 0;
 +    }
 +
 +    void disconnect()
 +    {
 +        if(sock != ENET_SOCKET_NULL)
 +        {
-+            server::authserverdisconnected(name);
++            notifygamedisconnected();
 +            enet_socket_destroy(sock);
 +            sock = ENET_SOCKET_NULL;
 +        }
@@ -598,7 +718,7 @@ Index: src/shared/authservers.h
 +        sock = enet_socket_create(ENET_SOCKET_TYPE_STREAM);
 +        if(sock == ENET_SOCKET_NULL)
 +        {
-+            if(isdedicatedserver()) name[0] ? logoutf("could not open socket for auth server %s", name) : logoutf("could not open master server socket");
++            if(isdedicatedserver()) logoutf("could not open socket for %s:%d", hostname, port);
 +            return;
 +        }
 +        if(serveraddress.host == ENET_HOST_ANY || !enet_socket_bind(sock, &serveraddress))
@@ -607,7 +727,7 @@ Index: src/shared/authservers.h
 +            if(!enet_socket_connect(sock, &address)) return;
 +        }
 +        enet_socket_destroy(sock);
-+        if(isdedicatedserver()) name[0] ? logoutf("could not connect to auth server %s", name) : logoutf("could not connect to master server");
++        if(isdedicatedserver()) logoutf("could not connect to %s:%d", hostname, port);
 +        sock = ENET_SOCKET_NULL;
 +        return;
 +    }
@@ -647,11 +767,11 @@ Index: src/shared/authservers.h
 +            int cmdlen = args - input;
 +            while(args < end && iscubespace(*args)) args++;
 +
-+            if(!name[0] && matchstring(input, cmdlen, "failreg"))
++            if(matchstring(input, cmdlen, "failreg"))
 +                conoutf(CON_ERROR, "master server registration failed: %s", args);
-+            else if(!name[0] && matchstring(input, cmdlen, "succreg"))
++            else if(matchstring(input, cmdlen, "succreg"))
 +                conoutf("master server registration succeeded");
-+            else server::processauthserverinput(name, input, cmdlen, args);
++            else notifygameinput(input, cmdlen, args);
 +
 +            end++;
 +            inpos = end - in.getbuf();
@@ -670,7 +790,7 @@ Index: src/shared/authservers.h
 +    {
 +        if(connecting && totalmillis - connecting >= 60000)
 +        {
-+            name[0] ? logoutf("could not connect to auth server %s", name) : logoutf("could not connect to master server");
++            logoutf("could not connect to %s:%d", hostname, port);
 +            disconnect();
 +        }
 +        if(out.empty() || !connected) return;
@@ -707,54 +827,15 @@ Index: src/shared/authservers.h
 +        }
 +        else disconnect();
 +    }
++
++    virtual void notifygameconnected() {}
++    virtual void notifygamedisconnected() {}
++    virtual bool notifygameinput(const char *input, int cmdlen, const char *args)
++    {
++        return server::processmasterserverinput(input, cmdlen, args);
++    }
 +};
 +
 +extern char *mastername;
 +extern int masterport;
-+extern authserver *masterserver;
-+extern hashnameset<authserver> authservers;
-+extern authserver *addauthserver(const char *keydomain, const char *hostname, int *port, const char *priv);
-+extern bool requestauthserverf(const char *keydomain, const char *fmt, ...);
-Index: src/shared/cube.h
-===================================================================
---- src/shared/cube.h	(revision 6491)
-+++ src/shared/cube.h	(working copy)
-@@ -64,5 +64,7 @@
- #include "iengine.h"
- #include "igame.h"
-
-+#include "authservers.h"
-+
- #endif
-
-Index: src/shared/iengine.h
-===================================================================
---- src/shared/iengine.h	(revision 6491)
-+++ src/shared/iengine.h	(working copy)
-@@ -473,8 +473,7 @@
- extern bool hasnonlocalclients();
- extern bool haslocalclients();
- extern void sendserverinforeply(ucharbuf &p);
--extern bool requestmaster(const char *req);
--extern bool requestmasterf(const char *fmt, ...) PRINTFARGS(1, 2);
-+extern bool requestauthserverf(const char *keydomain, const char *fmt, ...) PRINTFARGS(2, 3);
- extern bool isdedicatedserver();
-
- // client
-Index: src/shared/igame.h
-===================================================================
---- src/shared/igame.h	(revision 6491)
-+++ src/shared/igame.h	(working copy)
-@@ -121,9 +121,9 @@
-     extern int serverport(int infoport = -1);
-     extern const char *defaultmaster();
-     extern int masterport();
--    extern void processmasterinput(const char *cmd, int cmdlen, const char *args);
--    extern void masterconnected();
--    extern void masterdisconnected();
-+    extern void authserverconnected(const char *keydomain);
-+    extern void processauthserverinput(const char *keydomain, const char *cmd, int cmdlen, const char *args);
-+    extern void authserverdisconnected(const char *keydomain);
-     extern bool ispaused();
-     extern int scaletime(int t);
- }
++extern vector<masterserver *> masterlikeservers;
