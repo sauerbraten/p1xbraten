@@ -1187,6 +1187,7 @@ int getclockmillis()
 }
 
 VAR(numcpus, 1, 1, 16);
+VARP(minimizedframes, 0, 0, 1);
 
 int main(int argc, char **argv)
 {
@@ -1403,7 +1404,7 @@ int main(int argc, char **argv)
         updateparticles();
         updatesounds();
 
-        if(minimized) continue;
+        if(minimized && !minimizedframes) continue;
 
         if(draw)
         {

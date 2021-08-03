@@ -27,6 +27,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [chat_highlight_words.patch](#chat_highlight_wordspatch)
   - [server_ogzs.patch](#server_ogzspatch)
   - [modversion.patch](#modversionpatch)
+  - [minimizedframes.patch](#minimizedframespatch)
 - [Installation](#installation)
   - [Windows](#windows)
   - [macOS](#macos)
@@ -203,6 +204,10 @@ Improves logging when running a dedicated server:
 This lets you see wether a player connected to the same server as you is using p1xbraten, and what version. It relies on p1xbraten clients sending additional packets to the server, which the server then broadcasts to all other clients. This means other players can tell you're using p1xbraten (and what version). No information other than "I use p1xbraten, version X.Y.Z" is sent. No information is sent to me (p1x) or any third party. Opt out if you are firefly!
 
 For an overview of who uses p1xbraten, you can run `/showgui p1xbratenusage`.
+
+### [minimizedframes.patch](./patches/minimizedframes.patch)
+
+- adds the `minimizedframes` toggle: when 1, frames will always be drawn, even when they would usually be skipped because p1xbraten is minimized
 
 
 ## Installation
