@@ -28,6 +28,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [server_ogzs.patch](#server_ogzspatch)
   - [modversion.patch](#modversionpatch)
   - [minimizedframes.patch](#minimizedframespatch)
+  - [getflagholder.patch](#getflagholderpatch)
 - [Installation](#installation)
   - [Windows](#windows)
   - [macOS](#macos)
@@ -209,6 +210,9 @@ For an overview of who uses p1xbraten, you can run `/showgui p1xbratenusage`.
 
 - adds the `minimizedframes` toggle: when 1, frames will always be drawn, even when they would usually be skipped because p1xbraten is minimized
 
+### [getflagholder.patch](./patches/getflagholder.patch)
+
+- adds the `getflagholdercn [team?]` command: returns the CN of the player holding `team`'s flag (in ctf/protect modes) or the neutral flag (in hold)
 
 ## Installation
 
