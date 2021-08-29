@@ -23,7 +23,7 @@ apply-patches:
 	dos2unix src/vcpp/sauerbraten.nsi
 	$(PATCH) < patches/modversion.patch
 	$(PATCH) < patches/moviehud.patch
-	$(PATCH) < patches/getflagholder.patch
+	$(PATCH) < patches/hasflag.patch
 	$(PATCH) < patches/scoreboard.patch
 	$(PATCH) < patches/macos_builds.patch
 	$(PATCH) < patches/hudfragmessages.patch

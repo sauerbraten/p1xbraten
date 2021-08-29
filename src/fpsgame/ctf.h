@@ -1268,24 +1268,16 @@ struct ctfclientmode : clientmode
 		return false;
 	}
 
-    fpsent *getflagholder(const char *teamname) {
-        if(m_hold) return flags.length() == 1 ? flags[0].owner : NULL;
-        if(!strlen(teamname)) return NULL;
-        loopv(flags)
-        {
-            flag &f = flags[i];
-            if(f.team == ctfteamflag(teamname)) return f.owner;
-        }
-        return NULL;
+    bool hasflag(fpsent *d) {
+        if(!d) return false;
+        loopv(flags) if(flags[i].owner == d) return true;
+        return false;
     }
 };
 
 extern ctfclientmode ctfmode;
 ICOMMAND(dropflag, "", (), { ctfmode.trydropflag(); });
-ICOMMAND(getflagholdercn, "s", (const char *teamname), {
-    fpsent *h = ctfmode.getflagholder(teamname);
-    intret(h ? h->clientnum : -1);
-});
+ICOMMAND(hasflag,  "i", (int *cn), intret(ctfmode.hasflag(getclient(*cn))));
 
 #endif
 
