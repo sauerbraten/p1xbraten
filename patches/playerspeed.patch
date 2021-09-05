@@ -1,0 +1,21 @@
+Index: src/fpsgame/fps.cpp
+===================================================================
+--- src/fpsgame/fps.cpp	(revision 6518)
++++ src/fpsgame/fps.cpp	(working copy)
+@@ -235,6 +235,8 @@
+         }
+     }
+
++    VAR(playerspeed, 0, 0, -1);
++
+     void updateworld()        // main game update loop
+     {
+         if(!maptime) { maptime = lastmillis; maprealtime = totalmillis; return; }
+@@ -278,6 +280,7 @@
+                 else if(cmode) cmode->checkitems(player1);
+             }
+         }
++        playerspeed = int(hudplayer()->vel.magnitude2());
+         if(player1->clientnum>=0) c2sinfo();   // do this last, to reduce the effective frame lag
+     }
+

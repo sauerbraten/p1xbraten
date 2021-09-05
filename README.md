@@ -29,6 +29,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [modversion.patch](#modversionpatch)
   - [minimizedframes.patch](#minimizedframespatch)
   - [hasflag.patch](#hasflagpatch)
+  - [playerspeed.patch](#playerspeedpatch)
 - [Installation](#installation)
   - [Windows](#windows)
   - [macOS](#macos)
@@ -37,6 +38,7 @@ This repository contains the source for my client mod, as well as the patches ap
 - [Building your own binary](#building-your-own-binary)
   - [Using fresh upstream sources](#using-fresh-upstream-sources)
   - [Debugging](#debugging)
+
 
 ## Patches
 
@@ -214,6 +216,11 @@ For an overview of who uses p1xbraten, you can run `/showgui p1xbratenusage`.
 
 - adds the `hasflag <cn>` command: returns 1 if the specfied player carries a flag
 
+### [playerspeed.patch](./patches/playerspeed.patch)
+
+- adds the `playerspeed` variable (read-only): returns the hud player's speed (in units per second)
+
+
 ## Installation
 
 The latest builds are always at https://github.com/sauerbraten/p1xbraten/releases/latest.
@@ -237,6 +244,7 @@ Download p1xbraten_\<version\>_setup.exe from the link above and execute it. p1x
 ### Linux
 
 Download linux_64_client from the link above and put it into bin_unix/ inside of your Sauerbraten directory (*after* backing up the original file), then `chmod +x bin_unix/linux_64_client`.
+
 
 ## Menu
 
