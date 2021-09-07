@@ -30,6 +30,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [minimizedframes.patch](#minimizedframespatch)
   - [hasflag.patch](#hasflagpatch)
   - [playerspeed.patch](#playerspeedpatch)
+  - [up_down_hover.patch](#up_down_hoverpatch)
 - [Installation](#installation)
   - [Windows](#windows)
   - [macOS](#macos)
@@ -219,6 +220,14 @@ For an overview of who uses p1xbraten, you can run `/showgui p1xbratenusage`.
 ### [playerspeed.patch](./patches/playerspeed.patch)
 
 - adds the `playerspeed` variable (read-only): returns the hud player's speed (in units per second)
+
+### [up_down_hover.patch](./patches/up_down_hover.patch)
+
+- adds the `up`, `down` and `hover` movement commands:
+  - `up`/`down` induce movement up or down relative to the player's view
+  - `hover` prevents any change in height from forward/backward movement and making `up` and `down` work along the world's Z axis
+
+  all three commands only work while editing or spectating
 
 
 ## Installation

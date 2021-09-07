@@ -393,6 +393,11 @@ namespace game
         return player1->state!=CS_DEAD;
     }
 
+    bool canhover()
+    {
+        return player1->state==CS_SPECTATOR || player1->state==CS_EDITING;
+    }
+
     bool allowmove(physent *d)
     {
         if(d->type!=ENT_PLAYER) return true;

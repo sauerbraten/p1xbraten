@@ -45,6 +45,7 @@ apply-patches:
 	$(PATCH) < patches/server_ogzs.patch
 	$(PATCH) < patches/minimizedframes.patch
 	$(PATCH) < patches/playerspeed.patch
+	$(PATCH) < patches/up_down_hover.patch
 	unix2dos src/vcpp/sauerbraten.nsi
 	unix2dos src/vcpp/sauerbraten.vcxproj
 	cd src && make depend

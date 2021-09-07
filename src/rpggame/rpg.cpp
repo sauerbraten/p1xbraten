@@ -204,6 +204,7 @@ namespace game
     }
 
     bool canjump() { return true; }
+    bool canhover() { return false; }
     bool allowmove(physent *d) { return d->type!=ENT_AI || ((rpgent *)d)->allowmove(); }
     void doattack(bool on) { player1->attacking = on; }
     dynent *iterdynents(int i) { return i ? objects[i-1]->ent : player1; }
