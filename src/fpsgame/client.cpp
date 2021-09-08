@@ -849,7 +849,7 @@ namespace game
 
     bool ispaused() { return gamepaused; }
 
-    bool allowmouselook() { return !gamepaused || !remote || m_edit; }
+    bool allowmouselook() { return player1->state==CS_SPECTATOR || !gamepaused || !remote || m_edit; }
 
     void changegamespeed(int val)
     {

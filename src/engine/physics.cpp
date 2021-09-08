@@ -1748,6 +1748,20 @@ void physicsframe()          // optimally schedule physics frames inside the gra
     cleardynentcache();
 }
 
+void fakephysicsframe()      // induces fake physsteps for moving camera while paused
+{
+    static int lastfakephysframe = 0;
+    int diff = totalmillis - lastfakephysframe;
+    if(diff > curtime) { diff = curtime; lastfakephysframe = totalmillis; }
+    if(diff <= 0) physsteps = 0;
+    else
+    {
+        physframetime = clamp(game::scaletime(PHYSFRAMETIME)/100, 1, PHYSFRAMETIME);
+        physsteps = (diff + physframetime - 1)/physframetime;
+        lastfakephysframe += physsteps * physframetime;
+    }
+}
+
 VAR(physinterp, 0, 1, 1);
 
 void interppos(physent *pl)

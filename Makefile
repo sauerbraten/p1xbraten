@@ -46,6 +46,7 @@ apply-patches:
 	$(PATCH) < patches/minimizedframes.patch
 	$(PATCH) < patches/playerspeed.patch
 	$(PATCH) < patches/up_down_hover.patch
+	$(PATCH) < patches/paused_spec_movement.patch
 	unix2dos src/vcpp/sauerbraten.nsi
 	unix2dos src/vcpp/sauerbraten.vcxproj
 	cd src && make depend

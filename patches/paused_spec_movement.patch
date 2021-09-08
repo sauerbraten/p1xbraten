@@ -1,0 +1,135 @@
+Index: src/engine/main.cpp
+===================================================================
+--- src/engine/main.cpp	(revision 6518)
++++ src/engine/main.cpp	(working copy)
+@@ -1360,8 +1360,7 @@
+         curtime = scaledtime/100;
+         timeerr = scaledtime%100;
+         if(!multiplayer(false) && curtime>200) curtime = 200;
+-        if(game::ispaused()) curtime = 0;
+-		lastmillis += curtime;
++        if(!game::ispaused()) lastmillis += curtime;
+         totalmillis = millis;
+         updatetime();
+
+Index: src/engine/physics.cpp
+===================================================================
+--- src/engine/physics.cpp	(revision 6518)
++++ src/engine/physics.cpp	(working copy)
+@@ -1759,6 +1759,20 @@
+     cleardynentcache();
+ }
+
++void fakephysicsframe()      // induces fake physsteps for moving camera while paused
++{
++    static int lastfakephysframe = 0;
++    int diff = totalmillis - lastfakephysframe;
++    if(diff > curtime) { diff = curtime; lastfakephysframe = totalmillis; }
++    if(diff <= 0) physsteps = 0;
++    else
++    {
++        physframetime = clamp(game::scaletime(PHYSFRAMETIME)/100, 1, PHYSFRAMETIME);
++        physsteps = (diff + physframetime - 1)/physframetime;
++        lastfakephysframe += physsteps * physframetime;
++    }
++}
++
+ VAR(physinterp, 0, 1, 1);
+
+ void interppos(physent *pl)
+Index: src/engine/ragdoll.h
+===================================================================
+--- src/engine/ragdoll.h	(revision 6518)
++++ src/engine/ragdoll.h	(working copy)
+@@ -508,7 +508,7 @@
+
+ void moveragdoll(dynent *d)
+ {
+-    if(!curtime || !d->ragdoll) return;
++    if(!curtime || game::ispaused() || !d->ragdoll) return;
+
+     if(!d->ragdoll->collidemillis || lastmillis < d->ragdoll->collidemillis)
+     {
+Index: src/engine/server.cpp
+===================================================================
+--- src/engine/server.cpp	(revision 6518)
++++ src/engine/server.cpp	(working copy)
+@@ -623,8 +623,7 @@
+         int scaledtime = server::scaletime(elapsedtime) + timeerr;
+         curtime = scaledtime/100;
+         timeerr = scaledtime%100;
+-        if(server::ispaused()) curtime = 0;
+-        lastmillis += curtime;
++        if(!server::ispaused()) lastmillis += curtime;
+         totalmillis = millis;
+         updatetime();
+     }
+Index: src/fpsgame/client.cpp
+===================================================================
+--- src/fpsgame/client.cpp	(revision 6518)
++++ src/fpsgame/client.cpp	(working copy)
+@@ -791,7 +791,7 @@
+
+     bool ispaused() { return gamepaused; }
+
+-    bool allowmouselook() { return !gamepaused || !remote || m_edit; }
++    bool allowmouselook() { return player1->state==CS_SPECTATOR || !gamepaused || !remote || m_edit; }
+
+     void changegamespeed(int val)
+     {
+Index: src/fpsgame/fps.cpp
+===================================================================
+--- src/fpsgame/fps.cpp	(revision 6518)
++++ src/fpsgame/fps.cpp	(working copy)
+@@ -238,7 +238,12 @@
+     void updateworld()        // main game update loop
+     {
+         if(!maptime) { maptime = lastmillis; maprealtime = totalmillis; return; }
+-        if(!curtime) { gets2c(); if(player1->clientnum>=0) c2sinfo(); return; }
++        if(!curtime || ispaused()) {
++            gets2c();
++            if(curtime && player1->state==CS_SPECTATOR) { fakephysicsframe(); moveplayer(player1, 10, true); }
++            if(player1->clientnum>=0) c2sinfo();
++            return;
++        }
+
+         physicsframe();
+         ai::navigate();
+Index: src/fpsgame/movable.cpp
+===================================================================
+--- src/fpsgame/movable.cpp	(revision 6518)
++++ src/fpsgame/movable.cpp	(working copy)
+@@ -129,7 +129,7 @@
+
+     void updatemovables(int curtime)
+     {
+-        if(!curtime) return;
++        if(!curtime || ispaused()) return;
+         loopv(movables)
+         {
+             movable *m = movables[i];
+Index: src/rpggame/rpg.cpp
+===================================================================
+--- src/rpggame/rpg.cpp	(revision 6518)
++++ src/rpggame/rpg.cpp	(working copy)
+@@ -14,7 +14,7 @@
+     void updateworld()
+     {
+         if(!maptime) { maptime = lastmillis; return; }
+-        if(!curtime) return;
++        if(!curtime || ispaused()) return;
+         physicsframe();
+         updateobjects();
+         player1->updateplayer();
+Index: src/shared/iengine.h
+===================================================================
+--- src/shared/iengine.h	(revision 6518)
++++ src/shared/iengine.h	(working copy)
+@@ -387,6 +387,7 @@
+ extern bool overlapsdynent(const vec &o, float radius);
+ extern bool movecamera(physent *pl, const vec &dir, float dist, float stepdist);
+ extern void physicsframe();
++extern void fakephysicsframe();
+ extern void dropenttofloor(entity *e);
+ extern bool droptofloor(vec &o, float radius, float height);
+

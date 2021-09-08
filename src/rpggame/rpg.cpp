@@ -14,7 +14,7 @@ namespace game
     void updateworld()
     {
         if(!maptime) { maptime = lastmillis; return; }
-        if(!curtime) return;
+        if(!curtime || ispaused()) return;
         physicsframe();
         updateobjects();
         player1->updateplayer();

@@ -129,7 +129,7 @@ namespace game
 
     void updatemovables(int curtime)
     {
-        if(!curtime) return;
+        if(!curtime || ispaused()) return;
         loopv(movables)
         {
             movable *m = movables[i];

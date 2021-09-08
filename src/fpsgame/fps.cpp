@@ -245,7 +245,12 @@ namespace game
     void updateworld()        // main game update loop
     {
         if(!maptime) { maptime = lastmillis; maprealtime = totalmillis; return; }
-        if(!curtime) { gets2c(); if(player1->clientnum>=0) c2sinfo(); return; }
+        if(!curtime || ispaused()) {
+            gets2c();
+            if(curtime && player1->state==CS_SPECTATOR) { fakephysicsframe(); moveplayer(player1, 10, true); }
+            if(player1->clientnum>=0) c2sinfo();
+            return;
+        }
 
         physicsframe();
         ai::navigate();
