@@ -31,6 +31,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [hasflag.patch](#hasflagpatch)
   - [playerspeed.patch](#playerspeedpatch)
   - [up_down_hover.patch](#up_down_hoverpatch)
+  - [paused_spec_movement.patch](#paused_spec_movementpatch)
 - [Installation](#installation)
   - [Windows](#windows)
   - [macOS](#macos)
@@ -228,6 +229,10 @@ For an overview of who uses p1xbraten, you can run `/showgui p1xbratenusage`.
   - `hover` prevents any change in height from forward/backward movement and making `up` and `down` work along the world's Z axis
 
   all three commands only work while editing or spectating
+
+### [paused_spec_movement.patch](./patches/paused_spec_movement.patch)
+
+- enables free movement as spectator while the game is paused
 
 
 ## Installation
