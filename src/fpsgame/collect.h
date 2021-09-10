@@ -524,7 +524,7 @@ struct collectclientmode : clientmode
             formatstring(b.info, "%d", totalscore(b.team));
             vec above(b.tokenpos);
             above.z += TOKENHEIGHT;
-            if(b.info[0]) particle_text(above, b.info, PART_TEXT, 1, b.team==team ? 0x6496FF : 0xFF4B19, 2.0f);
+            if(b.info[0]) particle_text(above, b.info, PART_TEXT, 1, b.team==team ? COL_BLUE : COL_RED, 2.0f);
         }
         loopv(tokens)
         {

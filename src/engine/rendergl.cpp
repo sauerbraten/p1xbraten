@@ -1663,7 +1663,7 @@ void clearminimap()
 
 VARR(minimapheight, 0, 0, 2<<16);
 bvec minimapcolor(0, 0, 0);
-HVARFR(minimapcolour, 0, 0, 0xFFFFFF,
+HVARFR(minimapcolour, 0, 0, COL_WHITE,
 {
     minimapcolor = bvec((minimapcolour>>16)&0xFF, (minimapcolour>>8)&0xFF, minimapcolour&0xFF);
 });

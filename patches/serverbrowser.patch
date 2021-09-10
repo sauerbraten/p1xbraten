@@ -1,4 +1,4 @@
-NOTE: This patch relies on src/fpsgame/colors.h being present, which is part of scoreboard.patch!
+NOTE: This patch relies on colors.patch!
 
 Index: src/engine/serverbrowser.cpp
 ===================================================================
@@ -17,35 +17,33 @@ Index: src/fpsgame/fps.cpp
 ===================================================================
 --- src/fpsgame/fps.cpp	(revision 6479)
 +++ src/fpsgame/fps.cpp	(working copy)
-@@ -1173,13 +1173,28 @@
+@@ -1173,13 +1173,26 @@
          }
      }
 
-+    #define justified(elem,handleclick,dir) \
++    #define justified(elem,handleclick,right) \
 +        { \
 +            g->pushlist(); \
-+            if(dir) g->spring(); \
++            if((right)) g->spring(); \
 +            g->pushlist(); /* get vertical list dir back, so mergehits works */ \
-+            int up = elem; \
-+            if(handleclick && up&G3D_UP) return true; \
++            int up = (elem); \
++            if((handleclick) && up&G3D_UP) return true; \
 +            g->poplist(); \
 +            g->poplist(); \
 +        }
-+
-+    #include "colors.h"
 +
      bool serverinfostartcolumn(g3d_gui *g, int i)
      {
 -        static const char * const names[] = { "ping ", "players ", "mode ", "map ", "time ", "master ", "host ", "port ", "description " };
 -        static const float struts[] =       { 7,       7,          12.5f,   14,      7,      8,         14,      7,       24.5f };
 +        static const char * const names[] = { "ping", "players", "slots", "mode", "map", "time", "master", "host", "port", "description" };
-+        static const float struts[] =       {      0,         0,       0,  12.5f,    14,      0,        0,     14,      0,         24.5f };
-+        static const float alignments[] =   {      1,         1,       1,      0,     0,      0,        0,      0,      1,             0 }; // 0 = left, 1 = right
++        static const float struts[]       = {      0,         0,       0,  12.5f,    14,      0,        0,     14,      0,         24.5f };
++        static const bool right[]         = {   true,      true,    true,  false, false,  false,    false,  false,   true,         false };
          if(size_t(i) >= sizeof(names)/sizeof(names[0])) return false;
 +        if(i) g->space(2);
          g->pushlist();
--        g->text(names[i], 0xFFFF80, !i ? " " : NULL);
-+        justified(g->text(names[i], COL_GRAY, NULL), false, alignments[i]);
+-        g->text(names[i], COL_GRAY, !i ? " " : NULL);
++        justified(g->text(names[i], COL_GRAY, NULL), false, right[i]);
          if(struts[i]) g->strut(struts[i]);
          g->mergehits(true);
          return true;
@@ -53,15 +51,15 @@ Index: src/fpsgame/fps.cpp
 
      bool serverinfoentry(g3d_gui *g, int i, const char *name, int port, const char *sdesc, const char *map, int ping, const vector<int> &attr, int np)
      {
-+        #define leftjustified(elem)   justified(elem,true,0)
-+        #define rightjustified(elem)  justified(elem,true,1)
++        #define leftjustified(elem)   justified(elem,true,false)
++        #define rightjustified(elem)  justified(elem,true,true)
 +
          if(ping < 0 || attr.empty() || attr[0]!=PROTOCOL_VERSION)
          {
              switch(i)
              {
                  case 0:
--                    if(g->button(" ", 0xFFFFDD, "serverunk")&G3D_UP) return true;
+-                    if(g->button(" ", COL_WHITE, "serverunk")&G3D_UP) return true;
 -                    break;
 -
                  case 1:
@@ -69,16 +67,16 @@ Index: src/fpsgame/fps.cpp
                  case 3:
                  case 4:
                  case 5:
--                    if(g->button(" ", 0xFFFFDD)&G3D_UP) return true;
+-                    if(g->button(" ", COL_WHITE)&G3D_UP) return true;
 -                    break;
 -
                  case 6:
--                    if(g->buttonf("%s ", 0xFFFFDD, NULL, name)&G3D_UP) return true;
+-                    if(g->buttonf("%s ", COL_WHITE, NULL, name)&G3D_UP) return true;
 +                    leftjustified(g->button(" ", COL_WHITE));
                      break;
 
                  case 7:
--                    if(g->buttonf("%d ", 0xFFFFDD, NULL, port)&G3D_UP) return true;
+-                    if(g->buttonf("%d ", COL_WHITE, NULL, port)&G3D_UP) return true;
 +                    leftjustified(g->buttonf("%s", COL_WHITE, NULL, name));
                      break;
 
@@ -89,10 +87,10 @@ Index: src/fpsgame/fps.cpp
 +                case 9:
                      if(ping < 0)
                      {
--                        if(g->button(sdesc, 0xFFFFDD)&G3D_UP) return true;
+-                        if(g->button(sdesc, COL_WHITE)&G3D_UP) return true;
 +                        leftjustified(g->button(sdesc, COL_WHITE));
                      }
--                    else if(g->buttonf("[%s protocol] ", 0xFFFFDD, NULL, attr.empty() ? "unknown" : (attr[0] < PROTOCOL_VERSION ? "older" : "newer"))&G3D_UP) return true;
+-                    else if(g->buttonf("[%s protocol] ", COL_WHITE, NULL, attr.empty() ? "unknown" : (attr[0] < PROTOCOL_VERSION ? "older" : "newer"))&G3D_UP) return true;
 +                    else leftjustified(g->buttonf("[%s protocol]", COL_WHITE, NULL, attr.empty() ? "unknown" : (attr[0] < PROTOCOL_VERSION ? "older" : "newer")));
                      break;
              }
@@ -102,7 +100,7 @@ Index: src/fpsgame/fps.cpp
              case 0:
              {
 -                const char *icon = attr.inrange(3) && np >= attr[3] ? "serverfull" : (attr.inrange(4) ? mastermodeicon(attr[4], "serverunk") : "serverunk");
--                if(g->buttonf("%d ", 0xFFFFDD, icon, ping)&G3D_UP) return true;
+-                if(g->buttonf("%d ", COL_WHITE, icon, ping)&G3D_UP) return true;
 +                rightjustified(g->buttonf("%d", COL_WHITE, NULL, ping));
                  break;
              }
@@ -114,21 +112,21 @@ Index: src/fpsgame/fps.cpp
 +            case 2:
                  if(attr.length()>=4)
                  {
--                    if(g->buttonf(np >= attr[3] ? "\f3%d/%d " : "%d/%d ", 0xFFFFDD, NULL, np, attr[3])&G3D_UP) return true;
+-                    if(g->buttonf(np >= attr[3] ? "\f3%d/%d " : "%d/%d ", COL_WHITE, NULL, np, attr[3])&G3D_UP) return true;
 +                    rightjustified(g->buttonf(np >= attr[3] ? "\f3%d" : "%d", COL_WHITE, NULL, attr[3]));
                  }
--                else if(g->buttonf("%d ", 0xFFFFDD, NULL, np)&G3D_UP) return true;
+-                else if(g->buttonf("%d ", COL_WHITE, NULL, np)&G3D_UP) return true;
 +                else rightjustified(g->button(" ", COL_WHITE));
                  break;
 
 -            case 2:
--                if(g->buttonf("%s ", 0xFFFFDD, NULL, attr.length()>=2 ? server::modename(attr[1], "") : "")&G3D_UP) return true;
+-                if(g->buttonf("%s ", COL_WHITE, NULL, attr.length()>=2 ? server::modename(attr[1], "") : "")&G3D_UP) return true;
 +            case 3:
 +                leftjustified(g->buttonf("%s", COL_WHITE, NULL, attr.length()>=2 ? server::modename(attr[1], "") : ""));
                  break;
 
 -            case 3:
--                if(g->buttonf("%.25s ", 0xFFFFDD, NULL, map)&G3D_UP) return true;
+-                if(g->buttonf("%.25s ", COL_WHITE, NULL, map)&G3D_UP) return true;
 +            case 4:
 +                leftjustified(g->buttonf("%.25s", COL_WHITE, NULL, map));
                  break;
@@ -140,28 +138,28 @@ Index: src/fpsgame/fps.cpp
                      int secs = clamp(attr[2], 0, 59*60+59),
                          mins = secs/60;
                      secs %= 60;
--                    if(g->buttonf("%d:%02d ", 0xFFFFDD, NULL, mins, secs)&G3D_UP) return true;
+-                    if(g->buttonf("%d:%02d ", COL_WHITE, NULL, mins, secs)&G3D_UP) return true;
 +                    leftjustified(g->buttonf("%d:%02d", COL_WHITE, NULL, mins, secs));
                  }
--                else if(g->buttonf(" ", 0xFFFFDD)&G3D_UP) return true;
+-                else if(g->buttonf(" ", COL_WHITE)&G3D_UP) return true;
 +                else leftjustified(g->button(" ", COL_WHITE));
                  break;
 -            case 5:
--                if(g->buttonf("%s%s ", 0xFFFFDD, NULL, attr.length()>=5 ? mastermodecolor(attr[4], "") : "", attr.length()>=5 ? server::mastermodename(attr[4], "") : "")&G3D_UP) return true;
+-                if(g->buttonf("%s%s ", COL_WHITE, NULL, attr.length()>=5 ? mastermodecolor(attr[4], "") : "", attr.length()>=5 ? server::mastermodename(attr[4], "") : "")&G3D_UP) return true;
 -                break;
 -
              case 6:
--                if(g->buttonf("%s ", 0xFFFFDD, NULL, name)&G3D_UP) return true;
+-                if(g->buttonf("%s ", COL_WHITE, NULL, name)&G3D_UP) return true;
 +                leftjustified(g->buttonf("%s%s", COL_WHITE, NULL, attr.length()>=5 ? mastermodecolor(attr[4], "") : "", attr.length()>=5 ? server::mastermodename(attr[4], "") : ""));
                  break;
 
              case 7:
--                if(g->buttonf("%d ", 0xFFFFDD, NULL, port)&G3D_UP) return true;
+-                if(g->buttonf("%d ", COL_WHITE, NULL, port)&G3D_UP) return true;
 +                leftjustified(g->buttonf("%s", COL_WHITE, NULL, name));
                  break;
 
              case 8:
--                if(g->buttonf("%.25s", 0xFFFFDD, NULL, sdesc)&G3D_UP) return true;
+-                if(g->buttonf("%.25s", COL_WHITE, NULL, sdesc)&G3D_UP) return true;
 +                rightjustified(g->buttonf("%d", COL_WHITE, NULL, port));
                  break;
 +

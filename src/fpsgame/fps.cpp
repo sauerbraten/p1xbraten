@@ -940,7 +940,7 @@ namespace game
         flushhudmatrix();
 
         defformatstring(health, "%d", d->state==CS_DEAD ? 0 : d->health);
-        bvec healthcolor = bvec::hexcolor(healthcolors && !m_insta ? (d->state==CS_DEAD ? 0x808080 : (d->health<=25 ? 0xFF0000 : (d->health<=50 ? 0xFF8000 : (d->health<=100 ? 0xFFFFFF : 0x40C0FF)))) : 0xFFFFFF);
+        bvec healthcolor = bvec::hexcolor(healthcolors && !m_insta ? (d->state==CS_DEAD ? COL_GRAY : (d->health<=25 ? COL_RED : (d->health<=50 ? COL_ORANGE : (d->health<=100 ? COL_WHITE : COL_CYAN)))) : COL_WHITE);
         draw_text(health, (HICON_X + HICON_SIZE + HICON_SPACE)/2, HICON_TEXTY/2, healthcolor.r, healthcolor.g, healthcolor.b);
         if(d->state!=CS_DEAD)
         {
@@ -976,9 +976,9 @@ namespace game
 
     VARP(gameclock, 0, 0, 1);
     FVARP(gameclockscale, 1e-3f, 0.75f, 1e3f);
-    HVARP(gameclockcolour, 0, 0xFFFFFF, 0xFFFFFF);
+    HVARP(gameclockcolour, 0, COL_WHITE, COL_WHITE);
     VARP(gameclockalpha, 0, 255, 255);
-    HVARP(gameclocklowcolour, 0, 0xFFC040, 0xFFFFFF);
+    HVARP(gameclocklowcolour, 0, COL_ORANGE, COL_WHITE);
     VARP(gameclockalign, -1, 0, 1);
     FVARP(gameclockx, 0, 0.50f, 1);
     FVARP(gameclocky, 0, 0.03f, 1);
@@ -1043,7 +1043,7 @@ namespace game
         int tw, th; text_bounds(label, tw, th);
         vec2 textdrawpos = vec2(-tw, -th).div(2);
         float ammoratio = (float)p->ammo[gun] / itemstats[gun-GUN_SG].add;
-        bvec color = bvec::hexcolor(p->ammo[gun] == 0 || ammoratio >= 1.0f ? 0xFFFFFF : (ammoratio >= 0.5f ? 0xFFC040 : 0xFF0000));
+        bvec color = bvec::hexcolor(p->ammo[gun] == 0 || ammoratio >= 1.0f ? COL_WHITE : (ammoratio >= 0.5f ? COL_ORANGE : COL_RED));
         draw_text(label, textdrawpos.x, textdrawpos.y, color.r, color.g, color.b, alpha);
 
         pophudmatrix();
@@ -1190,28 +1190,26 @@ namespace game
         }
     }
 
-    #define justified(elem,handleclick,dir) \
+    #define justified(elem,handleclick,right) \
         { \
             g->pushlist(); \
-            if(dir) g->spring(); \
+            if((right)) g->spring(); \
             g->pushlist(); /* get vertical list dir back, so mergehits works */ \
-            int up = elem; \
-            if(handleclick && up&G3D_UP) return true; \
+            int up = (elem); \
+            if((handleclick) && up&G3D_UP) return true; \
             g->poplist(); \
             g->poplist(); \
         }
 
-    #include "colors.h"
-
     bool serverinfostartcolumn(g3d_gui *g, int i)
     {
         static const char * const names[] = { "ping", "players", "slots", "mode", "map", "time", "master", "host", "port", "description" };
-        static const float struts[] =       {      0,         0,       0,  12.5f,    14,      0,        0,     14,      0,         24.5f };
-        static const float alignments[] =   {      1,         1,       1,      0,     0,      0,        0,      0,      1,             0 }; // 0 = left, 1 = right
+        static const float struts[]       = {      0,         0,       0,  12.5f,    14,      0,        0,     14,      0,         24.5f };
+        static const bool right[]         = {   true,      true,    true,  false, false,  false,    false,  false,   true,         false };
         if(size_t(i) >= sizeof(names)/sizeof(names[0])) return false;
         if(i) g->space(2);
         g->pushlist();
-        justified(g->text(names[i], COL_GRAY, NULL), false, alignments[i]);
+        justified(g->text(names[i], COL_GRAY, NULL), false, right[i]);
         if(struts[i]) g->strut(struts[i]);
         g->mergehits(true);
         return true;
@@ -1236,8 +1234,8 @@ namespace game
 
     bool serverinfoentry(g3d_gui *g, int i, const char *name, int port, const char *sdesc, const char *map, int ping, const vector<int> &attr, int np)
     {
-        #define leftjustified(elem)   justified(elem,true,0)
-        #define rightjustified(elem)  justified(elem,true,1)
+        #define leftjustified(elem)   justified(elem,true,false)
+        #define rightjustified(elem)  justified(elem,true,true)
 
         if(ping < 0 || attr.empty() || attr[0]!=PROTOCOL_VERSION)
         {
