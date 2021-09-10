@@ -63,10 +63,10 @@ then
   #exec gdb --args ${SAUER_BIN}/${SYSTEM_NAME}${MACHINE_NAME}server ${SAUER_OPTIONS} "$@"
   exec "${SAUER_BIN}/${SYSTEM_NAME}${MACHINE_NAME}server" ${SAUER_OPTIONS} "$@"
 else
-  echo "Your platform does not have a pre-compiled Sauerbraten client."
-  echo "Please follow the following steps to build a native client:"
-  echo "1) Ensure you have the SDL2, SDL2-image, SDL2-mixer, and OpenGL libraries installed."
-  echo "2) Change directory to src/ and type \"make install\"."
+  echo "Your platform does not have a pre-compiled Sauerbraten server."
+  echo "Please follow the following steps to build a native server:"
+  echo "1) Change directory to src/ and type \"make server\"."
+  echo "2) Copy src/sauer_server to bin_unix/native_server."
   echo "3) If the build succeeds, return to this directory and run this script again."
   exit 1
 fi

@@ -1,6 +1,6 @@
 # p1xbraten
 
-This repository contains the source for my client mod, as well as the patches applied to the vanilla source to get there.
+This repository contains the source for my client mod, as well as the patches applied to the vanilla Sauerbraten source to get there.
 
 <p>
 <figure>
@@ -21,22 +21,24 @@ This repository contains the source for my client mod, as well as the patches ap
   - [decouple_framedrawing.patch](#decouple_framedrawingpatch)
   - [crosshaircolor.patch](#crosshaircolorpatch)
   - [zenmode.patch](#zenmodepatch)
-  - [authservers.patch](#authserverspatch)
-  - [serverlogging.patch](#serverloggingpatch)
   - [gamehud.patch](#gamehudpatch)
   - [chat_highlight_words.patch](#chat_highlight_wordspatch)
-  - [server_ogzs.patch](#server_ogzspatch)
   - [modversion.patch](#modversionpatch)
   - [minimizedframes.patch](#minimizedframespatch)
   - [hasflag.patch](#hasflagpatch)
   - [playerspeed.patch](#playerspeedpatch)
   - [up_down_hover.patch](#up_down_hoverpatch)
   - [paused_spec_movement.patch](#paused_spec_movementpatch)
+- [Server Patches](#server-patches)
+  - [authservers.patch](#authserverspatch)
+  - [serverlogging.patch](#serverloggingpatch)
+  - [server_ogzs.patch](#server_ogzspatch)
 - [Installation](#installation)
   - [Windows](#windows)
   - [macOS](#macos)
   - [Linux](#linux)
 - [Menu](#menu)
+- [Project Structure](#project-structure)
 - [Building your own binary](#building-your-own-binary)
   - [Using fresh upstream sources](#using-fresh-upstream-sources)
   - [Debugging](#debugging)
@@ -166,22 +168,6 @@ Using `maxfps` and `maxtps`, you can optimize for different goals:
   - chat and team chat messages from spectators
   - joins (all), leaves and renames (of spectators)
 
-### [authservers.patch](./patches/authservers.patch)
-
-- adds `/addauthserver <key_domain> <hostname> <port> <privilege>` server command to add an additional auth backend (other than the master server)
-
-For example, you can put `addauthserver "p1x.pw" "p1x.pw" 28787 "m"` into your `server-init.cfg` to allow users registered with my master server to claim auth on your server.
-
-### [serverlogging.patch](./patches/serverlogging.patch)
-
-Improves logging when running a dedicated server:
-
-- adds `logtime` variable: if 1, all log messages are prepended with ISO date and time (e.g. `[2021-04-06 17:12:05]`)
-- includes CN in connect, disconnect, chat, team chat log messages
-- logs a "join" message including CN and player name
-- logs map changes
-- logs all privilege changes
-
 ### [gamehud.patch](./patches/gamehud.patch)
 
 - properly right-justifies gamehud, wallclock, showfps, and/or showfpsrange lines
@@ -195,10 +181,6 @@ Improves logging when running a dedicated server:
 - lets you define words that trigger a sound when they appear in chat or team chat
 - adds `addchathighlightword <word>` command (for example, put `addchathighlightword pix` and `addchathighlightword p1x` into autoexec.cfg to receive a highlight on both spellings)
 - adds `chathighlightsound` variable to set the sound to play (default: `free/itempick`)
-
-### [server_ogzs.patch](./patches/server_ogzs.patch)
-
-- allows using slim .ogz files (see https://github.com/sauerbraten/genserverogz) on the server without getting `checkmaps` errors
 
 ### [modversion.patch](./patches/modversion.patch)
 
@@ -235,11 +217,34 @@ For an overview of who uses p1xbraten, you can run `/showgui p1xbratenusage`.
 - enables free movement as spectator while the game is paused
 
 
+## Server Patches
+
+These are the patches that make p1x.pw different from other servers.
+
+### [authservers.patch](./patches/authservers.patch)
+
+- adds `/addauthserver <key_domain> <hostname> <port> <privilege>` server command to add an additional auth backend (other than the master server)
+
+For example, you can put `addauthserver "p1x.pw" "p1x.pw" 28787 "m"` into your `server-init.cfg` to allow users registered with my master server to claim auth on your server.
+
+### [serverlogging.patch](./patches/serverlogging.patch)
+
+Improves logging when running a dedicated server:
+
+- adds `logtime` variable: if 1, all log messages are prepended with ISO date and time (e.g. `[2021-04-06 17:12:05]`)
+- includes CN in connect, disconnect, chat, team chat log messages
+- logs a "join" message including CN and player name
+- logs map changes
+- logs all privilege changes
+
+### [server_ogzs.patch](./patches/server_ogzs.patch)
+
+- allows using slim .ogz files (see https://github.com/sauerbraten/genserverogz) on the server without getting `checkmaps` errors
+
+
 ## Installation
 
 The latest builds are always at https://github.com/sauerbraten/p1xbraten/releases/latest.
-
-*You do not need to download anything but the correct executable in order to run this client mod!*
 
 ### Windows
 
@@ -264,7 +269,20 @@ Download linux_64_client from the link above and put it into bin_unix/ inside of
 
 For easy configuration of the new features, an updated version of the `menus.cfg` file is automatically installed when you start p1xbraten for the first time. The new file brings UI options for added features and also includes various cleanups of the vanilla GUI.
 
-If you do not want to use the p1xbraten menus, execute `/usep1xbratenmenus 0`.
+If you do not want to use the p1xbraten menus, run `/usep1xbratenmenus 0`.
+
+
+## Project Structure
+
+- `patches/` has all the patch files that turn vanilla Sauerbraten into p1xbraten
+- `src/` has the vanilla source tree with all patches already applied
+- `Makefile` has `make` commands to work with the patches and an SVN checkout of vanilla
+- `data/` contains p1xbraten specific cubescript files: each files exist as plain text .cfg file as well as gzipped, xxd'ed file for embedding during compilation
+- `bin/`, `bin64/` and `bin_unix/` are empty and only exist for CI builds
+- `sauerbraten.app/` contains SDL2 for macOS builds
+- `p1xbraten.bat`, `server.sh`, and `start.sh` are custom p1xbraten launch scripts (`start.sh` and `server.sh` use `~/.p1xbraten` as user directory instead of `~/.sauerbraten`)
+- `p1xbraten.vcxproj` is a file so Appveyor can build 32- and 64-bit Windows binaries in a single run
+
 
 ## Building your own binary
 
