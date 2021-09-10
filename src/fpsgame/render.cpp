@@ -241,7 +241,7 @@ namespace game
         }
         if (namesabovehead) {
             if(icons) concatstring(d->info, " ");
-            particle_text(p, d->info, PART_TEXT, 1, team ? (team==1 ? 0x6496FF : 0xFF4B19) : 0x1EC850, 2.0f, 0, icons);
+            particle_text(p, d->info, PART_TEXT, 1, team ? (team==1 ? COL_BLUE : COL_RED) : COL_GREEN, 2.0f, 0, icons);
         }
         if(icons)
         {
@@ -280,13 +280,13 @@ namespace game
         if(d->armour > 0)
         {
             int limit = d->armourtype==A_YELLOW ? 200 : (d->armourtype==A_GREEN ? 100 : 50);
-            int color = d->armourtype==A_YELLOW ? 0xFFC040 : (d->armourtype==A_GREEN ? 0x008C00 : 0x0B5899);
+            int color = d->armourtype==A_YELLOW ? COL_YELLOW : (d->armourtype==A_GREEN ? COL_GREEN : COL_BLUE);
             float size = scale*sqrtf(max(d->armour, limit)/100.0f);
             float fill = float(d->armour)/limit;
             offset += size;
             particle_meter(vec(p).madd(camup, offset), fill, PART_METER, 1, color, 0, size);
         }
-        int color = d->health<=25 ? 0xFF0000 : (d->health<=50 ? 0xFF8000 : (d->health<=100 ? 0x40FF80 : 0x40C0FF));
+        int color = d->health<=25 ? COL_RED : (d->health<=50 ? COL_ORANGE : (d->health<=100 ? COL_GREEN : COL_CYAN));
         float size = scale*sqrtf(max(d->health, d->maxhealth)/100.0f);
         float fill = float(d->health)/d->maxhealth;
         offset += size;

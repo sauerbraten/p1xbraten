@@ -1406,7 +1406,7 @@ namespace game
                 filtertext(text, text, true, true);
                 if(!t || isignored(t->clientnum)) break;
                 if(t->state!=CS_DEAD && t->state!=CS_SPECTATOR)
-                    particle_textcopy(t->abovehead(), text, PART_TEXT, 2000, 0x6496FF, 4.0f, -8);
+                    particle_textcopy(t->abovehead(), text, PART_TEXT, 2000, COL_BLUE, 4.0f, -8);
                 conoutf(CON_TEAMCHAT + (t->state==CS_SPECTATOR ? CON_NONZEN : 0), "\fs\f8[team]\fr %s: \f8%s", chatcolorname(t), text);
                 if(!hasfocus) loopv(chathighlightwords) if(strstr(text, chathighlightwords[i])) { playsoundname(chathighlightsound); break; }
                 break;

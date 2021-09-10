@@ -352,7 +352,7 @@ struct gui : g3d_gui
                     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                     hudshader->set();
                 }
-                if(overlaid[0]) text_(overlaid, xi + xs/12, yi + ys - ys/12 - FONTH, hit ? 0xFF0000 : 0xFFFFFF, hit, hit);
+                if(overlaid[0]) text_(overlaid, xi + xs/12, yi + ys - ys/12 - FONTH, hit ? 0xFF0000 : COL_WHITE, hit, hit);
                 if(!overlaytex) overlaytex = textureload("data/guioverlay.png", 3);
                 gle::color(light);
                 glBindTexture(GL_TEXTURE_2D, overlaytex->id);
@@ -409,7 +409,7 @@ struct gui : g3d_gui
                     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                     hudshader->set();
                 }
-                if(overlaid[0]) text_(overlaid, xi + xs/12, yi + ys - ys/12 - FONTH, hit ? 0xFF0000 : 0xFFFFFF, hit, hit);
+                if(overlaid[0]) text_(overlaid, xi + xs/12, yi + ys - ys/12 - FONTH, hit ? 0xFF0000 : COL_WHITE, hit, hit);
                 if(!overlaytex) overlaytex = textureload("data/guioverlay.png", 3);
                 gle::color(light);
                 glBindTexture(GL_TEXTURE_2D, overlaytex->id);
@@ -455,7 +455,7 @@ struct gui : g3d_gui
                     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                     hudshader->set();
                 }
-                if(overlaid[0]) text_(overlaid, xi + FONTH/2, yi + FONTH/2, hit ? 0xFF0000 : 0xFFFFFF, hit, hit);
+                if(overlaid[0]) text_(overlaid, xi + FONTH/2, yi + FONTH/2, hit ? 0xFF0000 : COL_WHITE, hit, hit);
                 if(!overlaytex) overlaytex = textureload("data/guioverlay.png", 3);
                 gle::color(light);
                 glBindTexture(GL_TEXTURE_2D, overlaytex->id);
@@ -674,7 +674,7 @@ struct gui : g3d_gui
             glBindTexture(GL_TEXTURE_2D, overlaytex->id);
             gle::color(light);
             rect_(x, y, xs, ys, 0);
-            if(title) text_(title, x + xs/12, y + ys - ys/12 - FONTH, hit ? 0xFF0000 : 0xFFFFFF, hit && actionon, hit);
+            if(title) text_(title, x + xs/12, y + ys - ys/12 - FONTH, hit ? 0xFF0000 : COL_WHITE, hit && actionon, hit);
         }
     }        
 
@@ -959,7 +959,7 @@ struct gui : g3d_gui
         tx = 0;
         ty = 0;
         tcurrent = tab;
-        tcolor = 0xFFFFFF;
+        tcolor = COL_WHITE;
         pushlist();
         if(layoutpass) 
         {

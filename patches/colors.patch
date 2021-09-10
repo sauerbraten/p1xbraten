@@ -1,0 +1,815 @@
+Index: src/engine/3dgui.cpp
+===================================================================
+--- src/engine/3dgui.cpp	(revision 6518)
++++ src/engine/3dgui.cpp	(working copy)
+@@ -352,7 +352,7 @@
+                     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                     hudshader->set();
+                 }
+-                if(overlaid[0]) text_(overlaid, xi + xs/12, yi + ys - ys/12 - FONTH, hit ? 0xFF0000 : 0xFFFFFF, hit, hit);
++                if(overlaid[0]) text_(overlaid, xi + xs/12, yi + ys - ys/12 - FONTH, hit ? 0xFF0000 : COL_WHITE, hit, hit);
+                 if(!overlaytex) overlaytex = textureload("data/guioverlay.png", 3);
+                 gle::color(light);
+                 glBindTexture(GL_TEXTURE_2D, overlaytex->id);
+@@ -409,7 +409,7 @@
+                     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                     hudshader->set();
+                 }
+-                if(overlaid[0]) text_(overlaid, xi + xs/12, yi + ys - ys/12 - FONTH, hit ? 0xFF0000 : 0xFFFFFF, hit, hit);
++                if(overlaid[0]) text_(overlaid, xi + xs/12, yi + ys - ys/12 - FONTH, hit ? 0xFF0000 : COL_WHITE, hit, hit);
+                 if(!overlaytex) overlaytex = textureload("data/guioverlay.png", 3);
+                 gle::color(light);
+                 glBindTexture(GL_TEXTURE_2D, overlaytex->id);
+@@ -455,7 +455,7 @@
+                     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                     hudshader->set();
+                 }
+-                if(overlaid[0]) text_(overlaid, xi + FONTH/2, yi + FONTH/2, hit ? 0xFF0000 : 0xFFFFFF, hit, hit);
++                if(overlaid[0]) text_(overlaid, xi + FONTH/2, yi + FONTH/2, hit ? 0xFF0000 : COL_WHITE, hit, hit);
+                 if(!overlaytex) overlaytex = textureload("data/guioverlay.png", 3);
+                 gle::color(light);
+                 glBindTexture(GL_TEXTURE_2D, overlaytex->id);
+@@ -674,7 +674,7 @@
+             glBindTexture(GL_TEXTURE_2D, overlaytex->id);
+             gle::color(light);
+             rect_(x, y, xs, ys, 0);
+-            if(title) text_(title, x + xs/12, y + ys - ys/12 - FONTH, hit ? 0xFF0000 : 0xFFFFFF, hit && actionon, hit);
++            if(title) text_(title, x + xs/12, y + ys - ys/12 - FONTH, hit ? 0xFF0000 : COL_WHITE, hit && actionon, hit);
+         }
+     }
+
+@@ -959,7 +959,7 @@
+         tx = 0;
+         ty = 0;
+         tcurrent = tab;
+-        tcolor = 0xFFFFFF;
++        tcolor = COL_WHITE;
+         pushlist();
+         if(layoutpass)
+         {
+Index: src/engine/menus.cpp
+===================================================================
+--- src/engine/menus.cpp	(revision 6518)
++++ src/engine/menus.cpp	(working copy)
+@@ -2,9 +2,9 @@
+
+ #include "engine.h"
+
+-#define GUI_TITLE_COLOR  0xFFDD88
+-#define GUI_BUTTON_COLOR 0xFFFFFF
+-#define GUI_TEXT_COLOR   0xDDFFDD
++#define GUI_TITLE_COLOR  COL_GRAY
++#define GUI_BUTTON_COLOR COL_WHITE
++#define GUI_TEXT_COLOR   COL_WHITE
+
+ static vec menupos;
+ static int menustart = 0;
+@@ -298,7 +298,7 @@
+
+ void guitextbox(char *text, int *width, int *height, int *color)
+ {
+-    if(cgui && text[0]) cgui->textbox(text, *width ? *width : 12, *height ? *height : 1, *color ? *color : 0xFFFFFF);
++    if(cgui && text[0]) cgui->textbox(text, *width ? *width : 12, *height ? *height : 1, *color ? *color : COL_WHITE);
+ }
+
+ void guitext(char *name, char *icon)
+Index: src/engine/rendergl.cpp
+===================================================================
+--- src/engine/rendergl.cpp	(revision 6518)
++++ src/engine/rendergl.cpp	(working copy)
+@@ -1663,7 +1663,7 @@
+
+ VARR(minimapheight, 0, 0, 2<<16);
+ bvec minimapcolor(0, 0, 0);
+-HVARFR(minimapcolour, 0, 0, 0xFFFFFF,
++HVARFR(minimapcolour, 0, 0, COL_WHITE,
+ {
+     minimapcolor = bvec((minimapcolour>>16)&0xFF, (minimapcolour>>8)&0xFF, minimapcolour&0xFF);
+ });
+Index: src/engine/renderparticles.cpp
+===================================================================
+--- src/engine/renderparticles.cpp	(revision 6518)
++++ src/engine/renderparticles.cpp	(working copy)
+@@ -1446,7 +1446,7 @@
+             if(!editmode)
+             {
+                 defformatstring(ds, "particles %d?", e.attr1);
+-                particle_textcopy(e.o, ds, PART_TEXT, 1, 0x6496FF, 2.0f);
++                particle_textcopy(e.o, ds, PART_TEXT, 1, COL_BLUE, 2.0f);
+             }
+             break;
+     }
+@@ -1538,13 +1538,13 @@
+         loopv(entgroup)
+         {
+             entity &e = *ents[entgroup[i]];
+-            particle_textcopy(e.o, entname(e), PART_TEXT, 1, 0xFF4B19, 2.0f);
++            particle_textcopy(e.o, entname(e), PART_TEXT, 1, COL_RED, 2.0f);
+         }
+         loopv(ents)
+         {
+             entity &e = *ents[i];
+             if(e.type==ET_EMPTY) continue;
+-            particle_textcopy(e.o, entname(e), PART_TEXT, 1, 0x1EC850, 2.0f);
++            particle_textcopy(e.o, entname(e), PART_TEXT, 1, COL_GREEN, 2.0f);
+             regular_particle_splash(PART_EDIT, 2, 40, e.o, 0x3232FF, 0.32f*particlesize/100.0f);
+         }
+     }
+Index: src/engine/rendertext.cpp
+===================================================================
+--- src/engine/rendertext.cpp	(revision 6518)
++++ src/engine/rendertext.cpp	(working copy)
+@@ -221,15 +221,15 @@
+         else stack[sp] = c;
+         switch(c)
+         {
+-            case '0': color = bvec( 64, 255, 128); break;   // green: player talk
+-            case '1': color = bvec( 96, 160, 255); break;   // blue: "echo" command
+-            case '2': color = bvec(255, 192,  64); break;   // yellow: gameplay messages
+-            case '3': color = bvec(255,  64,  64); break;   // red: important errors
+-            case '4': color = bvec(128, 128, 128); break;   // gray
+-            case '5': color = bvec(192,  64, 192); break;   // magenta
+-            case '6': color = bvec(255, 128,   0); break;   // orange
+-            case '7': color = bvec(255, 255, 255); break;   // white
+-            case '8': color = bvec( 96, 240, 255); break;   // cyan
++            case '0': color = bvec::hexcolor(COL_GREEN);   break;  // player talk
++            case '1': color = bvec::hexcolor(COL_BLUE);    break;  // "echo" command
++            case '2': color = bvec::hexcolor(COL_YELLOW);  break;  // gameplay messages
++            case '3': color = bvec::hexcolor(COL_RED);     break;  // important errors
++            case '4': color = bvec::hexcolor(COL_GRAY);    break;
++            case '5': color = bvec::hexcolor(COL_MAGENTA); break;
++            case '6': color = bvec::hexcolor(COL_ORANGE);  break;
++            case '7': color = bvec::hexcolor(COL_WHITE);   break;
++            case '8': color = bvec::hexcolor(COL_CYAN);    break;
+             // provided color: everything else
+         }
+         gle::color(color, a);
+Index: src/fpsgame/capture.h
+===================================================================
+--- src/fpsgame/capture.h	(revision 6518)
++++ src/fpsgame/capture.h	(working copy)
+@@ -366,15 +366,15 @@
+                 rendermodel(&b.light, entities::entmdlname(I_SHELLS+b.ammotype-1), ANIM_MAPMODEL|ANIM_LOOP, ammopos, 0, 0, MDL_SHADOW | MDL_CULL_VFC | MDL_CULL_OCCLUDED);
+             }
+
+-            int tcolor = 0x1EC850, mtype = -1, mcolor = 0xFFFFFF, mcolor2 = 0;
++            int tcolor = COL_GREEN, mtype = -1, mcolor = COL_WHITE, mcolor2 = 0;
+             if(b.owner[0])
+             {
+                 bool isowner = !strcmp(b.owner, player1->team);
+-                if(b.enemy[0]) { mtype = PART_METER_VS; mcolor = 0xFF1932; mcolor2 = 0x3219FF; if(!isowner) swap(mcolor, mcolor2); }
++                if(b.enemy[0]) { mtype = PART_METER_VS; mcolor = COL_RED; mcolor2 = COL_BLUE; if(!isowner) swap(mcolor, mcolor2); }
+                 if(!b.name[0]) formatstring(b.info, "base %d: %s", b.tag, b.owner);
+                 else if(basenumbers) formatstring(b.info, "%s (%d): %s", b.name, b.tag, b.owner);
+                 else formatstring(b.info, "%s: %s", b.name, b.owner);
+-                tcolor = isowner ? 0x6496FF : 0xFF4B19;
++                tcolor = isowner ? COL_BLUE : COL_RED;
+             }
+             else if(b.enemy[0])
+             {
+@@ -381,8 +381,8 @@
+                 if(!b.name[0]) formatstring(b.info, "base %d: %s", b.tag, b.enemy);
+                 else if(basenumbers) formatstring(b.info, "%s (%d): %s", b.name, b.tag, b.enemy);
+                 else formatstring(b.info, "%s: %s", b.name, b.enemy);
+-                if(strcmp(b.enemy, player1->team)) { tcolor = 0xFF4B19; mtype = PART_METER; mcolor = 0xFF1932; }
+-                else { tcolor = 0x6496FF; mtype = PART_METER; mcolor = 0x3219FF; }
++                if(strcmp(b.enemy, player1->team)) { tcolor = COL_RED; mtype = PART_METER; mcolor = COL_RED; }
++                else { tcolor = COL_BLUE; mtype = PART_METER; mcolor = COL_BLUE; }
+             }
+             else if(!b.name[0]) formatstring(b.info, "base %d", b.tag);
+             else if(basenumbers) formatstring(b.info, "%s (%d)", b.name, b.tag);
+@@ -596,7 +596,7 @@
+                 defformatstring(msg, "%d", total);
+                 vec above(b.ammopos);
+                 above.z += AMMOHEIGHT+1.0f;
+-                particle_textcopy(above, msg, PART_TEXT, 2000, isteam(team, player1->team) ? 0x6496FF : 0xFF4B19, 4.0f, -8);
++                particle_textcopy(above, msg, PART_TEXT, 2000, isteam(team, player1->team) ? COL_BLUE : COL_RED, 4.0f, -8);
+             }
+         }
+     }
+Index: src/fpsgame/client.cpp
+===================================================================
+--- src/fpsgame/client.cpp	(revision 6518)
++++ src/fpsgame/client.cpp	(working copy)
+@@ -1341,7 +1341,7 @@
+                 filtertext(text, text, true, true);
+                 if(!t || isignored(t->clientnum)) break;
+                 if(t->state!=CS_DEAD && t->state!=CS_SPECTATOR)
+-                    particle_textcopy(t->abovehead(), text, PART_TEXT, 2000, 0x6496FF, 4.0f, -8);
++                    particle_textcopy(t->abovehead(), text, PART_TEXT, 2000, COL_BLUE, 4.0f, -8);
+                 conoutf(CON_TEAMCHAT, "\fs\f8[team]\fr %s: \f8%s", chatcolorname(t), text);
+                 break;
+             }
+Index: src/fpsgame/collect.h
+===================================================================
+--- src/fpsgame/collect.h	(revision 6518)
++++ src/fpsgame/collect.h	(working copy)
+@@ -524,7 +524,7 @@
+             formatstring(b.info, "%d", totalscore(b.team));
+             vec above(b.tokenpos);
+             above.z += TOKENHEIGHT;
+-            if(b.info[0]) particle_text(above, b.info, PART_TEXT, 1, b.team==team ? 0x6496FF : 0xFF4B19, 2.0f);
++            if(b.info[0]) particle_text(above, b.info, PART_TEXT, 1, b.team==team ? COL_BLUE : COL_RED, 2.0f);
+         }
+         loopv(tokens)
+         {
+Index: src/fpsgame/ctf.h
+===================================================================
+--- src/fpsgame/ctf.h	(revision 6518)
++++ src/fpsgame/ctf.h	(working copy)
+@@ -686,7 +686,7 @@
+                     vec above = vec(pos).addz(3.0f);
+                     abovemodel(above, flagname);
+                     defformatstring(msg, "%d", max(HOLDSECS - counter / 1000, 0));
+-                    particle_textcopy(above, msg, PART_TEXT, 1, f.team == ctfteamflag(player1->team) ? 0x6496FF : 0xFF4B19, 4.0f);
++                    particle_textcopy(above, msg, PART_TEXT, 1, f.team == ctfteamflag(player1->team) ? COL_BLUE : COL_RED, 4.0f);
+                 }
+             }
+             if(m_protect && canaddparticles() && f.owner && insidebase(f, f.owner->feetpos()))
+Index: src/fpsgame/fps.cpp
+===================================================================
+--- src/fpsgame/fps.cpp	(revision 6518)
++++ src/fpsgame/fps.cpp	(working copy)
+@@ -907,7 +907,7 @@
+         flushhudmatrix();
+
+         defformatstring(health, "%d", d->state==CS_DEAD ? 0 : d->health);
+-        bvec healthcolor = bvec::hexcolor(healthcolors && !m_insta ? (d->state==CS_DEAD ? 0x808080 : (d->health<=25 ? 0xFF0000 : (d->health<=50 ? 0xFF8000 : (d->health<=100 ? 0xFFFFFF : 0x40C0FF)))) : 0xFFFFFF);
++        bvec healthcolor = bvec::hexcolor(healthcolors && !m_insta ? (d->state==CS_DEAD ? COL_GRAY : (d->health<=25 ? COL_RED : (d->health<=50 ? COL_ORANGE : (d->health<=100 ? COL_WHITE : COL_CYAN)))) : COL_WHITE);
+         draw_text(health, (HICON_X + HICON_SIZE + HICON_SPACE)/2, HICON_TEXTY/2, healthcolor.r, healthcolor.g, healthcolor.b);
+         if(d->state!=CS_DEAD)
+         {
+@@ -943,9 +943,9 @@
+
+     VARP(gameclock, 0, 0, 1);
+     FVARP(gameclockscale, 1e-3f, 0.75f, 1e3f);
+-    HVARP(gameclockcolour, 0, 0xFFFFFF, 0xFFFFFF);
++    HVARP(gameclockcolour, 0, COL_WHITE, COL_WHITE);
+     VARP(gameclockalpha, 0, 255, 255);
+-    HVARP(gameclocklowcolour, 0, 0xFFC040, 0xFFFFFF);
++    HVARP(gameclocklowcolour, 0, COL_ORANGE, COL_WHITE);
+     VARP(gameclockalign, -1, 0, 1);
+     FVARP(gameclockx, 0, 0.50f, 1);
+     FVARP(gameclocky, 0, 0.03f, 1);
+@@ -1010,7 +1010,7 @@
+         int tw, th; text_bounds(label, tw, th);
+         vec2 textdrawpos = vec2(-tw, -th).div(2);
+         float ammoratio = (float)p->ammo[gun] / itemstats[gun-GUN_SG].add;
+-        bvec color = bvec::hexcolor(p->ammo[gun] == 0 || ammoratio >= 1.0f ? 0xFFFFFF : (ammoratio >= 0.5f ? 0xFFC040 : 0xFF0000));
++        bvec color = bvec::hexcolor(p->ammo[gun] == 0 || ammoratio >= 1.0f ? COL_WHITE : (ammoratio >= 0.5f ? COL_ORANGE : COL_RED));
+         draw_text(label, textdrawpos.x, textdrawpos.y, color.r, color.g, color.b, alpha);
+
+         pophudmatrix();
+@@ -1068,7 +1068,7 @@
+             draw_text("SPECTATOR", w*1800/h - tw - pw, 1650 - th - fh);
+             if(f)
+             {
+-                int color = statuscolor(f, 0xFFFFFF);
++                int color = statuscolor(f, COL_WHITE);
+                 draw_text(colorname(f), w*1800/h - fw - pw, 1650 - fh, (color>>16)&0xFF, (color>>8)&0xFF, color&0xFF);
+             }
+         }
+@@ -1179,7 +1179,7 @@
+         static const float struts[] =       { 7,       7,          12.5f,   14,      7,      8,         14,      7,       24.5f };
+         if(size_t(i) >= sizeof(names)/sizeof(names[0])) return false;
+         g->pushlist();
+-        g->text(names[i], 0xFFFF80, !i ? " " : NULL);
++        g->text(names[i], COL_GRAY, !i ? " " : NULL);
+         if(struts[i]) g->strut(struts[i]);
+         g->mergehits(true);
+         return true;
+@@ -1209,7 +1209,7 @@
+             switch(i)
+             {
+                 case 0:
+-                    if(g->button(" ", 0xFFFFDD, "serverunk")&G3D_UP) return true;
++                    if(g->button(" ", COL_WHITE, "serverunk")&G3D_UP) return true;
+                     break;
+
+                 case 1:
+@@ -1217,23 +1217,23 @@
+                 case 3:
+                 case 4:
+                 case 5:
+-                    if(g->button(" ", 0xFFFFDD)&G3D_UP) return true;
++                    if(g->button(" ", COL_WHITE)&G3D_UP) return true;
+                     break;
+
+                 case 6:
+-                    if(g->buttonf("%s ", 0xFFFFDD, NULL, name)&G3D_UP) return true;
++                    if(g->buttonf("%s ", COL_WHITE, NULL, name)&G3D_UP) return true;
+                     break;
+
+                 case 7:
+-                    if(g->buttonf("%d ", 0xFFFFDD, NULL, port)&G3D_UP) return true;
++                    if(g->buttonf("%d ", COL_WHITE, NULL, port)&G3D_UP) return true;
+                     break;
+
+                 case 8:
+                     if(ping < 0)
+                     {
+-                        if(g->button(sdesc, 0xFFFFDD)&G3D_UP) return true;
++                        if(g->button(sdesc, COL_WHITE)&G3D_UP) return true;
+                     }
+-                    else if(g->buttonf("[%s protocol] ", 0xFFFFDD, NULL, attr.empty() ? "unknown" : (attr[0] < PROTOCOL_VERSION ? "older" : "newer"))&G3D_UP) return true;
++                    else if(g->buttonf("[%s protocol] ", COL_WHITE, NULL, attr.empty() ? "unknown" : (attr[0] < PROTOCOL_VERSION ? "older" : "newer"))&G3D_UP) return true;
+                     break;
+             }
+             return false;
+@@ -1244,7 +1244,7 @@
+             case 0:
+             {
+                 const char *icon = attr.inrange(3) && np >= attr[3] ? "serverfull" : (attr.inrange(4) ? mastermodeicon(attr[4], "serverunk") : "serverunk");
+-                if(g->buttonf("%d ", 0xFFFFDD, icon, ping)&G3D_UP) return true;
++                if(g->buttonf("%d ", COL_WHITE, icon, ping)&G3D_UP) return true;
+                 break;
+             }
+
+@@ -1251,17 +1251,17 @@
+             case 1:
+                 if(attr.length()>=4)
+                 {
+-                    if(g->buttonf(np >= attr[3] ? "\f3%d/%d " : "%d/%d ", 0xFFFFDD, NULL, np, attr[3])&G3D_UP) return true;
++                    if(g->buttonf(np >= attr[3] ? "\f3%d/%d " : "%d/%d ", COL_WHITE, NULL, np, attr[3])&G3D_UP) return true;
+                 }
+-                else if(g->buttonf("%d ", 0xFFFFDD, NULL, np)&G3D_UP) return true;
++                else if(g->buttonf("%d ", COL_WHITE, NULL, np)&G3D_UP) return true;
+                 break;
+
+             case 2:
+-                if(g->buttonf("%s ", 0xFFFFDD, NULL, attr.length()>=2 ? server::modename(attr[1], "") : "")&G3D_UP) return true;
++                if(g->buttonf("%s ", COL_WHITE, NULL, attr.length()>=2 ? server::modename(attr[1], "") : "")&G3D_UP) return true;
+                 break;
+
+             case 3:
+-                if(g->buttonf("%.25s ", 0xFFFFDD, NULL, map)&G3D_UP) return true;
++                if(g->buttonf("%.25s ", COL_WHITE, NULL, map)&G3D_UP) return true;
+                 break;
+
+             case 4:
+@@ -1270,24 +1270,24 @@
+                     int secs = clamp(attr[2], 0, 59*60+59),
+                         mins = secs/60;
+                     secs %= 60;
+-                    if(g->buttonf("%d:%02d ", 0xFFFFDD, NULL, mins, secs)&G3D_UP) return true;
++                    if(g->buttonf("%d:%02d ", COL_WHITE, NULL, mins, secs)&G3D_UP) return true;
+                 }
+-                else if(g->buttonf(" ", 0xFFFFDD)&G3D_UP) return true;
++                else if(g->buttonf(" ", COL_WHITE)&G3D_UP) return true;
+                 break;
+             case 5:
+-                if(g->buttonf("%s%s ", 0xFFFFDD, NULL, attr.length()>=5 ? mastermodecolor(attr[4], "") : "", attr.length()>=5 ? server::mastermodename(attr[4], "") : "")&G3D_UP) return true;
++                if(g->buttonf("%s%s ", COL_WHITE, NULL, attr.length()>=5 ? mastermodecolor(attr[4], "") : "", attr.length()>=5 ? server::mastermodename(attr[4], "") : "")&G3D_UP) return true;
+                 break;
+
+             case 6:
+-                if(g->buttonf("%s ", 0xFFFFDD, NULL, name)&G3D_UP) return true;
++                if(g->buttonf("%s ", COL_WHITE, NULL, name)&G3D_UP) return true;
+                 break;
+
+             case 7:
+-                if(g->buttonf("%d ", 0xFFFFDD, NULL, port)&G3D_UP) return true;
++                if(g->buttonf("%d ", COL_WHITE, NULL, port)&G3D_UP) return true;
+                 break;
+
+             case 8:
+-                if(g->buttonf("%.25s", 0xFFFFDD, NULL, sdesc)&G3D_UP) return true;
++                if(g->buttonf("%.25s", COL_WHITE, NULL, sdesc)&G3D_UP) return true;
+                 break;
+         }
+         return false;
+Index: src/fpsgame/game.h
+===================================================================
+--- src/fpsgame/game.h	(revision 6518)
++++ src/fpsgame/game.h	(working copy)
+@@ -863,5 +863,10 @@
+     extern bool delayspawn(int type);
+ }
+
++// additional colors
++#define COL_MASTER COL_GREEN
++#define COL_AUTH COL_MAGENTA
++#define COL_ADMIN COL_ORANGE
++
+ #endif
+
+Index: src/fpsgame/render.cpp
+===================================================================
+--- src/fpsgame/render.cpp	(revision 6518)
++++ src/fpsgame/render.cpp	(working copy)
+@@ -239,5 +239,5 @@
+-            particle_text(p, d->info, PART_TEXT, 1, team ? (team==1 ? 0x6496FF : 0xFF4B19) : 0x1EC850, 2.0f, 0, icons);
++            particle_text(p, d->info, PART_TEXT, 1, team ? (team==1 ? COL_BLUE : COL_RED) : COL_GREEN, 2.0f, 0, icons);
+         }
+         if(icons)
+         {
+             float tw, th;
+@@ -277,13 +277,13 @@
+         if(d->armour > 0)
+         {
+             int limit = d->armourtype==A_YELLOW ? 200 : (d->armourtype==A_GREEN ? 100 : 50);
+-            int color = d->armourtype==A_YELLOW ? 0xFFC040 : (d->armourtype==A_GREEN ? 0x008C00 : 0x0B5899);
++            int color = d->armourtype==A_YELLOW ? COL_YELLOW : (d->armourtype==A_GREEN ? COL_GREEN : COL_BLUE);
+             float size = scale*sqrtf(max(d->armour, limit)/100.0f);
+             float fill = float(d->armour)/limit;
+             offset += size;
+             particle_meter(vec(p).madd(camup, offset), fill, PART_METER, 1, color, 0, size);
+         }
+-        int color = d->health<=25 ? 0xFF0000 : (d->health<=50 ? 0xFF8000 : (d->health<=100 ? 0x40FF80 : 0x40C0FF));
++        int color = d->health<=25 ? COL_RED : (d->health<=50 ? COL_ORANGE : (d->health<=100 ? COL_GREEN : COL_CYAN));
+         float size = scale*sqrtf(max(d->health, d->maxhealth)/100.0f);
+         float fill = float(d->health)/d->maxhealth;
+         offset += size;
+Index: src/fpsgame/scoreboard.cpp
+===================================================================
+--- src/fpsgame/scoreboard.cpp	(revision 6518)
++++ src/fpsgame/scoreboard.cpp	(working copy)
+@@ -140,10 +140,10 @@
+     {
+         if(d->privilege)
+         {
+-            color = d->privilege>=PRIV_ADMIN ? 0xFF8000 : (d->privilege>=PRIV_AUTH ? 0xC040C0 : 0x40FF80);
++            color = d->privilege>=PRIV_ADMIN ? COL_ADMIN : (d->privilege>=PRIV_AUTH ? COL_AUTH : COL_MASTER);
+             if(d->state==CS_DEAD) color = (color>>1)&0x7F7F7F;
+         }
+-        else if(d->state==CS_DEAD) color = 0x606060;
++        else if(d->state==CS_DEAD) color = COL_GRAY;
+         return color;
+     }
+
+@@ -155,23 +155,23 @@
+             string hostname;
+             if(enet_address_get_host_ip(address, hostname, sizeof(hostname)) >= 0)
+             {
+-                if(servinfo[0]) g.titlef("%.25s", 0xFFFF80, NULL, servinfo);
+-                else g.titlef("%s:%d", 0xFFFF80, NULL, hostname, address->port);
++                if(servinfo[0]) g.titlef("%.25s", COL_WHITE, NULL, servinfo);
++                else g.titlef("%s:%d", COL_WHITE, NULL, hostname, address->port);
+             }
+         }
+
+         g.pushlist();
+         g.spring();
+-        g.text(server::modename(gamemode), 0xFFFF80);
++        g.text(server::modename(gamemode), COL_WHITE);
+         g.separator();
+         const char *mname = getclientmap();
+-        g.text(mname[0] ? mname : "[new map]", 0xFFFF80);
++        g.text(mname[0] ? mname : "[new map]", COL_WHITE);
+         extern int gamespeed;
+-        if(gamespeed != 100) { g.separator(); g.textf("%d.%02dx", 0xFFFF80, NULL, gamespeed/100, gamespeed%100); }
++        if(gamespeed != 100) { g.separator(); g.textf("%d.%02dx", COL_GRAY, NULL, gamespeed/100, gamespeed%100); }
+         if(m_timed && mname[0] && (maplimit >= 0 || intermission))
+         {
+             g.separator();
+-            if(intermission) g.text("intermission", 0xFFFF80);
++            if(intermission) g.text("intermission", COL_WHITE);
+             else
+             {
+                 int secs = max(maplimit-lastmillis+999, 0)/1000, mins = secs/60;
+@@ -178,11 +178,11 @@
+                 secs %= 60;
+                 g.pushlist();
+                 g.strut(mins >= 10 ? 4.5f : 3.5f);
+-                g.textf("%d:%02d", 0xFFFF80, NULL, mins, secs);
++                g.textf("%d:%02d", COL_WHITE, NULL, mins, secs);
+                 g.poplist();
+             }
+         }
+-        if(ispaused()) { g.separator(); g.text("paused", 0xFFFF80); }
++        if(ispaused()) { g.separator(); g.text("paused", COL_GRAY); }
+         g.spring();
+         g.poplist();
+
+@@ -194,8 +194,7 @@
+             if((k%2)==0) g.pushlist(); // horizontal
+
+             scoregroup &sg = *groups[k];
+-            int bgcolor = sg.team && m_teammode ? (isteam(player1->team, sg.team) ? 0x3030C0 : 0xC03030) : 0,
+-                fgcolor = 0xFFFF80;
++            //int bgcolor = sg.team && m_teammode ? (isteam(player1->team, sg.team) ? COL_BLUE : COL_RED) : 0;
+
+             g.pushlist(); // vertical
+             g.pushlist(); // horizontal
+@@ -211,7 +210,7 @@
+             if(sg.team && m_teammode)
+             {
+                 g.pushlist();
+-                g.background(bgcolor, numgroups>1 ? 3 : 5);
++                g.background(COL_BACKGROUND, numgroups>1 ? 3 : 5);
+                 g.strut(1);
+                 g.poplist();
+             }
+@@ -221,7 +220,7 @@
+                 if(o==player1 && highlightscore && (multiplayer(false) || demoplayback || players.length() > 1))
+                 {
+                     g.pushlist();
+-                    g.background(0x808080, numgroups>1 ? 3 : 5);
++                    g.background(COL_BACKGROUND, numgroups>1 ? 3 : 5);
+                 }
+                 const playermodelinfo &mdl = getplayermodelinfo(o);
+                 const char *icon = sg.team && m_teammode ? (isteam(player1->team, sg.team) ? mdl.blueicon : mdl.redicon) : mdl.ffaicon;
+@@ -234,8 +233,8 @@
+             {
+                 g.pushlist(); // vertical
+
+-                if(sg.score>=10000) g.textf("%s: WIN", fgcolor, NULL, sg.team);
+-                else g.textf("%s: %d", fgcolor, NULL, sg.team, sg.score);
++                if(sg.score>=10000) g.textf("%s: WIN", COL_YELLOW, NULL, sg.team);
++                else g.textf("%s: %d", COL_YELLOW, NULL, sg.team, sg.score);
+
+                 g.pushlist(); // horizontal
+             }
+@@ -244,8 +243,8 @@
+             {
+                 g.pushlist();
+                 g.strut(6);
+-                g.text("frags", fgcolor);
+-                loopscoregroup(o, g.textf("%d", 0xFFFFDD, NULL, o->frags));
++                g.text("frags", COL_YELLOW);
++                loopscoregroup(o, g.textf("%d", COL_WHITE, NULL, o->frags));
+                 g.poplist();
+             }
+
+@@ -253,17 +252,17 @@
+             {
+                 g.pushlist();
+                 g.strut(6);
+-                g.text("deaths", fgcolor);
+-                loopscoregroup(o, g.textf("%d", 0xFFFFDD, NULL, o->deaths));
++                g.text("deaths", COL_YELLOW);
++                loopscoregroup(o, g.textf("%d", COL_WHITE, NULL, o->deaths));
+                 g.poplist();
+             }
+
+             g.pushlist();
+-            g.text("name", fgcolor);
++            g.text("name", COL_YELLOW);
+             g.strut(12);
+             loopscoregroup(o,
+             {
+-                g.textf("%s ", statuscolor(o, 0xFFFFDD), NULL, colorname(o));
++                g.textf("%s ", statuscolor(o, COL_WHITE), NULL, colorname(o));
+             });
+             g.poplist();
+
+@@ -275,11 +274,11 @@
+                 {
+                     g.pushlist();
+                     g.strut(6);
+-                    g.text("pj", fgcolor);
++                    g.text("pj", COL_YELLOW);
+                     loopscoregroup(o,
+                     {
+-                        if(o->state==CS_LAGGED) g.text("LAG", 0xFFFFDD);
+-                        else g.textf("%d", 0xFFFFDD, NULL, o->plag);
++                        if(o->state==CS_LAGGED) g.text("LAG", COL_WHITE);
++                        else g.textf("%d", COL_WHITE, NULL, o->plag);
+                     });
+                     g.poplist();
+                 }
+@@ -290,10 +289,10 @@
+                     g.strut(6);
+
+                     g.pushlist();
+-                    g.text("ping", fgcolor);
++                    g.text("ping", COL_YELLOW);
+                     g.space(1);
+                     g.spring();
+-                    g.text("pj", fgcolor);
++                    g.text("pj", COL_YELLOW);
+                     g.poplist();
+
+                     loopscoregroup(o,
+@@ -301,13 +300,13 @@
+                         fpsent *p = o->ownernum >= 0 ? getclient(o->ownernum) : o;
+                         if(!p) p = o;
+                         g.pushlist();
+-                        if(p->state==CS_LAGGED) g.text("LAG", 0xFFFFDD);
++                        if(p->state==CS_LAGGED) g.text("LAG", COL_WHITE);
+                         else
+                         {
+-                            g.textf("%d", 0xFFFFDD, NULL, p->ping);
++                            g.textf("%d", COL_WHITE, NULL, p->ping);
+                             g.space(1);
+                             g.spring();
+-                            g.textf("%d", 0xFFFFDD, NULL, o->plag);
++                            g.textf("%d", COL_WHITE, NULL, o->plag);
+                         }
+                         g.poplist();
+
+@@ -317,14 +316,14 @@
+                 else if(showping)
+                 {
+                     g.pushlist();
+-                    g.text("ping", fgcolor);
++                    g.text("ping", COL_YELLOW);
+                     g.strut(6);
+                     loopscoregroup(o,
+                     {
+                         fpsent *p = o->ownernum >= 0 ? getclient(o->ownernum) : o;
+                         if(!p) p = o;
+-                        if(!showpj && p->state==CS_LAGGED) g.text("LAG", 0xFFFFDD);
+-                        else g.textf("%d", 0xFFFFDD, NULL, p->ping);
++                        if(!showpj && p->state==CS_LAGGED) g.text("LAG", COL_WHITE);
++                        else g.textf("%d", COL_WHITE, NULL, p->ping);
+                     });
+                     g.poplist();
+                 }
+@@ -334,8 +333,8 @@
+             {
+                 g.space(1);
+                 g.pushlist();
+-                g.text("cn", fgcolor);
+-                loopscoregroup(o, g.textf("%d", 0xFFFFDD, NULL, o->clientnum));
++                g.text("cn", COL_YELLOW);
++                loopscoregroup(o, g.textf("%d", COL_WHITE, NULL, o->clientnum));
+                 g.poplist();
+             }
+
+@@ -359,7 +358,7 @@
+                 g.pushlist();
+
+                 g.pushlist();
+-                g.text("spectator", 0xFFFF80, " ");
++                g.text("spectator", COL_YELLOW, " ");
+                 g.strut(12);
+                 loopv(spectators)
+                 {
+@@ -367,9 +366,9 @@
+                     if(o==player1 && highlightscore)
+                     {
+                         g.pushlist();
+-                        g.background(0x808080, 3);
++                        g.background(COL_BACKGROUND, 3);
+                     }
+-                    g.text(colorname(o), statuscolor(o, 0xFFFFDD), "spectator");
++                    g.text(colorname(o), statuscolor(o, COL_WHITE), "spectator");
+                     if(o==player1 && highlightscore) g.poplist();
+                 }
+                 g.poplist();
+@@ -378,7 +377,7 @@
+                 {
+                     g.space(1);
+                     g.pushlist();
+-                    g.text("ping", 0xFFFF80);
++                    g.text("ping", COL_YELLOW);
+                     g.strut(6);
+                     loopv(spectators)
+                     {
+@@ -385,8 +384,8 @@
+                         fpsent *o = spectators[i];
+                         fpsent *p = o->ownernum >= 0 ? getclient(o->ownernum) : o;
+                         if(!p) p = o;
+-                        if(p->state==CS_LAGGED) g.text("LAG", 0xFFFFDD);
+-                        else g.textf("%d", 0xFFFFDD, NULL, p->ping);
++                        if(p->state==CS_LAGGED) g.text("LAG", COL_WHITE);
++                        else g.textf("%d", COL_WHITE, NULL, p->ping);
+                     }
+                     g.poplist();
+                 }
+@@ -393,8 +392,8 @@
+
+                 g.space(1);
+                 g.pushlist();
+-                g.text("cn", 0xFFFF80);
+-                loopv(spectators) g.textf("%d", 0xFFFFDD, NULL, spectators[i]->clientnum);
++                g.text("cn", COL_YELLOW);
++                loopv(spectators) g.textf("%d", COL_WHITE, NULL, spectators[i]->clientnum);
+                 g.poplist();
+
+                 g.poplist();
+@@ -401,21 +400,21 @@
+             }
+             else
+             {
+-                g.textf("%d spectator%s", 0xFFFF80, " ", spectators.length(), spectators.length()!=1 ? "s" : "");
++                g.textf("%d spectator%s", COL_YELLOW, " ", spectators.length(), spectators.length()!=1 ? "s" : "");
+                 loopv(spectators)
+                 {
+                     if((i%3)==0)
+                     {
+                         g.pushlist();
+-                        g.text("", 0xFFFFDD, "spectator");
++                        g.text("", COL_WHITE, "spectator");
+                     }
+                     fpsent *o = spectators[i];
+                     if(o==player1 && highlightscore)
+                     {
+                         g.pushlist();
+-                        g.background(0x808080);
++                        g.background(COL_BACKGROUND);
+                     }
+-                    g.text(colorname(o), statuscolor(o, 0xFFFFDD));
++                    g.text(colorname(o), statuscolor(o, COL_WHITE));
+                     if(o==player1 && highlightscore) g.poplist();
+                     if(i+1<spectators.length() && (i+1)%3) g.space(1);
+                     else g.poplist();
+@@ -475,8 +474,8 @@
+     VARP(hudscorealign, -1, 0, 1);
+     FVARP(hudscorex, 0, 0.50f, 1);
+     FVARP(hudscorey, 0, 0.03f, 1);
+-    HVARP(hudscoreplayercolour, 0, 0x60A0FF, 0xFFFFFF);
+-    HVARP(hudscoreenemycolour, 0, 0xFF4040, 0xFFFFFF);
++    HVARP(hudscoreplayercolour, 0, COL_BLUE, COL_WHITE);
++    HVARP(hudscoreenemycolour, 0, COL_RED, COL_WHITE);
+     VARP(hudscorealpha, 0, 255, 255);
+     VARP(hudscoresep, 0, 200, 1000);
+
+Index: src/fpsgame/weapon.cpp
+===================================================================
+--- src/fpsgame/weapon.cpp	(revision 6518)
++++ src/fpsgame/weapon.cpp	(working copy)
+@@ -329,7 +329,7 @@
+         if(thirdperson)
+         {
+             defformatstring(ds, "%d", damage);
+-            particle_textcopy(d->abovehead(), ds, PART_TEXT, 2000, 0xFF4B19, 4.0f, -8);
++            particle_textcopy(d->abovehead(), ds, PART_TEXT, 2000, COL_RED, 4.0f, -8);
+         }
+     }
+
+Index: src/shared/colors.h
+===================================================================
+--- src/shared/colors.h	(nonexistent)
++++ src/shared/colors.h	(working copy)
+@@ -0,0 +1,11 @@
++#define COL_WHITE 0xFFFFFF
++#define COL_GRAY 0xA0A0A0
++#define COL_BACKGROUND 0x9A9A9A
++
++#define COL_RED 0xED2B2C
++#define COL_BLUE 0x1A76FF
++#define COL_YELLOW 0xFFC040
++#define COL_GREEN 0x40FF80
++#define COL_ORANGE 0xFF8000
++#define COL_MAGENTA 0xC040C0
++#define COL_CYAN 0x60F0FF
+Index: src/shared/cube.h
+===================================================================
+--- src/shared/cube.h	(revision 6518)
++++ src/shared/cube.h	(working copy)
+@@ -55,6 +55,7 @@
+ #include "geom.h"
+ #include "ents.h"
+ #include "command.h"
++#include "colors.h"
+
+ #ifndef STANDALONE
+ #include "glexts.h"
+Index: src/shared/iengine.h
+===================================================================
+--- src/shared/iengine.h	(revision 6518)
++++ src/shared/iengine.h	(working copy)
+@@ -341,17 +341,17 @@
+ };
+
+ extern bool canaddparticles();
+-extern void regular_particle_splash(int type, int num, int fade, const vec &p, int color = 0xFFFFFF, float size = 1.0f, int radius = 150, int gravity = 2, int delay = 0);
++extern void regular_particle_splash(int type, int num, int fade, const vec &p, int color = COL_WHITE, float size = 1.0f, int radius = 150, int gravity = 2, int delay = 0);
+ extern void regular_particle_flame(int type, const vec &p, float radius, float height, int color, int density = 3, float scale = 2.0f, float speed = 200.0f, float fade = 600.0f, int gravity = -15);
+-extern void particle_splash(int type, int num, int fade, const vec &p, int color = 0xFFFFFF, float size = 1.0f, int radius = 150, int gravity = 2);
+-extern void particle_trail(int type, int fade, const vec &from, const vec &to, int color = 0xFFFFFF, float size = 1.0f, int gravity = 20);
+-extern void particle_text(const vec &s, const char *t, int type, int fade = 2000, int color = 0xFFFFFF, float size = 2.0f, int gravity = 0, int offset = 0);
+-extern void particle_textcopy(const vec &s, const char *t, int type, int fade = 2000, int color = 0xFFFFFF, float size = 2.0f, int gravity = 0);
+-extern void particle_texticon(const vec &s, int ix, int iy, float offset, int type, int fade = 2000, int color = 0xFFFFFF, float size = 2.0f, int gravity = 0);
+-extern void particle_icon(const vec &s, int ix, int iy, int type, int fade = 2000, int color = 0xFFFFFF, float size = 2.0f, int gravity = 0);
+-extern void particle_meter(const vec &s, float val, int type, int fade = 1, int color = 0xFFFFFF, int color2 = 0xFFFFF, float size = 2.0f);
+-extern void particle_flare(const vec &p, const vec &dest, int fade, int type, int color = 0xFFFFFF, float size = 0.28f, physent *owner = NULL);
+-extern void particle_fireball(const vec &dest, float max, int type, int fade = -1, int color = 0xFFFFFF, float size = 4.0f);
++extern void particle_splash(int type, int num, int fade, const vec &p, int color = COL_WHITE, float size = 1.0f, int radius = 150, int gravity = 2);
++extern void particle_trail(int type, int fade, const vec &from, const vec &to, int color = COL_WHITE, float size = 1.0f, int gravity = 20);
++extern void particle_text(const vec &s, const char *t, int type, int fade = 2000, int color = COL_WHITE, float size = 2.0f, int gravity = 0, int offset = 0);
++extern void particle_textcopy(const vec &s, const char *t, int type, int fade = 2000, int color = COL_WHITE, float size = 2.0f, int gravity = 0);
++extern void particle_texticon(const vec &s, int ix, int iy, float offset, int type, int fade = 2000, int color = COL_WHITE, float size = 2.0f, int gravity = 0);
++extern void particle_icon(const vec &s, int ix, int iy, int type, int fade = 2000, int color = COL_WHITE, float size = 2.0f, int gravity = 0);
++extern void particle_meter(const vec &s, float val, int type, int fade = 1, int color = COL_WHITE, int color2 = 0xFFFFF, float size = 2.0f);
++extern void particle_flare(const vec &p, const vec &dest, int fade, int type, int color = COL_WHITE, float size = 0.28f, physent *owner = NULL);
++extern void particle_fireball(const vec &dest, float max, int type, int fade = -1, int color = COL_WHITE, float size = 4.0f);
+ extern void removetrackedparticles(physent *owner = NULL);
+
+ // decal
+Index: src/vcpp/sauerbraten.vcxproj
+===================================================================
+--- src/vcpp/sauerbraten.vcxproj	(revision 6518)
++++ src/vcpp/sauerbraten.vcxproj	(working copy)
+@@ -421,18 +421,19 @@
+     <ClInclude Include="..\engine\obj.h" />
+     <ClInclude Include="..\engine\ragdoll.h" />
+     <ClInclude Include="..\engine\rendertarget.h" />
+     <ClInclude Include="..\engine\skelmodel.h" />
+     <ClInclude Include="..\engine\smd.h" />
+     <ClInclude Include="..\engine\textedit.h" />
+     <ClInclude Include="..\engine\texture.h" />
+     <ClInclude Include="..\engine\vertmodel.h" />
+     <ClInclude Include="..\shared\command.h" />
++    <ClInclude Include="..\shared\colors.h" />
+     <ClInclude Include="..\shared\cube.h" />
+     <ClInclude Include="..\shared\ents.h" />
+     <ClInclude Include="..\shared\geom.h" />
+     <ClInclude Include="..\shared\glemu.h" />
+     <ClInclude Include="..\shared\glexts.h" />
+     <ClInclude Include="..\shared\iengine.h" />
+     <ClInclude Include="..\shared\igame.h" />
+     <ClInclude Include="..\shared\tools.h" />
+     <ClInclude Include="..\fpsgame\ai.h" />

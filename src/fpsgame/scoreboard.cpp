@@ -1,7 +1,6 @@
 // creation of scoreboard
 #include "game.h"
 #include "weaponstats.h"
-#include "colors.h"
 
 namespace game
 {
@@ -509,8 +508,8 @@ namespace game
     VARP(hudscorealign, -1, 0, 1);
     FVARP(hudscorex, 0, 0.50f, 1);
     FVARP(hudscorey, 0, 0.03f, 1);
-    HVARP(hudscoreplayercolour, 0, COL_BLUE, 0xFFFFFF);
-    HVARP(hudscoreenemycolour, 0, COL_RED, 0xFFFFFF);
+    HVARP(hudscoreplayercolour, 0, COL_BLUE, COL_WHITE);
+    HVARP(hudscoreenemycolour, 0, COL_RED, COL_WHITE);
     VARP(hudscorealpha, 0, 255, 255);
     VARP(hudscoresep, 0, 200, 1000);
 

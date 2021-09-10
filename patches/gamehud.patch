@@ -1,3 +1,5 @@
+NOTE: This patch relies on colors.patch!
+
 Index: src/engine/main.cpp
 ===================================================================
 --- src/engine/main.cpp	(revision 6496)
@@ -124,7 +126,7 @@ Index: src/fpsgame/fps.cpp
 -            draw_text("SPECTATOR", w*1800/h - tw - pw, 1650 - th - fh);
 -            if(f)
 -            {
--                int color = statuscolor(f, 0xFFFFFF);
+-                int color = statuscolor(f, COL_WHITE);
 -                draw_text(colorname(f), w*1800/h - fw - pw, 1650 - fh, (color>>16)&0xFF, (color>>8)&0xFF, color&0xFF);
 -            }
 -        }

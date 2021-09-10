@@ -55,6 +55,7 @@
 #include "geom.h"
 #include "ents.h"
 #include "command.h"
+#include "colors.h"
 
 #ifndef STANDALONE
 #include "glexts.h"

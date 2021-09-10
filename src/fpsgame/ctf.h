@@ -686,7 +686,7 @@ struct ctfclientmode : clientmode
                     vec above = vec(pos).addz(3.0f);
                     abovemodel(above, flagname);
                     defformatstring(msg, "%d", max(HOLDSECS - counter / 1000, 0));
-                    particle_textcopy(above, msg, PART_TEXT, 1, f.team == ctfteamflag(player1->team) ? 0x6496FF : 0xFF4B19, 4.0f);
+                    particle_textcopy(above, msg, PART_TEXT, 1, f.team == ctfteamflag(player1->team) ? COL_BLUE : COL_RED, 4.0f);
                 }
             }
             if(m_protect && canaddparticles() && f.owner && insidebase(f, f.owner->feetpos()))

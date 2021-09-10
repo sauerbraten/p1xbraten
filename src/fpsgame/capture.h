@@ -366,23 +366,23 @@ struct captureclientmode : clientmode
                 rendermodel(&b.light, entities::entmdlname(I_SHELLS+b.ammotype-1), ANIM_MAPMODEL|ANIM_LOOP, ammopos, 0, 0, MDL_SHADOW | MDL_CULL_VFC | MDL_CULL_OCCLUDED);
             }
 
-            int tcolor = 0x1EC850, mtype = -1, mcolor = 0xFFFFFF, mcolor2 = 0;
+            int tcolor = COL_GREEN, mtype = -1, mcolor = COL_WHITE, mcolor2 = 0;
             if(b.owner[0])
             {
                 bool isowner = !strcmp(b.owner, player1->team);
-                if(b.enemy[0]) { mtype = PART_METER_VS; mcolor = 0xFF1932; mcolor2 = 0x3219FF; if(!isowner) swap(mcolor, mcolor2); }
+                if(b.enemy[0]) { mtype = PART_METER_VS; mcolor = COL_RED; mcolor2 = COL_BLUE; if(!isowner) swap(mcolor, mcolor2); }
                 if(!b.name[0]) formatstring(b.info, "base %d: %s", b.tag, b.owner);
                 else if(basenumbers) formatstring(b.info, "%s (%d): %s", b.name, b.tag, b.owner);
                 else formatstring(b.info, "%s: %s", b.name, b.owner);
-                tcolor = isowner ? 0x6496FF : 0xFF4B19;
+                tcolor = isowner ? COL_BLUE : COL_RED;
             }
             else if(b.enemy[0])
             {
                 if(!b.name[0]) formatstring(b.info, "base %d: %s", b.tag, b.enemy);
                 else if(basenumbers) formatstring(b.info, "%s (%d): %s", b.name, b.tag, b.enemy);
                 else formatstring(b.info, "%s: %s", b.name, b.enemy);
-                if(strcmp(b.enemy, player1->team)) { tcolor = 0xFF4B19; mtype = PART_METER; mcolor = 0xFF1932; }
-                else { tcolor = 0x6496FF; mtype = PART_METER; mcolor = 0x3219FF; }
+                if(strcmp(b.enemy, player1->team)) { tcolor = COL_RED; mtype = PART_METER; mcolor = COL_RED; }
+                else { tcolor = COL_BLUE; mtype = PART_METER; mcolor = COL_BLUE; }
             }
             else if(!b.name[0]) formatstring(b.info, "base %d", b.tag);
             else if(basenumbers) formatstring(b.info, "%s (%d)", b.name, b.tag);
@@ -596,7 +596,7 @@ struct captureclientmode : clientmode
                 defformatstring(msg, "%d", total);
                 vec above(b.ammopos);
                 above.z += AMMOHEIGHT+1.0f;
-                particle_textcopy(above, msg, PART_TEXT, 2000, isteam(team, player1->team) ? 0x6496FF : 0xFF4B19, 4.0f, -8);
+                particle_textcopy(above, msg, PART_TEXT, 2000, isteam(team, player1->team) ? COL_BLUE : COL_RED, 4.0f, -8);
             }
         }
     }

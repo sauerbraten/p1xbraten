@@ -221,15 +221,15 @@ static void text_color(char c, char *stack, int size, int &sp, bvec color, int a
         else stack[sp] = c;
         switch(c)
         {
-            case '0': color = bvec( 64, 255, 128); break;   // green: player talk
-            case '1': color = bvec( 46, 130, 255); break;   // blue: "echo" command
-            case '2': color = bvec(255, 192,  64); break;   // yellow: gameplay messages 
-            case '3': color = bvec(237,  43,  44); break;   // red: important errors
-            case '4': color = bvec(128, 128, 128); break;   // gray
-            case '5': color = bvec(192,  64, 192); break;   // magenta
-            case '6': color = bvec(255, 128,   0); break;   // orange
-            case '7': color = bvec(255, 255, 255); break;   // white
-            case '8': color = bvec( 96, 240, 255); break;   // cyan
+            case '0': color = bvec::hexcolor(COL_GREEN);   break;  // player talk
+            case '1': color = bvec::hexcolor(COL_BLUE);    break;  // "echo" command
+            case '2': color = bvec::hexcolor(COL_YELLOW);  break;  // gameplay messages
+            case '3': color = bvec::hexcolor(COL_RED);     break;  // important errors
+            case '4': color = bvec::hexcolor(COL_GRAY);    break;
+            case '5': color = bvec::hexcolor(COL_MAGENTA); break;
+            case '6': color = bvec::hexcolor(COL_ORANGE);  break;
+            case '7': color = bvec::hexcolor(COL_WHITE);   break;
+            case '8': color = bvec::hexcolor(COL_CYAN);    break;
             // provided color: everything else
         }
         gle::color(color, a);
