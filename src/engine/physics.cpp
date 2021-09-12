@@ -1573,7 +1573,8 @@ VARP(maxroll, 0, 0, 20);
 FVAR(straferoll, 0, 0.033f, 90);
 FVAR(faderoll, 0, 0.95f, 1);
 VAR(floatspeed, 1, 100, 10000);
-VAR(playervel, 0, 0, -1);
+VAR(playerspeed, 0, 0, -1);
+FVAR(circlebonusscale, 1, 3.0f, 10);
 
 void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curtime)
 {
@@ -1652,7 +1653,7 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
                 float maxspeed = (pl->maxspeed*nostrafebonus*slidebonus);
                 float projspeed = vec(pl->vel.x, pl->vel.y, 0).dot2(m);
                 float addspeed = clamp(maxspeed-projspeed, 0.0f, maxspeed);
-                vec circlebonus = vec(m).mul(3*addspeed);
+                vec circlebonus = vec(m).mul(circlebonusscale*addspeed);
 
                 d.mul(nostrafebonus * slidebonus).add(circlebonus);
             }
@@ -1661,7 +1662,7 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
 
     float fric = water && !floating ? 20.0f : (pl->physstate >= PHYS_SLOPE || floating ? 6.0f : 30.0f);
     pl->vel.lerp(d, pl->vel, pow(1 - 1/fric, curtime/20.0f));
-    playervel = int(pl->vel.magnitude2());
+    playerspeed = int(pl->vel.magnitude2());
 // old fps friction
 //    float friction = water && !floating ? 20.0f : (pl->physstate >= PHYS_SLOPE || floating ? 6.0f : 30.0f);
 //    float fpsfric = min(curtime/(20.0f*friction), 1.0f);
