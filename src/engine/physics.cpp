@@ -1643,7 +1643,19 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
             {
                 if(pl==player) d.mul(floatspeed/100.0f);
             }
-            else if(!water && allowmove) d.mul((pl->move && !pl->strafe ? 1.3f : 1.0f) * (pl->physstate < PHYS_SLOPE ? 1.3f : 1.0f));
+            else if(!water && allowmove)
+            {
+                float nostrafebonus = pl->move && !pl->strafe ? 1.3f : 1.0f;
+                float slidebonus = pl->physstate < PHYS_SLOPE ? 1.3f : 1.0f;
+
+                // Quake 3 style circle walk bonus, similar to air logic above
+                float maxspeed = (pl->maxspeed*nostrafebonus*slidebonus);
+                float projspeed = vec(pl->vel.x, pl->vel.y, 0).dot2(m);
+                float addspeed = clamp(maxspeed-projspeed, 0.0f, maxspeed);
+                vec circlebonus = vec(m).mul(3*addspeed);
+
+                d.mul(nostrafebonus * slidebonus).add(circlebonus);
+            }
         }
     }
 
