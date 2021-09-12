@@ -1620,43 +1620,26 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
         m.normalize();
     }
 
-    vec d;
-
-    if(pl->physstate==PHYS_FALL) // when in the air, use logic from https://github.com/id-Software/Quake-III-Arena/blob/dbe4ddb10315479fc00086f08e25d968b4b43c49/code/game/bg_pmove.c#L240
+    vec d = vec(m);
+    d.mul(pl->maxspeed);
+    if(pl->type==ENT_PLAYER)
     {
-        // m ~ Quake's wishdir
-        const float maxspeed = pl->maxspeed*1.3f*1.3f; // Quake's wishspeed (set to vanilla's maximum speed, i.e. when jumping straight forward, see below)
-        d = vec(pl->vel.x, pl->vel.y, 0); // ~ Quake's pm->ps->velocity
-        float projspeed = d.dot2(m); // ~ Quake's currentspeed
-        float addspeed = clamp(maxspeed-projspeed, 0.0f, maxspeed);
-        // change X and Y using this logic, but let vanilla gravity to its thing to Z
-        m.x*=addspeed;
-        m.y*=addspeed;
-        d.add(m);
-    }
-    else
-    {
-        d = vec(m);
-        d.mul(pl->maxspeed);
-        if(pl->type==ENT_PLAYER)
+        if(floating)
         {
-            if(floating)
-            {
-                if(pl==player) d.mul(floatspeed/100.0f);
-            }
-            else if(!water && allowmove)
-            {
-                float nostrafebonus = pl->move && !pl->strafe ? 1.3f : 1.0f;
-                float slidebonus = pl->physstate < PHYS_SLOPE ? 1.3f : 1.0f;
+            if(pl==player) d.mul(floatspeed/100.0f);
+        }
+        else if(!water && allowmove)
+        {
+            float nostrafebonus = pl->move && !pl->strafe ? 1.3f : 1.0f;
+            float fallslidebonus = pl->physstate < PHYS_SLOPE ? 1.3f : 1.0f;
 
-                // Quake 3 style circle walk bonus, similar to air logic above
-                float maxspeed = (pl->maxspeed*nostrafebonus*slidebonus);
-                float projspeed = vec(pl->vel.x, pl->vel.y, 0).dot2(m);
-                float addspeed = clamp(maxspeed-projspeed, 0.0f, maxspeed);
-                vec circlebonus = vec(m).mul(circlebonusscale*addspeed);
+            // Quake 3 style circle walk bonus, similar to air logic above
+            float maxspeed = pl->maxspeed * nostrafebonus * fallslidebonus;
+            float projspeed = vec(pl->vel.x, pl->vel.y, 0).dot2(m);
+            float addspeed = clamp(maxspeed-projspeed, 0.0f, maxspeed);
+            vec circlebonus = vec(m).mul(circlebonusscale*addspeed);
 
-                d.mul(nostrafebonus * slidebonus).add(circlebonus);
-            }
+            d.mul(nostrafebonus * fallslidebonus).add(circlebonus);
         }
     }
 
