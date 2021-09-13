@@ -1574,7 +1574,8 @@ FVAR(straferoll, 0, 0.033f, 90);
 FVAR(faderoll, 0, 0.95f, 1);
 VAR(floatspeed, 1, 100, 10000);
 VAR(playerspeed, 0, 0, -1);
-FVAR(circlebonusscale, 1, 3.0f, 10);
+FVAR(circlemoveaccel, 0, 1.0f, 5); // 0 = vanilla cornering, 1.0 compensates sauer's cornering slowdown. this gives air control, kinda.
+FVAR(strafejumpaccel, 0, 2.0f, 10); // 0 = vanilla, disabled strafe jumping
 
 void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curtime)
 {
@@ -1633,14 +1634,24 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
         {
             float nostrafebonus = pl->move && !pl->strafe ? 1.3f : 1.0f;
             float fallslidebonus = pl->physstate < PHYS_SLOPE ? 1.3f : 1.0f;
+            d.mul(nostrafebonus * fallslidebonus);
 
-            // Quake 3 style circle walk bonus, similar to air logic above
+            // Quake 3 style circle walk and strafe jumping bonus, based on https://github.com/id-Software/Quake-III-Arena/blob/dbe4ddb10315479fc00086f08e25d968b4b43c49/code/game/bg_pmove.c#L240
             float maxspeed = pl->maxspeed * nostrafebonus * fallslidebonus;
-            float projspeed = vec(pl->vel.x, pl->vel.y, 0).dot2(m);
+            vec playervel = vec(pl->vel.x, pl->vel.y, 0);
+            float projspeed = playervel.dot2(m);
             float addspeed = clamp(maxspeed-projspeed, 0.0f, maxspeed);
-            vec circlebonus = vec(m).mul(circlebonusscale*addspeed);
 
-            d.mul(nostrafebonus * fallslidebonus).add(circlebonus);
+            // circle move bonus scales up the player's inputs
+            vec circlemovebonus = vec(m).mul(addspeed*circlemoveaccel);
+            d.add(circlemovebonus);
+
+            if(pl->physstate==PHYS_FALL && pl->strafe)
+            {
+                // strafe jumping bonus scales up the player's existing velocity
+                vec strafejumpbonus  = playervel.normalize().mul(addspeed*strafejumpaccel);
+                d.add(strafejumpbonus);
+            }
         }
     }
 
