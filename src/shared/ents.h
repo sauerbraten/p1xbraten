@@ -77,23 +77,23 @@ struct physent                                  // base entity type, can be affe
 
     ushort timeinair;
     uchar inwater;
-    bool jumping, hovering;
+    bool jumping, jumped, hovering;
     schar move, strafe, vertical;
 
     uchar physstate;                            // one of PHYS_* above
     uchar state, editstate;                     // one of CS_* above
     uchar type;                                 // one of ENT_* above
-    uchar collidetype;                          // one of COLLIDE_* above           
+    uchar collidetype;                          // one of COLLIDE_* above
 
     bool blocked;                               // used by physics to signal ai
 
-    physent() : o(0, 0, 0), deltapos(0, 0, 0), newpos(0, 0, 0), yaw(0), pitch(0), roll(0), maxspeed(100), 
+    physent() : o(0, 0, 0), deltapos(0, 0, 0), newpos(0, 0, 0), yaw(0), pitch(0), roll(0), maxspeed(100),
                radius(4.1f), eyeheight(14), aboveeye(1), xradius(4.1f), yradius(4.1f), zmargin(0),
                state(CS_ALIVE), editstate(CS_ALIVE), type(ENT_PLAYER),
                collidetype(COLLIDE_ELLIPSE),
                blocked(false)
                { reset(); }
-              
+
     void resetinterp()
     {
         newpos = o;
@@ -105,6 +105,7 @@ struct physent                                  // base entity type, can be affe
         inwater = 0;
         timeinair = 0;
         jumping = false;
+        jumped = false;
         hovering = false;
         strafe = move = 0;
         physstate = PHYS_FALL;
@@ -115,7 +116,7 @@ struct physent                                  // base entity type, can be affe
     vec feetpos(float offset = 0) const { return vec(o).add(vec(0, 0, offset - eyeheight)); }
     vec headpos(float offset = 0) const { return vec(o).add(vec(0, 0, offset)); }
 
-    bool maymove() const { return timeinair || physstate < PHYS_FLOOR || vel.squaredlen() > 1e-4f || deltapos.squaredlen() > 1e-4f; } 
+    bool maymove() const { return timeinair || physstate < PHYS_FLOOR || vel.squaredlen() > 1e-4f || deltapos.squaredlen() > 1e-4f; }
 };
 
 enum
@@ -207,8 +208,8 @@ struct dynent : physent                         // animated characters, or chara
     uchar occluded;
 
     dynent() : ragdoll(NULL), query(NULL), lastrendered(0), occluded(0)
-    { 
-        reset(); 
+    {
+        reset();
     }
 
     ~dynent()
@@ -218,13 +219,13 @@ struct dynent : physent                         // animated characters, or chara
         if(ragdoll) cleanragdoll(this);
 #endif
     }
-               
+
     void stopmoving()
     {
-        k_left = k_right = k_forward = k_backward = k_up = k_down = jumping = hovering = false;
+        k_left = k_right = k_forward = k_backward = k_up = k_down = jumping = jumped = hovering = false;
         move = strafe = 0;
     }
-        
+
     void reset()
     {
         physent::reset();

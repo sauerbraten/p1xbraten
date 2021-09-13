@@ -1593,6 +1593,7 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
         if(pl->jumping && allowmove)
         {
             pl->jumping = false;
+            pl->jumped = true;
 
             pl->vel.z = max(pl->vel.z, JUMPVEL); // physics impulse upwards
             if(water) { pl->vel.x /= 8.0f; pl->vel.y /= 8.0f; } // dampen velocity change even harder, gives correct water feel
@@ -1724,6 +1725,7 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
         {
             game::physicstrigger(pl, local, -1, 0);
         }
+        if(timeinair && !pl->timeinair) pl->jumped = false;
     }
 
     if(pl->state==CS_ALIVE) updatedynentcache(pl);
@@ -2037,7 +2039,15 @@ dir(right,    strafe, -1, k_right, k_left);
 dir(up,       vertical,  1, k_up,       k_down);
 dir(down,     vertical, -1, k_down,     k_up);
 
-ICOMMAND(jump,   "D", (int *down), { if(!*down || game::canjump()) player->jumping = *down!=0; });
+VARP(jumpqueueing, 0, 0, 1);
+ICOMMAND(jump,   "D", (int *down), {
+    if(jumpqueueing)
+    {
+        if(player->physstate==PHYS_FALL && !player->jumped) return; // can't queue a jump when not currently in a jump
+        if(*down && game::canjump()) player->jumping = true;
+    }
+    else if(!*down || game::canjump()) player->jumping = *down!=0;
+});
 ICOMMAND(hover,  "D", (int *down), { if(!*down || game::canhover()) player->hovering = *down!=0; });
 ICOMMAND(attack, "D", (int *down), { game::doattack(*down!=0); });
 

@@ -459,6 +459,7 @@ namespace game
             disablezoom();
             if(!restore) loopi(NUMGUNS) savedammo[i] = player1->ammo[i];
             d->attacking = false;
+            d->jumping = false;
             //d->pitch = 0;
             d->roll = 0;
             playsound(S_DIE1+rnd(2));
