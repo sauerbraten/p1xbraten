@@ -1646,11 +1646,11 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
             vec circlemovebonus = vec(m).mul(addspeed*circlemoveaccel);
             d.add(circlemovebonus);
 
-            if(pl->physstate==PHYS_FALL && pl->strafe)
+            if(pl->physstate==PHYS_FALL && pl->move && pl->strafe)
             {
                 // strafe jumping bonus scales up the player's existing velocity
-                vec strafejumpbonus  = playervel.normalize().mul(addspeed*strafejumpaccel);
-                d.add(strafejumpbonus);
+                vec strafejumpbonus = m.mul(addspeed*strafejumpaccel);
+                d = playervel.add(strafejumpbonus);
             }
         }
     }
