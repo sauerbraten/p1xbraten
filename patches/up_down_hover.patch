@@ -95,6 +95,15 @@ Index: src/fpsgame/fps.cpp
      bool allowmove(physent *d)
      {
          if(d->type!=ENT_PLAYER) return true;
+@@ -445,7 +450,7 @@
+         }
+         else
+         {
+-            d->move = d->strafe = 0;
++            d->move = d->strafe = d->vertical = 0;
+             d->resetinterp();
+             d->smoothmillis = 0;
+             playsound(S_DIE1+rnd(2), &d->o);
 Index: src/rpggame/rpg.cpp
 ===================================================================
 --- src/rpggame/rpg.cpp	(revision 6518)
@@ -122,14 +131,16 @@ Index: src/shared/ents.h
 
      uchar physstate;                            // one of PHYS_* above
      uchar state, editstate;                     // one of CS_* above
-@@ -105,6 +105,7 @@
+@@ -105,7 +105,8 @@
          inwater = 0;
          timeinair = 0;
          jumping = false;
+-        strafe = move = 0;
 +        hovering = false;
-         strafe = move = 0;
++        strafe = move = vertical =0;
          physstate = PHYS_FALL;
          vel = falling = vec(0, 0, 0);
+         floor = vec(0, 0, 1);
 @@ -196,7 +197,7 @@
 
  struct dynent : physent                         // animated characters, or characters that can receive input
@@ -139,15 +150,17 @@ Index: src/shared/ents.h
 
      entitylight light;
      animinterpinfo animinterp[MAXANIMPARTS];
-@@ -220,7 +221,7 @@
+@@ -220,8 +221,8 @@
 
      void stopmoving()
      {
 -        k_left = k_right = k_up = k_down = jumping = false;
+-        move = strafe = 0;
 +        k_left = k_right = k_forward = k_backward = k_up = k_down = jumping = hovering = false;
-         move = strafe = 0;
++        move = strafe = vertical = 0;
      }
 
+     void reset()
 Index: src/shared/igame.h
 ===================================================================
 --- src/shared/igame.h	(revision 6518)

@@ -465,7 +465,7 @@ namespace game
         }
         else
         {
-            d->move = d->strafe = 0;
+            d->move = d->strafe = d->vertical = 0;
             d->resetinterp();
             d->smoothmillis = 0;
             playsound(S_DIE1+rnd(2), &d->o);

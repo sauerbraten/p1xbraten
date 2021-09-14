@@ -106,7 +106,7 @@ struct physent                                  // base entity type, can be affe
         timeinair = 0;
         jumping = false;
         hovering = false;
-        strafe = move = 0;
+        strafe = move = vertical =0;
         physstate = PHYS_FALL;
         vel = falling = vec(0, 0, 0);
         floor = vec(0, 0, 1);
@@ -222,7 +222,7 @@ struct dynent : physent                         // animated characters, or chara
     void stopmoving()
     {
         k_left = k_right = k_forward = k_backward = k_up = k_down = jumping = hovering = false;
-        move = strafe = 0;
+        move = strafe = vertical = 0;
     }
         
     void reset()
