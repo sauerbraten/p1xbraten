@@ -1577,6 +1577,7 @@ VAR(playerspeed, 0, 0, -1);
 FVAR(circlemoveaccel, 0, 1.0f, 5); // 0 = vanilla cornering, 1.0 compensates sauer's cornering slowdown. this gives air control, kinda.
 FVAR(strafejumpaccel, 0, 2.0f, 10); // 0 = vanilla, disabled strafe jumping
 VAR(strafejumpwithcirclemovebonus, 0, 0, 1);
+VAR(strafejumprequiremovekey, 0, 0, 1);
 
 void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curtime)
 {
@@ -1647,7 +1648,7 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
             vec circlemovebonus = vec(m).mul(addspeed*circlemoveaccel);
             d.add(circlemovebonus);
 
-            if(pl->physstate==PHYS_FALL && pl->move && pl->strafe)
+            if(pl->physstate==PHYS_FALL && pl->strafe && (!strafejumprequiremovekey || pl->move))
             {
                 // strafe jumping bonus scales up the player's existing velocity
                 vec strafejumpbonus = m.mul(addspeed*strafejumpaccel);
