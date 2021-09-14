@@ -6,7 +6,7 @@ Index: src/engine/main.cpp
  }
 
  VAR(numcpus, 1, 1, 16);
-+VARP(minimizedframes, 0, 0, 1);
++MOD(VARP, minimizedframes, 0, 0, 1);
 
  int main(int argc, char **argv)
  {

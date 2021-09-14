@@ -226,7 +226,7 @@ namespace game
 #endif
 
     VARP(statusicons, 0, 1, 1);
-    VARP(namesabovehead, 0, 1, 1);
+    MOD(VARP, namesabovehead, 0, 1, 1);
 
     void renderstatusicons(fpsent *d, int team, float yoffset)
     {

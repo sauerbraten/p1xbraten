@@ -140,25 +140,16 @@ Index: src/fpsgame/scoreboard.cpp
 
  namespace game
  {
-@@ -7,7 +8,7 @@
-     VARP(showservinfo, 0, 1, 1);
-     VARP(showclientnum, 0, 0, 1);
-     VARP(showpj, 0, 0, 1);
--    VARP(showping, 0, 1, 2);
-+    VARP(showping, 0, 1, 1);
-     VARP(showspectators, 0, 1, 1);
-     VARP(showspectatorping, 0, 0, 1);
-     VARP(highlightscore, 0, 1, 1);
 @@ -14,6 +15,12 @@
      VARP(showconnecting, 0, 0, 1);
      VARP(hidefrags, 0, 1, 1);
      VARP(showdeaths, 0, 0, 1);
-+    VARP(showsuicides, 0, 0, 1);
-+    VARP(showflags, 0, 0, 1);
-+    VARP(showkpd, 0, 0, 1);
-+    VARP(showaccuracy, 0, 0, 1);
-+    VARP(showdamage, 0, 0, 2);
-+    VARP(showdamagereceived, 0, 0, 1);
++    MOD(VARP, showsuicides, 0, 0, 1);
++    MOD(VARP, showflags, 0, 0, 1);
++    MOD(VARP, showkpd, 0, 0, 1);
++    MOD(VARP, showaccuracy, 0, 0, 1);
++    MOD(VARP, showdamage, 0, 0, 2);
++    MOD(VARP, showdamagereceived, 0, 0, 1);
 
      static hashset<teaminfo> teaminfos;
 

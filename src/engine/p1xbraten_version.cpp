@@ -1,6 +1,6 @@
 #include "engine.h"
 
-SVARP(p1xbratenversion, "");
+MOD(SVARP, p1xbratenversion, "");
 
 void lockversion()
 {

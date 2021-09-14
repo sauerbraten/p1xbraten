@@ -35,7 +35,7 @@ Index: src/fpsgame/client.cpp
 
      ICOMMAND(servcmd, "C", (char *cmd), addmsg(N_SERVCMD, "rs", cmd));
 
-+    SVARP(chathighlightsound, "free/tick");
++    MOD(SVARP, chathighlightsound, "free/tick");
 +    vector<const char *> chathighlightwords;
 +    ICOMMAND(addchathighlightword, "s", (char *text), chathighlightwords.add(newstring(text)));
 +

@@ -62,7 +62,7 @@ Index: src/fpsgame/client.cpp
      ICOMMAND(unignore, "s", (char *arg), unignore(parseplayer(arg)));
      ICOMMAND(isignored, "s", (char *arg), intret(isignored(parseplayer(arg)) ? 1 : 0));
 
-+    VARFP(zenmode, 0, 0, 1, {
++    MOD(VARFP, zenmode, 0, 0, 1, {
 +        if(zenmode)
 +        {
 +            if(miniconfilter&CON_NONZEN) miniconfilter -= CON_NONZEN;

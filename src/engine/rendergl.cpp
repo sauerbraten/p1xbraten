@@ -2072,7 +2072,7 @@ void cleardamagescreen()
     loopi(8) damagedirs[i] = 0;
 }
 
-VARP(fullconalpha, 1, 50, 100);
+MOD(VARP, fullconalpha, 1, 50, 100);
 
 void drawfullconsoleshade(int w, int h)
 {
@@ -2098,7 +2098,7 @@ VARP(crosshairsize, 0, 15, 50);
 VARP(cursorsize, 0, 30, 50);
 VARP(crosshairfx, 0, 1, 1);
 VARP(crosshaircolors, 0, 1, 1);
-HVARP(crosshaircolor, 0, 0xFFFFFF, 0xFFFFFF);
+MOD(HVARP, crosshaircolor, 0, 0xFFFFFF, 0xFFFFFF);
 
 #define MAXCROSSHAIRS 4
 static Texture *crosshairs[MAXCROSSHAIRS] = { NULL, NULL, NULL, NULL };

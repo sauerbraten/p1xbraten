@@ -1041,7 +1041,7 @@ void swapbuffers(bool overlay)
  
 VAR(menufps, 0, 60, 1000);
 VARP(maxfps, 0, 200, 1000);
-VARFP(maxtps, 0, 0, 1000, { if(maxtps && maxtps<60) {conoutf("can't set maxtps < 60"); maxtps = 60;} });
+MOD(VARFP, maxtps, 0, 0, 1000, { if(maxtps && maxtps<60) {conoutf("can't set maxtps < 60"); maxtps = 60;} });
 
 void ratelimit(int &millis, int lastdrawmillis, bool &draw)
 {
@@ -1187,7 +1187,7 @@ int getclockmillis()
 }
 
 VAR(numcpus, 1, 1, 16);
-VARP(minimizedframes, 0, 0, 1);
+MOD(VARP, minimizedframes, 0, 0, 1);
 
 int main(int argc, char **argv)
 {

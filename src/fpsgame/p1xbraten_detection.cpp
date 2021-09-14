@@ -3,7 +3,7 @@
 namespace game {
     #define P1XBRATEN_VERSION_PREFIX (uchar(69))
 
-    VARP(enablep1xbratendetection, 0, 1, 1);
+    MOD(VARP, enablep1xbratendetection, 0, 1, 1);
 
     void broadcastp1xbratenversion()
     {

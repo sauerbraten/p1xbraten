@@ -490,7 +490,7 @@ namespace game
     ICOMMAND(unignore, "s", (char *arg), unignore(parseplayer(arg))); 
     ICOMMAND(isignored, "s", (char *arg), intret(isignored(parseplayer(arg)) ? 1 : 0));
 
-    VARFP(zenmode, 0, 0, 1, {
+    MOD(VARFP, zenmode, 0, 0, 1, {
         if(zenmode)
         {
             if(miniconfilter&CON_NONZEN) miniconfilter -= CON_NONZEN;
@@ -988,7 +988,7 @@ namespace game
 
     ICOMMAND(servcmd, "C", (char *cmd), addmsg(N_SERVCMD, "rs", cmd));
 
-    SVARP(chathighlightsound, "free/tick");
+    MOD(SVARP, chathighlightsound, "free/tick");
     vector<const char *> chathighlightwords;
     ICOMMAND(addchathighlightword, "s", (char *text), chathighlightwords.add(newstring(text)));
 

@@ -3,16 +3,16 @@
 namespace game {
     vector<fragmessage> fragmessages; // oldest first, newest at the end
 
-    VARP(hudfragmessages, 0, 1, 2);
-    VARFP(maxhudfragmessages, 1, 3, 10, { fragmessages.growbuf(maxhudfragmessages); fragmessages.shrink(maxhudfragmessages); });
-    FVARP(hudfragmessageduration, 0, 2.0f, 10.0f); // in seconds
-    VARP(hudfragmessagefade, 0, 1, 1);
-    FVARP(hudfragmessagex, 0, 0.5f, 1.0f);
-    FVARP(hudfragmessagey, 0, 0.25f, 1.0f);
-    FVARP(hudfragmessagescale, 0.1f, 0.5f, 1.0f);
-    VARP(hudfragmessagestackdir, -1, 0, 1); // -1 = upwards, 1 = downwards
-    HVARP(hudfragmessagefilter, 0, 0x2800, 0x7FFFFFF); // default: own frags + teamkills
-    VARP(hudfragmessageforcecolors, 0, 1, 1);
+    MOD(VARP, hudfragmessages, 0, 1, 2);
+    MOD(VARFP, maxhudfragmessages, 1, 3, 10, { fragmessages.growbuf(maxhudfragmessages); fragmessages.shrink(maxhudfragmessages); });
+    MOD(FVARP, hudfragmessageduration, 0, 2.0f, 10.0f); // in seconds
+    MOD(VARP, hudfragmessagefade, 0, 1, 1);
+    MOD(FVARP, hudfragmessagex, 0, 0.5f, 1.0f);
+    MOD(FVARP, hudfragmessagey, 0, 0.25f, 1.0f);
+    MOD(FVARP, hudfragmessagescale, 0.1f, 0.5f, 1.0f);
+    MOD(VARP, hudfragmessagestackdir, -1, 0, 1); // -1 = upwards, 1 = downwards
+    MOD(HVARP, hudfragmessagefilter, 0, 0x2800, 0x7FFFFFF); // default: own frags + teamkills
+    MOD(VARP, hudfragmessageforcecolors, 0, 1, 1);
 
     void addfragmessage(int contype, const char *aname, const char *vname, int gun)
     {

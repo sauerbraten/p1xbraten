@@ -194,17 +194,24 @@ void clearoverrides()
 static bool initedidents = false;
 static vector<ident> *identinits = NULL;
 
+ident *lastaddedident; // set in addident()
+
+int setmodidentflag() {
+    if(lastaddedident) { lastaddedident->flags |= IDF_MOD; }
+    return 0;
+}
+
 static inline ident *addident(const ident &id)
 {
     if(!initedidents)
     {
         if(!identinits) identinits = new vector<ident>;
-        identinits->add(id);
+        lastaddedident = &(identinits->add(id));
         return NULL;
     }
     ident &def = idents.access(id.name, id);
     def.index = identmap.length();
-    return identmap.add(&def);
+    return lastaddedident = identmap.add(&def);
 }
 
 static bool initidents()
@@ -2450,7 +2457,7 @@ void writecfg(const char *name)
     loopv(ids)
     {
         ident &id = *ids[i];
-        if(id.flags&IDF_PERSIST) switch(id.type)
+        if(id.flags&IDF_PERSIST && !(id.flags&IDF_MOD)) switch(id.type)
         {
             case ID_VAR: f->printf("%s %d\n", escapeid(id), *id.storage.i); break;
             case ID_FVAR: f->printf("%s %s\n", escapeid(id), floatstr(*id.storage.f)); break;
@@ -2475,6 +2482,21 @@ void writecfg(const char *name)
     }
     f->printf("\n");
     writecompletions(f);
+    delete f;
+    f = openutf8file(path(game::modconfig(), true), "w");
+    if(!f) return;
+    f->printf("// automatically written on exit, DO NOT MODIFY\n\n");
+    loopv(ids)
+    {
+        ident &id = *ids[i];
+        if(id.flags&IDF_PERSIST && id.flags&IDF_MOD) switch(id.type)
+        {
+            case ID_VAR: f->printf("%s %d\n", escapeid(id), *id.storage.i); break;
+            case ID_FVAR: f->printf("%s %s\n", escapeid(id), floatstr(*id.storage.f)); break;
+            case ID_SVAR: f->printf("%s %s\n", escapeid(id), escapestring(*id.storage.s)); break;
+}
+    }
+    f->printf("\n");
     delete f;
 }
 

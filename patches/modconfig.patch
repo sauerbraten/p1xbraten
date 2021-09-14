@@ -1,0 +1,220 @@
+Index: src/engine/command.cpp
+===================================================================
+--- src/engine/command.cpp	(revision 6518)
++++ src/engine/command.cpp	(working copy)
+@@ -194,17 +194,24 @@
+ static bool initedidents = false;
+ static vector<ident> *identinits = NULL;
+
++ident *lastaddedident; // set in addident()
++
++int setmodidentflag() {
++    if(lastaddedident) { lastaddedident->flags |= IDF_MOD; }
++    return 0;
++}
++
+ static inline ident *addident(const ident &id)
+ {
+     if(!initedidents)
+     {
+         if(!identinits) identinits = new vector<ident>;
+-        identinits->add(id);
++        lastaddedident = &(identinits->add(id));
+         return NULL;
+     }
+     ident &def = idents.access(id.name, id);
+     def.index = identmap.length();
+-    return identmap.add(&def);
++    return lastaddedident = identmap.add(&def);
+ }
+
+ static bool initidents()
+@@ -2450,7 +2457,7 @@
+     loopv(ids)
+     {
+         ident &id = *ids[i];
+-        if(id.flags&IDF_PERSIST) switch(id.type)
++        if(id.flags&IDF_PERSIST && !(id.flags&IDF_MOD)) switch(id.type)
+         {
+             case ID_VAR: f->printf("%s %d\n", escapeid(id), *id.storage.i); break;
+             case ID_FVAR: f->printf("%s %s\n", escapeid(id), floatstr(*id.storage.f)); break;
+@@ -2476,7 +2483,22 @@
+     f->printf("\n");
+     writecompletions(f);
+     delete f;
++    f = openutf8file(path(game::modconfig(), true), "w");
++    if(!f) return;
++    f->printf("// automatically written on exit, DO NOT MODIFY\n\n");
++    loopv(ids)
++    {
++        ident &id = *ids[i];
++        if(id.flags&IDF_PERSIST && id.flags&IDF_MOD) switch(id.type)
++        {
++            case ID_VAR: f->printf("%s %d\n", escapeid(id), *id.storage.i); break;
++            case ID_FVAR: f->printf("%s %s\n", escapeid(id), floatstr(*id.storage.f)); break;
++            case ID_SVAR: f->printf("%s %s\n", escapeid(id), escapestring(*id.storage.s)); break;
+ }
++    }
++    f->printf("\n");
++    delete f;
++}
+
+ COMMAND(writecfg, "s");
+ #endif
+Index: src/fpsgame/fps.cpp
+===================================================================
+--- src/fpsgame/fps.cpp	(revision 6518)
++++ src/fpsgame/fps.cpp	(working copy)
+@@ -1300,6 +1300,7 @@
+     const char *savedconfig() { return "config.cfg"; }
+     const char *restoreconfig() { return "restore.cfg"; }
+     const char *defaultconfig() { return "data/defaults.cfg"; }
++    const char *modconfig() { return "p1xbraten.cfg"; }
+     const char *autoexec() { return "autoexec.cfg"; }
+     const char *savedservers() { return "servers.cfg"; }
+
+Index: src/shared/command.h
+===================================================================
+--- src/shared/command.h	(revision 6518)
++++ src/shared/command.h	(working copy)
+@@ -40,7 +40,7 @@
+
+ enum { ID_VAR, ID_FVAR, ID_SVAR, ID_COMMAND, ID_ALIAS, ID_LOCAL };
+
+-enum { IDF_PERSIST = 1<<0, IDF_OVERRIDE = 1<<1, IDF_HEX = 1<<2, IDF_READONLY = 1<<3, IDF_OVERRIDDEN = 1<<4, IDF_UNKNOWN = 1<<5, IDF_ARG = 1<<6, IDF_EMUVAR = 1<<7 };
++enum { IDF_PERSIST = 1<<0, IDF_OVERRIDE = 1<<1, IDF_HEX = 1<<2, IDF_READONLY = 1<<3, IDF_OVERRIDDEN = 1<<4, IDF_UNKNOWN = 1<<5, IDF_ARG = 1<<6, IDF_EMUVAR = 1<<7, IDF_MOD = 1<<15 };
+
+ struct ident;
+
+@@ -333,3 +333,7 @@
+ #define ICOMMANDSNAME _icmds_
+ #define ICOMMANDS(name, nargs, proto, b) ICOMMANDNS(name, ICOMMANDSNAME, nargs, proto, b)
+
++extern int setmodidentflag();
++#define MOD(macro, name, ...) \
++    macro(name, ##__VA_ARGS__); \
++    UNUSED static int setmodident ## name = setmodidentflag();
+Index: src/shared/igame.h
+===================================================================
+--- src/shared/igame.h	(revision 6518)
++++ src/shared/igame.h	(working copy)
+@@ -45,6 +45,7 @@
+     extern const char *savedconfig();
+     extern const char *restoreconfig();
+     extern const char *defaultconfig();
++    extern const char *modconfig();
+     extern const char *autoexec();
+     extern const char *savedservers();
+     extern void loadconfigs();
+Index: src/vcpp/sauerbraten.vcxproj
+===================================================================
+--- src/vcpp/sauerbraten.vcxproj	(revision 6518)
++++ src/vcpp/sauerbraten.vcxproj	(working copy)
+@@ -44,13 +44,13 @@
+     <ConfigurationType>Application</ConfigurationType>
+     <UseOfMfc>false</UseOfMfc>
+     <CharacterSet>MultiByte</CharacterSet>
+-    <PlatformToolset>v140_xp</PlatformToolset>
++    <PlatformToolset>v142</PlatformToolset>
+   </PropertyGroup>
+   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'" Label="Configuration">
+     <ConfigurationType>Application</ConfigurationType>
+     <UseOfMfc>false</UseOfMfc>
+     <CharacterSet>MultiByte</CharacterSet>
+-    <PlatformToolset>v140_xp</PlatformToolset>
++    <PlatformToolset>v142</PlatformToolset>
+   </PropertyGroup>
+   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+     <ConfigurationType>Application</ConfigurationType>
+@@ -57,7 +57,7 @@
+     <UseOfMfc>false</UseOfMfc>
+     <CharacterSet>MultiByte</CharacterSet>
+     <WholeProgramOptimization>true</WholeProgramOptimization>
+-    <PlatformToolset>v140_xp</PlatformToolset>
++    <PlatformToolset>v142</PlatformToolset>
+   </PropertyGroup>
+   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+     <ConfigurationType>Application</ConfigurationType>
+@@ -64,7 +64,7 @@
+     <UseOfMfc>false</UseOfMfc>
+     <CharacterSet>MultiByte</CharacterSet>
+     <WholeProgramOptimization>true</WholeProgramOptimization>
+-    <PlatformToolset>v140_xp</PlatformToolset>
++    <PlatformToolset>v142</PlatformToolset>
+   </PropertyGroup>
+   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+     <ConfigurationType>Application</ConfigurationType>
+@@ -71,7 +71,7 @@
+     <UseOfMfc>false</UseOfMfc>
+     <CharacterSet>MultiByte</CharacterSet>
+     <WholeProgramOptimization>true</WholeProgramOptimization>
+-    <PlatformToolset>v140_xp</PlatformToolset>
++    <PlatformToolset>v142</PlatformToolset>
+   </PropertyGroup>
+   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+     <ConfigurationType>Application</ConfigurationType>
+@@ -78,13 +78,13 @@
+     <UseOfMfc>false</UseOfMfc>
+     <CharacterSet>MultiByte</CharacterSet>
+     <WholeProgramOptimization>true</WholeProgramOptimization>
+-    <PlatformToolset>v140_xp</PlatformToolset>
++    <PlatformToolset>v142</PlatformToolset>
+   </PropertyGroup>
+   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">
+-    <PlatformToolset>v140_xp</PlatformToolset>
++    <PlatformToolset>v142</PlatformToolset>
+   </PropertyGroup>
+   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Template|x64'">
+-    <PlatformToolset>v140_xp</PlatformToolset>
++    <PlatformToolset>v142</PlatformToolset>
+   </PropertyGroup>
+   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+   <ImportGroup Label="ExtensionSettings">
+@@ -162,6 +158,7 @@
+       <SuppressStartupBanner>true</SuppressStartupBanner>
+       <DebugInformationFormat>OldStyle</DebugInformationFormat>
+       <CompileAs>Default</CompileAs>
++      <UseStandardPreprocessor>true</UseStandardPreprocessor>
+     </ClCompile>
+     <ResourceCompile>
+       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+@@ -211,6 +208,7 @@
+       <SuppressStartupBanner>true</SuppressStartupBanner>
+       <DebugInformationFormat>OldStyle</DebugInformationFormat>
+       <CompileAs>Default</CompileAs>
++      <UseStandardPreprocessor>true</UseStandardPreprocessor>
+     </ClCompile>
+     <ResourceCompile>
+       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+@@ -252,6 +250,7 @@
+       <SuppressStartupBanner>true</SuppressStartupBanner>
+       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+       <CompileAs>Default</CompileAs>
++      <UseStandardPreprocessor>true</UseStandardPreprocessor>
+     </ClCompile>
+     <ResourceCompile>
+       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+@@ -290,6 +289,7 @@
+       <SuppressStartupBanner>true</SuppressStartupBanner>
+       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+       <CompileAs>Default</CompileAs>
++      <UseStandardPreprocessor>true</UseStandardPreprocessor>
+     </ClCompile>
+     <ResourceCompile>
+       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+@@ -335,6 +335,7 @@
+       <SuppressStartupBanner>true</SuppressStartupBanner>
+       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+       <CompileAs>Default</CompileAs>
++      <UseStandardPreprocessor>true</UseStandardPreprocessor>
+     </ClCompile>
+     <ResourceCompile>
+       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+@@ -380,6 +381,7 @@
+       <SuppressStartupBanner>true</SuppressStartupBanner>
+       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+       <CompileAs>Default</CompileAs>
++      <UseStandardPreprocessor>true</UseStandardPreprocessor>
+     </ClCompile>
+     <ResourceCompile>
+       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>

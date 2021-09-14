@@ -60,7 +60,7 @@ Index: src/engine/p1xbraten_version.cpp
 @@ -0,0 +1,22 @@
 +#include "engine.h"
 +
-+SVARP(p1xbratenversion, "");
++MOD(SVARP, p1xbratenversion, "");
 +
 +void lockversion()
 +{
@@ -159,7 +159,7 @@ Index: src/fpsgame/p1xbraten_detection.cpp
 +namespace game {
 +    #define P1XBRATEN_VERSION_PREFIX (uchar(69))
 +
-+    VARP(enablep1xbratendetection, 0, 1, 1);
++    MOD(VARP, enablep1xbratendetection, 0, 1, 1);
 +
 +    void broadcastp1xbratenversion()
 +    {

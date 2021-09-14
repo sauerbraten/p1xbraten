@@ -70,7 +70,7 @@ namespace game {
         return 0;
     }
 
-    VARFP(usep1xbratenmenus, 0, 1, 1, {
+    MOD(VARFP, usep1xbratenmenus, 0, 1, 1, {
         if(usep1xbratenmenus) execfile(menuscfg.name);
         else execfile("data/menus.cfg");
     });

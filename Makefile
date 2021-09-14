@@ -21,6 +21,7 @@ clean:
 apply-patches:
 	dos2unix src/vcpp/sauerbraten.vcxproj
 	dos2unix src/vcpp/sauerbraten.nsi
+	$(PATCH) < patches/modconfig.patch
 	$(PATCH) < patches/modversion.patch
 	$(PATCH) < patches/moviehud.patch
 	$(PATCH) < patches/hasflag.patch

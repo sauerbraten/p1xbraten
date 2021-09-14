@@ -61,7 +61,7 @@ Index: src/engine/rendergl.cpp
      loopi(8) damagedirs[i] = 0;
  }
 
-+VARP(fullconalpha, 1, 50, 100);
++MOD(VARP, fullconalpha, 1, 50, 100);
 +
 +void drawfullconsoleshade(int w, int h)
 +{

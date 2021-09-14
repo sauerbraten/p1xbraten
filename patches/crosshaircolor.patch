@@ -6,7 +6,7 @@ Index: src/engine/rendergl.cpp
  VARP(cursorsize, 0, 30, 50);
  VARP(crosshairfx, 0, 1, 1);
  VARP(crosshaircolors, 0, 1, 1);
-+HVARP(crosshaircolor, 0, 0xFFFFFF, 0xFFFFFF);
++MOD(HVARP, crosshaircolor, 0, 0xFFFFFF, 0xFFFFFF);
 
  #define MAXCROSSHAIRS 4
  static Texture *crosshairs[MAXCROSSHAIRS] = { NULL, NULL, NULL, NULL };
