@@ -1333,6 +1333,7 @@ int main(int argc, char **argv)
         execfile(game::defaultconfig());
         writecfg(game::restoreconfig());
     }
+    execfile(game::modconfig(), false);
     execfile(game::autoexec(), false);
 
     identflags &= ~IDF_PERSIST;

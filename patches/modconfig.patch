@@ -61,6 +61,18 @@ Index: src/engine/command.cpp
 
  COMMAND(writecfg, "s");
  #endif
+Index: src/engine/main.cpp
+===================================================================
+--- src/engine/main.cpp	(revision 6518)
++++ src/engine/main.cpp	(working copy)
+@@ -1312,6 +1312,7 @@
+         execfile(game::defaultconfig());
+         writecfg(game::restoreconfig());
+     }
++    execfile(game::modconfig(), false);
+     execfile(game::autoexec(), false);
+
+     identflags &= ~IDF_PERSIST;
 Index: src/fpsgame/fps.cpp
 ===================================================================
 --- src/fpsgame/fps.cpp	(revision 6518)
