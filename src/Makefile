@@ -4,7 +4,7 @@ override CXXFLAGS+= -Wall -fsigned-char -fno-exceptions -fno-rtti
 PLATFORM= $(shell uname -s | tr '[:lower:]' '[:upper:]')
 PLATFORM_PREFIX= native
 
-INCLUDES= -Ishared -Iengine -Ifpsgame -Ienet/include
+INCLUDES= -Ishared -Iengine -Ifpsgame -Ip1xbraten -Ienet/include
 
 STRIP=
 ifeq (,$(findstring -g,$(CXXFLAGS)))
@@ -45,6 +45,7 @@ endif
 CLIENT_INCLUDES= $(INCLUDES) -Iinclude
 STD_LIBS= -static-libgcc -static-libstdc++
 CLIENT_LIBS= -mwindows $(STD_LIBS) -L$(WINBIN) -L$(WINLIB) -lSDL2 -lSDL2_image -lSDL2_mixer -lzlib1 -lopengl32 -lenet -lws2_32 -lwinmm
+CLIENT_LIBS+= -lcurl
 else
 ifneq (,$(findstring DARWIN,$(PLATFORM)))
 ifneq (,$(findstring CROSS,$(PLATFORM)))
@@ -66,9 +67,11 @@ CLIENT_INCLUDES= $(INCLUDES) -Iinclude
 CLIENT_LIBS= -F../sauerbraten.app/Contents/Frameworks/ -framework SDL2 -framework SDL2_image
 CLIENT_LIBS+= -framework SDL2_mixer -framework CoreAudio -framework AudioToolbox
 CLIENT_LIBS+= -framework AudioUnit -framework OpenGL -framework Cocoa -lz -Lenet -lenet -lc++
+CLIENT_LIBS+= -lcurl
 else
 CLIENT_INCLUDES= $(INCLUDES) -I/usr/X11R6/include `sdl2-config --cflags`
 CLIENT_LIBS= -Lenet -lenet -L/usr/X11R6/lib -lX11 `sdl2-config --libs` -lSDL2_image -lSDL2_mixer -lz -lGL
+CLIENT_LIBS+= -lcurl
 endif
 endif
 ifeq ($(PLATFORM),LINUX)
@@ -89,6 +92,7 @@ CLIENT_OBJS= \
 	engine/bih.o \
 	engine/blend.o \
 	engine/blob.o \
+	p1xbraten/checkupdate.o \
 	engine/client.o	\
 	engine/command.o \
 	engine/console.o \
@@ -304,6 +308,13 @@ engine/blob.o: shared/glemu.h shared/iengine.h shared/igame.h
 engine/blob.o: shared/authservers.h shared/masterserver.h engine/world.h
 engine/blob.o: engine/octa.h engine/lightmap.h engine/bih.h engine/texture.h
 engine/blob.o: engine/model.h
+p1xbraten/checkupdate.o: engine/engine.h shared/cube.h shared/tools.h
+p1xbraten/checkupdate.o: shared/geom.h shared/ents.h shared/command.h
+p1xbraten/checkupdate.o: shared/colors.h shared/glexts.h shared/glemu.h
+p1xbraten/checkupdate.o: shared/iengine.h shared/igame.h shared/authservers.h
+p1xbraten/checkupdate.o: shared/masterserver.h engine/world.h engine/octa.h
+p1xbraten/checkupdate.o: engine/lightmap.h engine/bih.h engine/texture.h
+p1xbraten/checkupdate.o: engine/model.h
 engine/client.o: engine/engine.h shared/cube.h shared/tools.h shared/geom.h
 engine/client.o: shared/ents.h shared/command.h shared/colors.h
 engine/client.o: shared/glexts.h shared/glemu.h shared/iengine.h

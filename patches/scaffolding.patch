@@ -1,0 +1,13 @@
+Index: src/Makefile
+===================================================================
+--- src/Makefile	(revision 6518)
++++ src/Makefile	(working copy)
+@@ -4,7 +4,7 @@
+ PLATFORM= $(shell uname -s | tr '[:lower:]' '[:upper:]')
+ PLATFORM_PREFIX= native
+
+-INCLUDES= -Ishared -Iengine -Ifpsgame -Ienet/include
++INCLUDES= -Ishared -Iengine -Ifpsgame -Ip1xbraten -Ienet/include
+
+ STRIP=
+ ifeq (,$(findstring -g,$(CXXFLAGS)))
