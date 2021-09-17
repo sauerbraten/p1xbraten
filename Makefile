@@ -9,10 +9,10 @@ endif
 endif
 
 build: update-src apply-patches embed-cfgs
-	cd src && make -j
+	cd src && make --jobs=8
 
 install:
-	cd src && make -j install
+	cd src && make --jobs=8 install
 
 clean:
 	cd src && make clean

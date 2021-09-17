@@ -29,6 +29,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [playerspeed.patch](#playerspeedpatch)
   - [up_down_hover.patch](#up_down_hoverpatch)
   - [paused_spec_movement.patch](#paused_spec_movementpatch)
+  - [checkupdate.patch](#checkupdatepatch)
 - [Server Patches](#server-patches)
   - [authservers.patch](#authserverspatch)
   - [serverlogging.patch](#serverloggingpatch)
@@ -215,6 +216,10 @@ For an overview of who uses p1xbraten, you can run `/showgui p1xbratenusage`.
 ### [paused_spec_movement.patch](./patches/paused_spec_movement.patch)
 
 - enables free movement as spectator while the game is paused
+
+### [checkupdate.patch](./patches/checkupdate.patch)
+
+- adds the `checkupdate` command to check if a newer version of p1xbraten is available
 
 
 ## Server Patches
