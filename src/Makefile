@@ -131,6 +131,7 @@ CLIENT_OBJS= \
 	fpsgame/ai.o \
 	fpsgame/client.o \
 	fpsgame/embedded_cfgs.o \
+	p1xbraten/clientdemo.o \
 	fpsgame/entities.o \
 	fpsgame/fps.o \
 	fpsgame/fragmessages.o \
@@ -561,6 +562,12 @@ fpsgame/embedded_cfgs.o: ../data/p1xbraten/menus.cfg.gz.xxd
 fpsgame/embedded_cfgs.o: ../data/p1xbraten/master.cfg.gz.xxd
 fpsgame/embedded_cfgs.o: ../data/p1xbraten/gamehud.cfg.gz.xxd
 fpsgame/embedded_cfgs.o: ../data/p1xbraten/keymap.cfg.gz.xxd
+p1xbraten/clientdemo.o: fpsgame/game.h shared/cube.h shared/tools.h
+p1xbraten/clientdemo.o: shared/geom.h shared/ents.h shared/command.h
+p1xbraten/clientdemo.o: shared/colors.h shared/glexts.h shared/glemu.h
+p1xbraten/clientdemo.o: shared/iengine.h shared/igame.h shared/authservers.h
+p1xbraten/clientdemo.o: shared/masterserver.h fpsgame/ai.h
+p1xbraten/clientdemo.o: fpsgame/weaponstats_type.h fpsgame/fragmessages.h
 fpsgame/entities.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
 fpsgame/entities.o: shared/ents.h shared/command.h shared/colors.h
 fpsgame/entities.o: shared/glexts.h shared/glemu.h shared/iengine.h

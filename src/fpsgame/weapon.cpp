@@ -25,6 +25,7 @@ namespace game
         if(gun!=d->gunselect)
         {
             addmsg(N_GUNSELECT, "rci", d, gun);
+            if(demorecord) recordmsg(N_GUNSELECT, "rci", d, gun);
             playsound(S_WEAPLOAD, d == player1 ? NULL : &d->o);
         }
         d->gunselect = gun;
@@ -821,6 +822,10 @@ namespace game
                    (int)(from.x*DMF), (int)(from.y*DMF), (int)(from.z*DMF),
                    (int)(to.x*DMF), (int)(to.y*DMF), (int)(to.z*DMF),
                    hits.length(), hits.length()*sizeof(hitmsg)/sizeof(int), hits.getbuf());
+            if(demorecord) recordmsg(N_SHOTFX, "rci9", d,
+                d->clientnum, d->gunselect, lastmillis-maptime,
+                int(from.x*DMF), int(from.y*DMF), int(from.z*DMF),
+                int(to.x*DMF), int(to.y*DMF), int(to.z*DMF));
         }
 
 		d->gunwait = guns[d->gunselect].attackdelay;

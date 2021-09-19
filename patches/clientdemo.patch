@@ -1,0 +1,630 @@
+diff --git src/Makefile src/Makefile
+index 4cabd54..232c9d2 100644
+--- src/Makefile
++++ src/Makefile
+@@ -126,3 +126,4 @@
++	p1xbraten/clientdemo.o \
+ 	fpsgame/entities.o \
+ 	fpsgame/fps.o \
+ 	fpsgame/monster.o \
+diff --git src/fpsgame/capture.h src/fpsgame/capture.h
+index f6f7555..59b8c54 100644
+--- src/fpsgame/capture.h
++++ src/fpsgame/capture.h
+@@ -700,6 +700,29 @@ struct captureclientmode : clientmode
+ 		b.type = ai::AI_S_DEFEND;
+ 		return aidefend(d, b);
+ 	}
++
++    void initdemoclient(packetbuf &p)
++    {
++        loopv(scores)
++        {
++            score &cs = scores[i];
++            putint(p, N_BASESCORE);
++            putint(p, -1);
++            sendstring(cs.team, p);
++            putint(p, cs.total);
++        }
++        putint(p, N_BASES);
++        putint(p, bases.length());
++        loopv(bases)
++        {
++            baseinfo &b = bases[i];
++            putint(p, b.ammotype);
++            sendstring(b.owner, p);
++            sendstring(b.enemy, p);
++            putint(p, b.converted);
++            putint(p, b.ammo);
++        }
++    }
+ };
+ 
+ extern captureclientmode capturemode;
+diff --git src/fpsgame/client.cpp src/fpsgame/client.cpp
+index 522d32a..b0cc1c8 100644
+--- src/fpsgame/client.cpp
++++ src/fpsgame/client.cpp
+@@ -131,6 +131,7 @@ namespace game
+         filtertext(player1->name, name, false, false, MAXNAMELEN);
+         if(!player1->name[0]) copystring(player1->name, "unnamed");
+         addmsg(N_SWITCHNAME, "rs", player1->name);
++        if(demorecord) recordmsg(N_SWITCHNAME, "rs", player1->name);
+     }
+     void printname()
+     {
+@@ -568,6 +569,7 @@ namespace game
+ 
+     void changemapserv(const char *name, int mode)        // forced map change from the server
+     {
++        if(demorecord) enddemorecord();
+         if(multiplayer(false) && !m_mp(mode))
+         {
+             conoutf(CON_ERROR, "mode %s (%d) not supported in multiplayer", server::modename(gamemode), gamemode);
+@@ -634,6 +636,7 @@ namespace game
+         {
+             server::forcemap(name, mode);
+             if(!isconnected()) localconnect();
++            if(demonextmatch) setupdemorecord();
+         }
+         else if(player1->state!=CS_SPECTATOR || player1->privilege) addmsg(N_MAPVOTE, "rsi", name, mode);
+     }
+@@ -980,7 +983,7 @@ namespace game
+     VARP(teamcolorchat, 0, 1, 1);
+     const char *chatcolorname(fpsent *d) { return teamcolorchat ? teamcolorname(d, NULL) : colorname(d); }
+ 
+-    void toserver(char *text) { conoutf(CON_CHAT, "%s:\f0 %s", chatcolorname(player1), text); addmsg(N_TEXT, "rcs", player1, text); }
++    void toserver(char *text) { conoutf(CON_CHAT, "%s:\f0 %s", chatcolorname(player1), text); addmsg(N_TEXT, "rcs", player1, text); if(demorecord) recordmsg(N_TEXT, "rcs", player1, text); }
+     COMMANDN(say, toserver, "C");
+ 
+     void sayteam(char *text) { conoutf(CON_TEAMCHAT, "\fs\f8[team]\fr %s: \f8%s", chatcolorname(player1), text); addmsg(N_SAYTEAM, "rcs", player1, text); }
+@@ -994,6 +997,7 @@ namespace game
+ 
+     static void sendposition(fpsent *d, packetbuf &q)
+     {
++        int offset = q.length();
+         putint(q, N_POS);
+         putuint(q, d->clientnum);
+         // 3 bits phys state, 1 bit life sequence, 2 bits move, 2 bits strafe
+@@ -1045,6 +1049,7 @@ namespace game
+                 q.put((falldir>>8)&0xFF);
+             }
+         }
++        if(demorecord && (d==player1 || d->ai)) recordpacket(0, q.buf+offset, q.length());
+     }
+ 
+     void sendposition(fpsent *d, bool reliable)
+@@ -1115,9 +1120,21 @@ namespace game
+     void c2sinfo(bool force) // send update to the server
+     {
+         static int lastupdate = -1000;
+-        if(totalmillis - lastupdate < 33 && !force) return; // don't update faster than 30fps
++        static int lastdemopos = -1000;
++        if(totalmillis - lastupdate < 33 && !force)
++        {
++            if(demorecord && totalmillis - lastdemopos >= 4 && player1->state == CS_ALIVE)
++            {
++                static packetbuf q(100);
++                sendposition(player1, q);
++                q.reset();
++                lastdemopos = totalmillis;
++            }
++            return; // don't update faster than 30fps
++        }
+         lastupdate = totalmillis;
+         sendpositions();
++        lastdemopos = totalmillis;
+         sendmessages();
+         flushclient();
+     }
+@@ -1826,7 +1843,9 @@ namespace game
+             }
+ 
+             case N_PONG:
++                if(demopacket) { getint(p); break; }
+                 addmsg(N_CLIENTPING, "i", player1->ping = (player1->ping*5+totalmillis-getint(p))/6);
++                if(demorecord) recordmsg(N_CLIENTPING, "i", player1->ping);
+                 break;
+ 
+             case N_CLIENTPING:
+@@ -2101,6 +2120,7 @@ namespace game
+     void parsepacketclient(int chan, packetbuf &p)   // processes any updates from the server
+     {
+         if(p.packet->flags&ENET_PACKET_FLAG_UNSEQUENCED) return;
++        if(demorecord && chan<2) recordpacket(chan, p.packet->data, p.packet->dataLength);
+         switch(chan)
+         {
+             case 0:
+diff --git src/fpsgame/ctf.h src/fpsgame/ctf.h
+index a3d4ea8..1e6b8b0 100644
+--- src/fpsgame/ctf.h
++++ src/fpsgame/ctf.h
+@@ -447,6 +447,9 @@ struct ctfclientmode : clientmode
+     }
+ 
+     void initclient(clientinfo *ci, packetbuf &p, bool connecting)
++#else
++    void initdemoclient(packetbuf &p)
++#endif
+     {
+         putint(p, N_INITFLAGS);
+         loopk(2) putint(p, scores[k]);
+@@ -456,9 +459,15 @@ struct ctfclientmode : clientmode
+             flag &f = flags[i];
+             putint(p, f.version);
+             putint(p, f.spawnindex);
++#ifdef SERVMODE
+             putint(p, f.owner);
+             putint(p, f.invistime ? 1 : 0);
+             if(f.owner<0)
++#else
++            putint(p, f.owner ? f.owner->clientnum : -1);
++            putint(p, f.vistime ? 0 : 1);
++            if(!f.owner)
++#endif
+             {
+                 putint(p, f.droptime ? 1 : 0);
+                 if(f.droptime)
+@@ -480,6 +489,7 @@ struct ctfclientmode : clientmode
+         }
+     }
+ 
++#ifdef SERVMODE
+     void parseflags(ucharbuf &p, bool commit)
+     {
+         int numflags = getint(p);
+diff --git src/fpsgame/entities.cpp src/fpsgame/entities.cpp
+index c35a0d1..a492ca5 100644
+--- src/fpsgame/entities.cpp
++++ src/fpsgame/entities.cpp
+@@ -221,6 +221,7 @@ namespace entities
+             putint(p, d->clientnum);
+             putint(p, tp);
+             putint(p, td);
++            if(demorecord) recordpacket(0, p.buf, p.length());
+             sendclientpacket(p.finalize(), 0);
+             flushclient();
+         }
+@@ -245,6 +246,7 @@ namespace entities
+             putint(p, N_JUMPPAD);
+             putint(p, d->clientnum);
+             putint(p, jp);
++            if(demorecord) recordpacket(0, p.buf, p.length());
+             sendclientpacket(p.finalize(), 0);
+             flushclient();
+         }
+diff --git src/fpsgame/fps.cpp src/fpsgame/fps.cpp
+index 7dc7de0..f5328cb 100644
+--- src/fpsgame/fps.cpp
++++ src/fpsgame/fps.cpp
+@@ -688,6 +688,7 @@ namespace game
+         disablezoom();
+         lasthit = 0;
+ 
++        if(remote && demonextmatch) setupdemorecord();
+         execident("mapstart");
+     }
+ 
+@@ -743,12 +744,16 @@ namespace game
+         if(!d || d==player1)
+         {
+             addmsg(N_SOUND, "ci", d, n);
++            if(demorecord) recordmsg(N_SOUND, "ci", d, n);
+             playsound(n);
+         }
+         else
+         {
+             if(d->type==ENT_PLAYER && ((fpsent *)d)->ai)
++            {
+                 addmsg(N_SOUND, "ci", d, n);
++                if(demorecord) recordmsg(N_SOUND, "ci", d, n);
++            }
+             playsound(n, &d->o);
+         }
+     }
+diff --git src/fpsgame/game.h src/fpsgame/game.h
+index b59407a..64a92ad 100644
+--- src/fpsgame/game.h
++++ src/fpsgame/game.h
+@@ -705,6 +705,7 @@ namespace game
+         virtual bool aicheck(fpsent *d, ai::aistate &b) { return false; }
+         virtual bool aidefend(fpsent *d, ai::aistate &b) { return false; }
+         virtual bool aipursue(fpsent *d, ai::aistate &b) { return false; }
++        virtual void initdemoclient(packetbuf &p) {}
+     };
+ 
+     extern clientmode *cmode;
+@@ -752,8 +753,10 @@ namespace game
+     const char *mastermodeicon(int n, const char *unknown);
+ 
+     // client
+-    extern bool connected, remote, demoplayback;
++    extern bool connected, remote, demoplayback, gamepaused;
+     extern string servinfo;
++    extern int mastermode, gamespeed;
++    extern hashset<teaminfo> teaminfos;
+     extern vector<uchar> messages;
+ 
+     extern int parseplayer(const char *arg);
+@@ -860,6 +863,14 @@ namespace game
+     extern int chooserandomplayermodel(int seed);
+     extern void swayhudgun(int curtime);
+     extern vec hudgunorigin(int gun, const vec &from, const vec &to, fpsent *d);
++
++    // clientdemo
++    extern bool demonextmatch;
++    extern stream *demorecord;
++    extern void setupdemorecord();
++    extern void recordpacket(int chan, void *data, int len);
++    extern bool recordmsg(int type, const char *fmt = NULL, ...);
++    extern void enddemorecord();
+ }
+ 
+ #include "fragmessages.h"
+diff --git src/fpsgame/scoreboard.cpp src/fpsgame/scoreboard.cpp
+index 1833375..6433a9b 100644
+--- src/fpsgame/scoreboard.cpp
++++ src/fpsgame/scoreboard.cpp
+@@ -22,7 +22,7 @@ namespace game
+     MOD(VARP, showdamage, 0, 0, 2);
+     MOD(VARP, showdamagereceived, 0, 0, 1);
+ 
+-    static hashset<teaminfo> teaminfos;
++    hashset<teaminfo> teaminfos;
+ 
+     void clearteaminfo()
+     {
+diff --git src/fpsgame/weapon.cpp src/fpsgame/weapon.cpp
+index f495ed6..4810e0d 100644
+--- src/fpsgame/weapon.cpp
++++ src/fpsgame/weapon.cpp
+@@ -25,6 +25,7 @@ namespace game
+         if(gun!=d->gunselect)
+         {
+             addmsg(N_GUNSELECT, "rci", d, gun);
++            if(demorecord) recordmsg(N_GUNSELECT, "rci", d, gun);
+             playsound(S_WEAPLOAD, d == player1 ? NULL : &d->o);
+         }
+         d->gunselect = gun;
+@@ -821,6 +822,10 @@ namespace game
+                    (int)(from.x*DMF), (int)(from.y*DMF), (int)(from.z*DMF),
+                    (int)(to.x*DMF), (int)(to.y*DMF), (int)(to.z*DMF),
+                    hits.length(), hits.length()*sizeof(hitmsg)/sizeof(int), hits.getbuf());
++            if(demorecord) recordmsg(N_SHOTFX, "rci9", d,
++                d->clientnum, d->gunselect, lastmillis-maptime,
++                int(from.x*DMF), int(from.y*DMF), int(from.z*DMF),
++                int(to.x*DMF), int(to.y*DMF), int(to.z*DMF));
+         }
+ 
+ 		d->gunwait = guns[d->gunselect].attackdelay;
+diff --git src/p1xbraten/clientdemo.cpp src/p1xbraten/clientdemo.cpp
+new file mode 100644
+index 0000000..839b0a9
+--- /dev/null
++++ src/p1xbraten/clientdemo.cpp
+@@ -0,0 +1,300 @@
++#include "game.h"
++
++// client-side demo recording works mostly the same as server-side:
++// all packets coming from the server are recorded to a file.
++//
++// some messages going from us to the server need to be injected,
++// because those actions aren't confirmed/acknowledged explicitly
++// by the server:
++//  - N_SWITCHNAME
++//  - N_TEXT
++//  - N_GUNSELECT
++//  - N_SOUND
++//  - N_CLIENTPING
++//  - N_SHOTFX
++//  - N_POS
++//  - N_TELEPORT
++//  - N_JUMPPAD
++
++namespace game {
++    bool demonextmatch = false;
++    stream *demo = NULL, *demorecord = NULL;
++    int demostartmillis = 0;
++
++    void enddemorecord()
++    {
++        if(!demorecord) return;
++        DELETEP(demorecord);
++        if(!demo) return;
++        DELETEP(demo);
++        conoutf("stopped client demo recording");
++    }
++
++    void recordpacket(int chan, void *data, int len)
++    {
++        if(!demorecord) return;
++        int stamp[3] = { totalmillis-demostartmillis, chan, len };
++        lilswap(stamp, 3);
++        demorecord->write(stamp, sizeof(stamp));
++        demorecord->write(data, len);
++    }
++
++    // mostly the original sendstate(), but works with fpsent * now
++    void sendstate(fpsent *d, packetbuf &p)
++    {
++        putint(p, d->lifesequence);
++        putint(p, d->health);
++        putint(p, d->maxhealth);
++        putint(p, d->armour);
++        putint(p, d->armourtype);
++        putint(p, d->gunselect);
++        loopi(GUN_PISTOL-GUN_SG+1) putint(p, d->ammo[GUN_SG+i]);
++    }
++
++    // mostly the original putinitclient(), but works with fpsent * now
++    void putinitclient(fpsent *d, packetbuf &p)
++    {
++        if(d->aitype != AI_NONE)
++        {
++            putint(p, N_INITAI);
++            putint(p, d->clientnum);
++            putint(p, d->ownernum);
++            putint(p, d->aitype);
++            putint(p, d->skill);
++            putint(p, d->playermodel);
++            sendstring(d->name, p);
++            sendstring(d->team, p);
++        }
++        else
++        {
++            putint(p, N_INITCLIENT);
++            putint(p, d->clientnum);
++            sendstring(d->name, p);
++            sendstring(d->team, p);
++            putint(p, d->playermodel);
++        }
++    }
++
++    // mostly the original welcomeinitclient() function
++    void welcomeinitclient(packetbuf &p)
++    {
++        loopv(players)
++        {
++            fpsent *pl = players[i];
++            putinitclient(pl, p);
++        }
++    }
++
++    // mostly the original welcomepacket(), with the bits that set up a connecting client removed
++    int welcomepacket(packetbuf &p)
++    {
++        putint(p, N_WELCOME);
++        putint(p, N_MAPCHANGE);
++        sendstring(clientmap, p);
++        putint(p, gamemode);
++        putint(p, 0); // notgotitems = false
++        putint(p, N_TIMEUP);
++        putint(p, lastmillis < maplimit && !intermission ? max((maplimit - totalmillis)/1000, 1) : 0);
++        putint(p, N_ITEMLIST);
++        loopv(entities::ents) if(entities::ents[i]->spawned())
++        {
++            putint(p, i);
++            putint(p, entities::ents[i]->type);
++        }
++        putint(p, -1);
++        bool hasmaster = false;
++        if(mastermode != MM_OPEN)
++        {
++            putint(p, N_CURRENTMASTER);
++            putint(p, mastermode);
++            hasmaster = true;
++        }
++        loopv(players) if(players[i]->privilege >= PRIV_MASTER)
++        {
++            if(!hasmaster)
++            {
++                putint(p, N_CURRENTMASTER);
++                putint(p, mastermode);
++                hasmaster = true;
++            }
++            putint(p, players[i]->clientnum);
++            putint(p, players[i]->privilege);
++        }
++        if(hasmaster) putint(p, -1);
++        if(gamepaused)
++        {
++            putint(p, N_PAUSEGAME);
++            putint(p, 1);
++            putint(p, -1);
++        }
++        if(gamespeed != 100)
++        {
++            putint(p, N_GAMESPEED);
++            putint(p, gamespeed);
++            putint(p, -1);
++        }
++        if(m_teammode)
++        {
++            putint(p, N_TEAMINFO);
++            enumerate(teaminfos, teaminfo, t,
++                if(t.frags) { sendstring(t.team, p); putint(p, t.frags); }
++            );
++            sendstring("", p);
++        }
++        putint(p, N_RESUME);
++        loopv(players)
++        {
++            fpsent *pl = players[i];
++            putint(p, pl->clientnum);
++            putint(p, pl->state);
++            putint(p, pl->frags);
++            putint(p, pl->flags);
++            putint(p, pl->deaths);
++            putint(p, pl->quadmillis);
++
++            sendstate(pl, p);
++        }
++        putint(p, -1);
++        welcomeinitclient(p);
++        if(cmode) cmode->initdemoclient(p);
++        return 1;
++    }
++
++    void setupdemorecord()
++    {
++        if(!m_mp(gamemode) || m_edit || m_collect || demo || demorecord) return;
++
++        string tname;
++        tname[0] = '\0';
++        time_t t = time(NULL);
++        size_t len = strftime(tname, sizeof(tname), "%Y-%m-%d_%H.%M.%S", localtime(&t));
++        tname[min(len, sizeof(tname)-1)] = '\0';
++
++        defformatstring(fname, "%s_%s_%s", tname, gamemodes[gamemode-STARTGAMEMODE].name, clientmap);
++        filtertext(fname, fname, false);
++        len = strlen(fname);
++        if(len < 4 || strcasecmp(&fname[len-4], ".dmo")) concatstring(fname, ".dmo");
++
++        if(const char *buf = server::getdemofile(fname, true)) demo = openrawfile(buf, "w+b");
++        if(!demo) demo = openrawfile(fname, "w+b");
++        if(!demo) return;
++
++        stream *f = opengzfile(NULL, "wb", demo);
++        if(!f) { DELETEP(demo); return; }
++
++        conoutf("recording client demo");
++
++        demonextmatch = false;
++        demorecord = f;
++
++        demoheader hdr;
++        memcpy(hdr.magic, DEMO_MAGIC, sizeof(hdr.magic));
++        hdr.version = DEMO_VERSION;
++        hdr.protocol = PROTOCOL_VERSION;
++        lilswap(&hdr.version, 2);
++        demorecord->write(&hdr, sizeof(demoheader));
++
++        demostartmillis = totalmillis;
++
++        packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
++        welcomepacket(p);
++        recordpacket(1, p.buf, p.len);
++    }
++
++    void recordclientdemo(int val)
++    {
++        switch (val)
++        {
++            case 0: case 1: // (un)schedule for next match
++            {
++                demonextmatch = val==1;
++                conoutf("client demo recording is %s for next match", demonextmatch ? "enabled" : "disabled");
++                break;
++            }
++            case 2: // start immediately
++            {
++                setupdemorecord();
++                break;
++            }
++        }
++    }
++    ICOMMAND(recordclientdemo, "i", (int *val), recordclientdemo(*val));
++    ICOMMAND(stopclientdemo, "", (), enddemorecord());
++
++    // mostly just a copy of addmsg()
++    // differences:
++    //  - mcn defaults to player1
++    //  - certain message types get wrapped in N_CLIENT packets (like the server would)
++    //  - packets are written directly into the demo instead of the client's message buffer
++    bool recordmsg(int type, const char *fmt, ...)
++    {
++        if(!connected || !demorecord) return false;
++        static uchar buf[MAXTRANS];
++        ucharbuf p(buf, sizeof(buf));
++        putint(p, type);
++        int numi = 1, numf = 0, nums = 0, mcn = player1->clientnum;
++        bool reliable = false;
++        if(fmt)
++        {
++            va_list args;
++            va_start(args, fmt);
++            while(*fmt) switch(*fmt++)
++            {
++                case 'r': reliable = true; break;
++                case 'c':
++                {
++                    fpsent *d = va_arg(args, fpsent *);
++                    if(d) mcn = d->clientnum;
++                    break;
++                }
++                case 'v':
++                {
++                    int n = va_arg(args, int);
++                    int *v = va_arg(args, int *);
++                    loopi(n) putint(p, v[i]);
++                    numi += n;
++                    break;
++                }
++
++                case 'i':
++                {
++                    int n = isdigit(*fmt) ? *fmt++-'0' : 1;
++                    loopi(n) putint(p, va_arg(args, int));
++                    numi += n;
++                    break;
++                }
++                case 'f':
++                {
++                    int n = isdigit(*fmt) ? *fmt++-'0' : 1;
++                    loopi(n) putfloat(p, (float)va_arg(args, double));
++                    numf += n;
++                    break;
++                }
++                case 's': sendstring(va_arg(args, const char *), p); nums++; break;
++            }
++            va_end(args);
++        }
++        int num = nums || numf ? 0 : numi, msgsize = server::msgsizelookup(type);
++        if(msgsize && num!=msgsize) { fatal("inconsistent msg size for %d (%d != %d)", type, num, msgsize); }
++        switch(type)
++        {
++            case N_SWITCHNAME: case N_TEXT: case N_GUNSELECT:
++            case N_SOUND: case N_CLIENTPING:
++            {
++                // must be wrapped in N_CLIENT
++                static uchar cpbuf[MAXTRANS];
++                ucharbuf q(cpbuf, sizeof(cpbuf));
++                putint(q, N_CLIENT);
++                putint(q, mcn);
++                putuint(q, p.length());
++                q.put(buf, p.length());
++                recordpacket(1, cpbuf, q.length());
++                q.reset();
++                break;
++            }
++            default: recordpacket(reliable ? 1 : 0, buf, p.length()); break;
++        }
++        p.reset();
++        return true;
++    }
++}
+diff --git src/vcpp/sauerbraten.vcxproj src/vcpp/sauerbraten.vcxproj
+index 23b7b0e..616c95c 100644
+--- src/vcpp/sauerbraten.vcxproj
++++ src/vcpp/sauerbraten.vcxproj
+@@ -1067,6 +1067,20 @@
+       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+     </ClCompile>
++    <ClCompile Include="..\p1xbraten\clientdemo.cpp">
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++    </ClCompile>
+     <ClCompile Include="..\fpsgame\entities.cpp">
+       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">game.h</PrecompiledHeaderFile>
+       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">game.h</PrecompiledHeaderFile>

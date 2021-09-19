@@ -131,6 +131,7 @@ namespace game
         filtertext(player1->name, name, false, false, MAXNAMELEN);
         if(!player1->name[0]) copystring(player1->name, "unnamed");
         addmsg(N_SWITCHNAME, "rs", player1->name);
+        if(demorecord) recordmsg(N_SWITCHNAME, "rs", player1->name);
     }
     void printname()
     {
@@ -568,6 +569,7 @@ namespace game
 
     void changemapserv(const char *name, int mode)        // forced map change from the server
     {
+        if(demorecord) enddemorecord();
         if(multiplayer(false) && !m_mp(mode))
         {
             conoutf(CON_ERROR, "mode %s (%d) not supported in multiplayer", server::modename(gamemode), gamemode);
@@ -634,6 +636,7 @@ namespace game
         {
             server::forcemap(name, mode);
             if(!isconnected()) localconnect();
+            if(demonextmatch) setupdemorecord();
         }
         else if(player1->state!=CS_SPECTATOR || player1->privilege) addmsg(N_MAPVOTE, "rsi", name, mode);
     }
@@ -980,7 +983,7 @@ namespace game
     VARP(teamcolorchat, 0, 1, 1);
     const char *chatcolorname(fpsent *d) { return teamcolorchat ? teamcolorname(d, NULL) : colorname(d); }
 
-    void toserver(char *text) { conoutf(CON_CHAT, "%s:\f0 %s", chatcolorname(player1), text); addmsg(N_TEXT, "rcs", player1, text); }
+    void toserver(char *text) { conoutf(CON_CHAT, "%s:\f0 %s", chatcolorname(player1), text); addmsg(N_TEXT, "rcs", player1, text); if(demorecord) recordmsg(N_TEXT, "rcs", player1, text); }
     COMMANDN(say, toserver, "C");
 
     void sayteam(char *text) { conoutf(CON_TEAMCHAT, "\fs\f8[team]\fr %s: \f8%s", chatcolorname(player1), text); addmsg(N_SAYTEAM, "rcs", player1, text); }
@@ -994,6 +997,7 @@ namespace game
 
     static void sendposition(fpsent *d, packetbuf &q)
     {
+        int offset = q.length();
         putint(q, N_POS);
         putuint(q, d->clientnum);
         // 3 bits phys state, 1 bit life sequence, 2 bits move, 2 bits strafe
@@ -1045,6 +1049,7 @@ namespace game
                 q.put((falldir>>8)&0xFF);
             }
         }
+        if(demorecord && (d==player1 || d->ai)) recordpacket(0, q.buf+offset, q.length());
     }
 
     void sendposition(fpsent *d, bool reliable)
@@ -1115,9 +1120,21 @@ namespace game
     void c2sinfo(bool force) // send update to the server
     {
         static int lastupdate = -1000;
-        if(totalmillis - lastupdate < 33 && !force) return; // don't update faster than 30fps
+        static int lastdemopos = -1000;
+        if(totalmillis - lastupdate < 33 && !force)
+        {
+            if(demorecord && totalmillis - lastdemopos >= 4 && player1->state == CS_ALIVE)
+            {
+                static packetbuf q(100);
+                sendposition(player1, q);
+                q.reset();
+                lastdemopos = totalmillis;
+            }
+            return; // don't update faster than 30fps
+        }
         lastupdate = totalmillis;
         sendpositions();
+        lastdemopos = totalmillis;
         sendmessages();
         flushclient();
     }
@@ -1826,7 +1843,9 @@ namespace game
             }
 
             case N_PONG:
+                if(demopacket) { getint(p); break; }
                 addmsg(N_CLIENTPING, "i", player1->ping = (player1->ping*5+totalmillis-getint(p))/6);
+                if(demorecord) recordmsg(N_CLIENTPING, "i", player1->ping);
                 break;
 
             case N_CLIENTPING:
@@ -2101,6 +2120,7 @@ namespace game
     void parsepacketclient(int chan, packetbuf &p)   // processes any updates from the server
     {
         if(p.packet->flags&ENET_PACKET_FLAG_UNSEQUENCED) return;
+        if(demorecord && chan<2) recordpacket(chan, p.packet->data, p.packet->dataLength);
         switch(chan)
         {
             case 0:
