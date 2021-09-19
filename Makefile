@@ -63,14 +63,14 @@ gzip-cfgs:
 	gzip --keep --force --best --no-name data/p1xbraten/keymap.cfg && xxd -i - data/p1xbraten/keymap.cfg.gz.xxd < data/p1xbraten/keymap.cfg.gz
 
 embed-cfgs: gzip-cfgs
-	sed -i "s/0,\/\/menuscrc/0x$(shell crc32 data/p1xbraten/menus.cfg),/" src/fpsgame/embedded_cfgs.cpp
-	sed -i "s/embeddedfile<0> menuscfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/menus.cfg.gz)> menuscfg/" src/fpsgame/embedded_cfgs.cpp
-	sed -i "s/0,\/\/mastercrc/0x$(shell crc32 data/p1xbraten/master.cfg),/" src/fpsgame/embedded_cfgs.cpp
-	sed -i "s/embeddedfile<0> mastercfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/master.cfg.gz)> mastercfg/" src/fpsgame/embedded_cfgs.cpp
-	sed -i "s/0,\/\/gamehudcrc/0x$(shell crc32 data/p1xbraten/gamehud.cfg),/" src/fpsgame/embedded_cfgs.cpp
-	sed -i "s/embeddedfile<0> gamehudcfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/gamehud.cfg.gz)> gamehudcfg/" src/fpsgame/embedded_cfgs.cpp
-	sed -i "s/0,\/\/keymapcrc/0x$(shell crc32 data/p1xbraten/keymap.cfg),/" src/fpsgame/embedded_cfgs.cpp
-	sed -i "s/embeddedfile<0> keymapcfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/keymap.cfg.gz)> keymapcfg/" src/fpsgame/embedded_cfgs.cpp
+	sed -i "s/0,\/\/menuscrc/0x$(shell crc32 data/p1xbraten/menus.cfg),/" src/p1xbraten/embedded_cfgs.cpp
+	sed -i "s/embeddedfile<0> menuscfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/menus.cfg.gz)> menuscfg/" src/p1xbraten/embedded_cfgs.cpp
+	sed -i "s/0,\/\/mastercrc/0x$(shell crc32 data/p1xbraten/master.cfg),/" src/p1xbraten/embedded_cfgs.cpp
+	sed -i "s/embeddedfile<0> mastercfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/master.cfg.gz)> mastercfg/" src/p1xbraten/embedded_cfgs.cpp
+	sed -i "s/0,\/\/gamehudcrc/0x$(shell crc32 data/p1xbraten/gamehud.cfg),/" src/p1xbraten/embedded_cfgs.cpp
+	sed -i "s/embeddedfile<0> gamehudcfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/gamehud.cfg.gz)> gamehudcfg/" src/p1xbraten/embedded_cfgs.cpp
+	sed -i "s/0,\/\/keymapcrc/0x$(shell crc32 data/p1xbraten/keymap.cfg),/" src/p1xbraten/embedded_cfgs.cpp
+	sed -i "s/embeddedfile<0> keymapcfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/keymap.cfg.gz)> keymapcfg/" src/p1xbraten/embedded_cfgs.cpp
 
 clean-sauer: check-env
 	cd $(SAUER_DIR) && \

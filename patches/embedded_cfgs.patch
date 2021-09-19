@@ -6,7 +6,7 @@ Index: src/Makefile
  	engine/worldio.o \
  	fpsgame/ai.o \
  	fpsgame/client.o \
-+	fpsgame/embedded_cfgs.o \
++	p1xbraten/embedded_cfgs.o \
  	fpsgame/entities.o \
  	fpsgame/fps.o \
  	fpsgame/monster.o \
@@ -25,10 +25,10 @@ Index: src/engine/main.cpp
      execfile("data/stdedit.cfg");
      execfile("data/sounds.cfg");
      execfile("data/menus.cfg");
-Index: src/fpsgame/embedded_cfgs.cpp
+Index: src/p1xbraten/embedded_cfgs.cpp
 ===================================================================
---- src/fpsgame/embedded_cfgs.cpp	(nonexistent)
-+++ src/fpsgame/embedded_cfgs.cpp	(working copy)
+--- src/p1xbraten/embedded_cfgs.cpp	(nonexistent)
++++ src/p1xbraten/embedded_cfgs.cpp	(working copy)
 @@ -0,0 +1,77 @@
 +#include "cube.h"
 +#include "embedded_cfgs.h"
@@ -107,10 +107,10 @@ Index: src/fpsgame/embedded_cfgs.cpp
 +        else execfile("data/menus.cfg");
 +    });
 +}
-Index: src/fpsgame/embedded_cfgs.h
+Index: src/p1xbraten/embedded_cfgs.h
 ===================================================================
---- src/fpsgame/embedded_cfgs.h	(nonexistent)
-+++ src/fpsgame/embedded_cfgs.h	(working copy)
+--- src/p1xbraten/embedded_cfgs.h	(nonexistent)
++++ src/p1xbraten/embedded_cfgs.h	(working copy)
 @@ -0,0 +1,10 @@
 +#include "cube.h"
 +
@@ -164,7 +164,7 @@ Index: src/vcpp/sauerbraten.vcxproj
        <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)2.obj</ObjectFileName>
        <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)2.obj</ObjectFileName>
      </ClCompile>
-+    <ClCompile Include="..\fpsgame\embedded_cfgs.cpp">
++    <ClCompile Include="..\p1xbraten\embedded_cfgs.cpp">
 +      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">cube.h</PrecompiledHeaderFile>
 +      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">cube.h</PrecompiledHeaderFile>
 +      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)cube.pch</PrecompiledHeaderOutputFile>

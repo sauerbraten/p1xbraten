@@ -328,7 +328,7 @@ namespace game
                     rightjustified(g.text("ping", COL_GRAY))
                     loopscoregroup(o,
                     {
-                        fpsent *p = getclient(o->ownernum);
+                        fpsent *p = o->ownernum >= 0 ? getclient(o->ownernum) : o;
                         if(!p) p = o;
                         if(!showpj && p->state==CS_LAGGED) rightjustified(g.text("LAG", fgcolor))
                         else rightjustified(g.textf("%d", fgcolor, NULL, p->ping))
@@ -344,7 +344,7 @@ namespace game
                     rightjustified(g.text("pj", COL_GRAY))
                     loopscoregroup(o,
                     {
-                        fpsent *p = getclient(o->ownernum);
+                        fpsent *p = o->ownernum >= 0 ? getclient(o->ownernum) : o;
                         if(!p) p = o;
                         if(p==player1) rightjustified(g.text("0", fgcolor))
                         else if(p->state==CS_LAGGED) rightjustified(g.text("LAG", fgcolor))
@@ -407,7 +407,7 @@ namespace game
                     rightjustified(g.text("ping", COL_GRAY))
                     loopspectators(o,
                     {
-                        fpsent *p = getclient(o->ownernum);
+                        fpsent *p = o->ownernum >= 0 ? getclient(o->ownernum) : o;
                         if(!p) p = o;
                         if(p->state==CS_LAGGED) rightjustified(g.text("LAG", fgcolor))
                         else rightjustified(g.textf("%d", fgcolor, NULL, p->ping))
