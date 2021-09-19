@@ -221,6 +221,7 @@ namespace entities
             putint(p, d->clientnum);
             putint(p, tp);
             putint(p, td);
+            if(demorecord) recordpacket(0, p.buf, p.length());
             sendclientpacket(p.finalize(), 0);
             flushclient();
         }
@@ -245,6 +246,7 @@ namespace entities
             putint(p, N_JUMPPAD);
             putint(p, d->clientnum);
             putint(p, jp);
+            if(demorecord) recordpacket(0, p.buf, p.length());
             sendclientpacket(p.finalize(), 0);
             flushclient();
         }

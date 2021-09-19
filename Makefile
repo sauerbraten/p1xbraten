@@ -51,6 +51,7 @@ apply-patches:
 	$(PATCH) < patches/up_down_hover.patch
 	$(PATCH) < patches/paused_spec_movement.patch
 	$(PATCH) < patches/checkupdate.patch
+	$(PATCH) < patches/clientdemo.patch
 	unix2dos src/vcpp/sauerbraten.nsi
 	unix2dos src/vcpp/sauerbraten.vcxproj
 	cd src && make depend

@@ -30,6 +30,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [up_down_hover.patch](#up_down_hoverpatch)
   - [paused_spec_movement.patch](#paused_spec_movementpatch)
   - [checkupdate.patch](#checkupdatepatch)
+  - [clientdemo.patch](#clientdemopatch)
 - [Server Patches](#server-patches)
   - [authservers.patch](#authserverspatch)
   - [serverlogging.patch](#serverloggingpatch)
@@ -221,6 +222,12 @@ For an overview of who uses p1xbraten, you can run `/showgui p1xbratenusage`.
 
 - adds the `checkupdate` command to check if a newer version of p1xbraten is available
 
+### [clientdemo.patch](./patches/clientdemo.patch)
+
+- adds the `recordclientdemo <0|1|2>` command: 1 schedules, 0 cancels demo recording for the next match; 2 starts recording a demo immediately
+- adds the `stopclientdemo` command: stops an ongoing demo recording
+
+Client-side demos record the game as you experience it, and work independently of server-side demo recording. They also work locally, without being connected to any server.
 
 ## Server Patches
 

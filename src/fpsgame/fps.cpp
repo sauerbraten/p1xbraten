@@ -688,6 +688,7 @@ namespace game
         disablezoom();
         lasthit = 0;
 
+        if(demonextmatch) setupdemorecord();
         execident("mapstart");
     }
 
@@ -743,12 +744,16 @@ namespace game
         if(!d || d==player1)
         {
             addmsg(N_SOUND, "ci", d, n);
+            if(demorecord) recordmsg(N_SOUND, "ci", d, n);
             playsound(n);
         }
         else
         {
             if(d->type==ENT_PLAYER && ((fpsent *)d)->ai)
+            {
                 addmsg(N_SOUND, "ci", d, n);
+                if(demorecord) recordmsg(N_SOUND, "ci", d, n);
+            }
             playsound(n, &d->o);
         }
     }

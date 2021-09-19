@@ -22,7 +22,7 @@ namespace game
     MOD(VARP, showdamage, 0, 0, 2);
     MOD(VARP, showdamagereceived, 0, 0, 1);
 
-    static hashset<teaminfo> teaminfos;
+    hashset<teaminfo> teaminfos;
 
     void clearteaminfo()
     {

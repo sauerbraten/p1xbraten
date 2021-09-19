@@ -131,6 +131,7 @@ namespace game
         filtertext(player1->name, name, false, false, MAXNAMELEN);
         if(!player1->name[0]) copystring(player1->name, "unnamed");
         addmsg(N_SWITCHNAME, "rs", player1->name);
+        if(demorecord) recordmsg(N_SWITCHNAME, "rs", player1->name);
     }
     void printname()
     {
@@ -568,6 +569,7 @@ namespace game
 
     void changemapserv(const char *name, int mode)        // forced map change from the server
     {
+        if(demorecord) enddemorecord();
         if(multiplayer(false) && !m_mp(mode))
         {
             conoutf(CON_ERROR, "mode %s (%d) not supported in multiplayer", server::modename(gamemode), gamemode);
@@ -980,7 +982,7 @@ namespace game
     VARP(teamcolorchat, 0, 1, 1);
     const char *chatcolorname(fpsent *d) { return teamcolorchat ? teamcolorname(d, NULL) : colorname(d); }
 
-    void toserver(char *text) { conoutf(CON_CHAT, "%s:\f0 %s", chatcolorname(player1), text); addmsg(N_TEXT, "rcs", player1, text); }
+    void toserver(char *text) { conoutf(CON_CHAT, "%s:\f0 %s", chatcolorname(player1), text); addmsg(N_TEXT, "rcs", player1, text); if(demorecord) recordmsg(N_TEXT, "rcs", player1, text); }
     COMMANDN(say, toserver, "C");
 
     void sayteam(char *text) { conoutf(CON_TEAMCHAT, "\fs\f8[team]\fr %s: \f8%s", chatcolorname(player1), text); addmsg(N_SAYTEAM, "rcs", player1, text); }
@@ -1052,6 +1054,7 @@ namespace game
         if(d->state != CS_ALIVE && d->state != CS_EDITING) return;
         packetbuf q(100, reliable ? ENET_PACKET_FLAG_RELIABLE : 0);
         sendposition(d, q);
+        if(demorecord) recordpacket(0, q.buf, q.length());
         sendclientpacket(q.finalize(), 0);
     }
 
@@ -1070,6 +1073,7 @@ namespace game
                     if((d == player1 || d->ai) && (d->state == CS_ALIVE || d->state == CS_EDITING))
                         sendposition(d, q);
                 }
+                if(demorecord) recordpacket(0, q.buf, q.length());
                 sendclientpacket(q.finalize(), 0);
                 break;
             }
@@ -1826,7 +1830,9 @@ namespace game
             }
 
             case N_PONG:
+                if(demopacket) { getint(p); break; }
                 addmsg(N_CLIENTPING, "i", player1->ping = (player1->ping*5+totalmillis-getint(p))/6);
+                if(demorecord) recordmsg(N_CLIENTPING, "i", player1->ping);
                 break;
 
             case N_CLIENTPING:
@@ -2115,6 +2121,8 @@ namespace game
                 receivefile(p);
                 break;
         }
+
+        if(demorecord && chan<2) recordpacket(chan, p.packet->data, p.packet->dataLength);
     }
 
     void getmap()
