@@ -8,7 +8,7 @@ Index: src/Makefile
  	fpsgame/render.o \
  	fpsgame/scoreboard.o \
  	fpsgame/server.o \
-+	fpsgame/weaponstats.o \
++	p1xbraten/weaponstats.o \
  	fpsgame/waypoint.o \
  	fpsgame/weapon.o
 
@@ -394,8 +394,7 @@ Index: src/fpsgame/scoreboard.cpp
 +                    rightjustified(g.text("ping", COL_GRAY))
                      loopscoregroup(o,
                      {
--                        fpsent *p = o->ownernum >= 0 ? getclient(o->ownernum) : o;
-+                        fpsent *p = getclient(o->ownernum);
+                         fpsent *p = o->ownernum >= 0 ? getclient(o->ownernum) : o;
                          if(!p) p = o;
 -                        g.pushlist();
 -                        if(p->state==CS_LAGGED) g.text("LAG", COL_WHITE);
@@ -425,8 +424,7 @@ Index: src/fpsgame/scoreboard.cpp
 +                    rightjustified(g.text("pj", COL_GRAY))
                      loopscoregroup(o,
                      {
--                        fpsent *p = o->ownernum >= 0 ? getclient(o->ownernum) : o;
-+                        fpsent *p = getclient(o->ownernum);
+                         fpsent *p = o->ownernum >= 0 ? getclient(o->ownernum) : o;
                          if(!p) p = o;
 -                        if(!showpj && p->state==CS_LAGGED) g.text("LAG", COL_WHITE);
 -                        else g.textf("%d", COL_WHITE, NULL, p->ping);
@@ -510,8 +508,7 @@ Index: src/fpsgame/scoreboard.cpp
 +                    loopspectators(o,
                      {
 -                        fpsent *o = spectators[i];
--                        fpsent *p = o->ownernum >= 0 ? getclient(o->ownernum) : o;
-+                        fpsent *p = getclient(o->ownernum);
+                         fpsent *p = o->ownernum >= 0 ? getclient(o->ownernum) : o;
                          if(!p) p = o;
 -                        if(p->state==CS_LAGGED) g.text("LAG", COL_WHITE);
 -                        else g.textf("%d", COL_WHITE, NULL, p->ping);
@@ -600,10 +597,10 @@ Index: src/fpsgame/weapon.cpp
      }
 
      void adddynlights()
-Index: src/fpsgame/weaponstats.cpp
+Index: src/p1xbraten/weaponstats.cpp
 ===================================================================
---- src/fpsgame/weaponstats.cpp	(nonexistent)
-+++ src/fpsgame/weaponstats.cpp	(working copy)
+--- src/p1xbraten/weaponstats.cpp	(nonexistent)
++++ src/p1xbraten/weaponstats.cpp	(working copy)
 @@ -0,0 +1,60 @@
 +#include "game.h"
 +#include "weaponstats.h"
@@ -665,10 +662,10 @@ Index: src/fpsgame/weaponstats.cpp
 +    }
 +    DAMAGECOMMAND(getaccuracy, floatret(playeraccuracy(p, gun)))
 +}
-Index: src/fpsgame/weaponstats.h
+Index: src/p1xbraten/weaponstats.h
 ===================================================================
---- src/fpsgame/weaponstats.h	(nonexistent)
-+++ src/fpsgame/weaponstats.h	(working copy)
+--- src/p1xbraten/weaponstats.h	(nonexistent)
++++ src/p1xbraten/weaponstats.h	(working copy)
 @@ -0,0 +1,27 @@
 +#ifndef __WEAPONSTATS_H__
 +#define __WEAPONSTATS_H__
@@ -697,10 +694,10 @@ Index: src/fpsgame/weaponstats.h
 +}
 +
 +#endif
-Index: src/fpsgame/weaponstats_type.h
+Index: src/p1xbraten/weaponstats_type.h
 ===================================================================
---- src/fpsgame/weaponstats_type.h	(nonexistent)
-+++ src/fpsgame/weaponstats_type.h	(working copy)
+--- src/p1xbraten/weaponstats_type.h	(nonexistent)
++++ src/p1xbraten/weaponstats_type.h	(working copy)
 @@ -0,0 +1,59 @@
 +#ifndef __WEAPONSTATS_TYPE_H__
 +#define __WEAPONSTATS_TYPE_H__
@@ -769,7 +766,7 @@ Index: src/vcpp/sauerbraten.vcxproj
        <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
        <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
      </ClCompile>
-+    <ClCompile Include="..\fpsgame\weaponstats.cpp">
++    <ClCompile Include="..\p1xbraten\weaponstats.cpp">
 +      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">game.h</PrecompiledHeaderFile>
 +      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">game.h</PrecompiledHeaderFile>
 +      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>

@@ -571,10 +571,10 @@ Index: src/fpsgame/server.cpp
      }
 
      void receivefile(int sender, uchar *data, int len)
-Index: src/shared/authservers.h
+Index: src/p1xbraten/authservers.h
 ===================================================================
---- src/shared/authservers.h	(nonexistent)
-+++ src/shared/authservers.h	(working copy)
+--- src/p1xbraten/authservers.h	(nonexistent)
++++ src/p1xbraten/authservers.h	(working copy)
 @@ -0,0 +1,28 @@
 +#include "masterserver.h"
 +
@@ -648,10 +648,10 @@ Index: src/shared/igame.h
      extern bool ispaused();
      extern int scaletime(int t);
  }
-Index: src/shared/masterserver.h
+Index: src/p1xbraten/masterserver.h
 ===================================================================
---- src/shared/masterserver.h	(nonexistent)
-+++ src/shared/masterserver.h	(working copy)
+--- src/p1xbraten/masterserver.h	(nonexistent)
++++ src/p1xbraten/masterserver.h	(working copy)
 @@ -0,0 +1,186 @@
 +#include "cube.h"
 +

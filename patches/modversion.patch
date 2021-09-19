@@ -6,7 +6,7 @@ Index: src/Makefile
  	engine/octa.o \
  	engine/octaedit.o \
  	engine/octarender.o \
-+	engine/p1xbraten_version.o \
++	p1xbraten/version.o \
  	engine/physics.o \
  	engine/pvs.o \
  	engine/rendergl.o \
@@ -14,7 +14,7 @@ Index: src/Makefile
  	fpsgame/fps.o \
  	fpsgame/monster.o \
  	fpsgame/movable.o \
-+	fpsgame/p1xbraten_detection.o \
++	p1xbraten/detection.o \
  	fpsgame/render.o \
  	fpsgame/scoreboard.o \
  	fpsgame/server.o \
@@ -53,10 +53,10 @@ Index: src/engine/main.cpp
      logoutf("init: mainloop");
 
      if(execfile("once.cfg", false)) remove(findfile("once.cfg", "rb"));
-Index: src/engine/p1xbraten_version.cpp
+Index: src/p1xbraten/version.cpp
 ===================================================================
---- src/engine/p1xbraten_version.cpp	(nonexistent)
-+++ src/engine/p1xbraten_version.cpp	(working copy)
+--- src/p1xbraten/version.cpp	(nonexistent)
++++ src/p1xbraten/version.cpp	(working copy)
 @@ -0,0 +1,22 @@
 +#include "engine.h"
 +
@@ -149,10 +149,10 @@ Index: src/fpsgame/game.h
 
      // monster
      struct monster;
-Index: src/fpsgame/p1xbraten_detection.cpp
+Index: src/p1xbraten/detection.cpp
 ===================================================================
---- src/fpsgame/p1xbraten_detection.cpp	(nonexistent)
-+++ src/fpsgame/p1xbraten_detection.cpp	(working copy)
+--- src/p1xbraten/detection.cpp	(nonexistent)
++++ src/p1xbraten/detection.cpp	(working copy)
 @@ -0,0 +1,23 @@
 +#include "game.h"
 +
@@ -244,7 +244,7 @@ Index: src/vcpp/sauerbraten.vcxproj
        <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)engine.pch</PrecompiledHeaderOutputFile>
        <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)engine.pch</PrecompiledHeaderOutputFile>
      </ClCompile>
-+    <ClCompile Include="..\engine\p1xbraten_version.cpp">
++    <ClCompile Include="..\p1xbraten\version.cpp">
 +      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">engine.h</PrecompiledHeaderFile>
 +      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">engine.h</PrecompiledHeaderFile>
 +      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)engine.pch</PrecompiledHeaderOutputFile>
@@ -265,7 +265,7 @@ Index: src/vcpp/sauerbraten.vcxproj
        <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)2.obj</ObjectFileName>
        <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)2.obj</ObjectFileName>
      </ClCompile>
-+    <ClCompile Include="..\fpsgame\p1xbraten_detection.cpp">
++    <ClCompile Include="..\p1xbraten\detection.cpp">
 +      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">game.h</PrecompiledHeaderFile>
 +      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">game.h</PrecompiledHeaderFile>
 +      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
