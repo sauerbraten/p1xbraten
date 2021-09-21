@@ -52,6 +52,7 @@ apply-patches:
 	$(PATCH) < patches/paused_spec_movement.patch
 	$(PATCH) < patches/checkupdate.patch
 	$(PATCH) < patches/clientdemo.patch
+	$(PATCH) < patches/colored_weapon_trails.patch
 	unix2dos src/vcpp/sauerbraten.nsi
 	unix2dos src/vcpp/sauerbraten.vcxproj
 	cd src && make depend

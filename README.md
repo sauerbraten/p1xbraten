@@ -31,6 +31,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [paused_spec_movement.patch](#paused_spec_movementpatch)
   - [checkupdate.patch](#checkupdatepatch)
   - [clientdemo.patch](#clientdemopatch)
+  - [colored_weapon_trails.patch](#colored_weapon_trailspatch)
 - [Server Patches](#server-patches)
   - [authservers.patch](#authserverspatch)
   - [serverlogging.patch](#serverloggingpatch)
@@ -228,6 +229,12 @@ For an overview of who uses p1xbraten, you can run `/showgui p1xbratenusage`.
 - adds the `stopclientdemo` command: stops an ongoing demo recording
 
 Client-side demos record the game as you experience it, and work independently of server-side demo recording. They also work locally, without being connected to any server.
+
+### [colored_weapon_trails.patch](./patches/colored_weapon_trails.patch)
+
+- adds the `trailcolor[shotgun|chaingun|rocketlauncher|rifle|grenadelauncher|pistol]` vars that change the respective weapon's projectile/particle trail
+- adds the `settrailcolor <SG|CG|RL|RI|GL|PI> <color>` command (for convenience: changing the variables directly also works)
+
 
 ## Server Patches
 
