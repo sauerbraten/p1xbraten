@@ -230,6 +230,8 @@ namespace game
         adddecal(DECAL_BLOOD, vec(b->o).sub(vec(surface).mul(b->radius)), surface, 2.96f/b->bounces, bvec(0x60, 0xFF, 0xFF), rnd(4));
     }
         
+    MOD(HVARP, trailcolorgrenadelauncher, 0, 0x404040, 0xFFFFFF);
+
     void updatebouncers(int time)
     {
         loopv(bouncers)
@@ -238,7 +240,7 @@ namespace game
             if(bnc.bouncetype==BNC_GRENADE && bnc.vel.magnitude() > 50.0f)
             {
                 vec pos = bnc.offsetpos();
-                regular_particle_splash(PART_SMOKE, 1, 150, pos, 0x404040, 2.4f, 50, -20);
+                regular_particle_splash(PART_SMOKE, 1, 150, pos, trailcolorgrenadelauncher, 2.4f, 50, -20);
             }
             vec old(bnc.o);
             bool stopped = false;
@@ -522,6 +524,8 @@ namespace game
         return true;
     }
 
+    MOD(HVARP, trailcolorrocketlauncher, 0, 0x404040, 0xFFFFFF);
+
     void updateprojectiles(int time)
     {
         loopv(projs)
@@ -572,7 +576,7 @@ namespace game
                          }
                          particle_splash(guns[p.gun].part, 1, 1, pos, color, 4.8f, 150, 20);
                     }
-                    else regular_particle_splash(PART_SMOKE, 2, 300, pos, 0x404040, 2.4f, 50, -20);
+                    else regular_particle_splash(PART_SMOKE, 2, 300, pos, p.gun==GUN_RL ? trailcolorrocketlauncher : 0x404040, 2.4f, 50, -20);
                 }
             }
             if(exploded)
@@ -590,6 +594,10 @@ namespace game
 
     VARP(muzzleflash, 0, 1, 1);
     VARP(muzzlelight, 0, 1, 1);
+    MOD(HVARP, trailcolorshotgun, 0, 0xFFC864, 0xFFFFFF);
+    MOD(HVARP, trailcolorchaingun, 0, 0xFFC864, 0xFFFFFF);
+    MOD(HVARP, trailcolorrifle, 0, 0x404040, 0xFFFFFF);
+    MOD(HVARP, trailcolorpistol, 0, 0xFFC864, 0xFFFFFF);
 
     void shoteffects(int gun, const vec &from, const vec &to, fpsent *d, bool local, int id, int prevaction)     // create visual effect from a shot
     {
@@ -608,7 +616,7 @@ namespace game
                 loopi(guns[gun].rays)
                 {
                     particle_splash(PART_SPARK, 20, 250, rays[i], 0xB49B4B, 0.24f);
-                    particle_flare(hudgunorigin(gun, from, rays[i], d), rays[i], 300, PART_STREAK, 0xFFC864, 0.28f);
+                    particle_flare(hudgunorigin(gun, from, rays[i], d), rays[i], 300, PART_STREAK, trailcolorshotgun, 0.28f);
                     if(!local) adddecal(DECAL_BULLET, rays[i], vec(from).sub(rays[i]).safenormalize(), 2.0f);
                 }
                 if(muzzlelight) adddynlight(hudgunorigin(gun, d->o, to, d), 30, vec(0.5f, 0.375f, 0.25f), 100, 100, DL_FLASH, 0, vec(0, 0, 0), d);
@@ -619,7 +627,7 @@ namespace game
             case GUN_PISTOL:
             {
                 particle_splash(PART_SPARK, 200, 250, to, 0xB49B4B, 0.24f);
-                particle_flare(hudgunorigin(gun, from, to, d), to, 600, PART_STREAK, 0xFFC864, 0.28f);
+                particle_flare(hudgunorigin(gun, from, to, d), to, 600, PART_STREAK, gun==GUN_CG ? trailcolorchaingun : trailcolorpistol, 0.28f);
                 if(muzzleflash && d->muzzle.x >= 0)
                     particle_flare(d->muzzle, d->muzzle, gun==GUN_CG ? 100 : 200, PART_MUZZLE_FLASH1, 0xFFFFFF, gun==GUN_CG ? 2.25f : 1.25f, d);
                 if(!local) adddecal(DECAL_BULLET, to, vec(from).sub(to).safenormalize(), 2.0f);
@@ -652,7 +660,7 @@ namespace game
 
             case GUN_RIFLE:
                 particle_splash(PART_SPARK, 200, 250, to, 0xB49B4B, 0.24f);
-                particle_trail(PART_SMOKE, 500, hudgunorigin(gun, from, to, d), to, 0x404040, 0.6f, 20);
+                particle_trail(PART_SMOKE, 500, hudgunorigin(gun, from, to, d), to, trailcolorrifle, 0.6f, 20);
                 if(muzzleflash && d->muzzle.x >= 0)
                     particle_flare(d->muzzle, d->muzzle, 150, PART_MUZZLE_FLASH3, 0xFFFFFF, 1.25f, d);
                 if(!local) adddecal(DECAL_BULLET, to, vec(from).sub(to).safenormalize(), 3.0f);
@@ -677,6 +685,19 @@ namespace game
         }
         if(d->quadmillis && lastmillis-prevaction>200 && !looped) playsound(S_ITEMPUP, d==h ? NULL : &d->o);
     }
+
+    ICOMMAND(settrailcolor, "sf", (char *name, float *color), {
+        if(!color) return;
+        switch (getweapon(name))
+        {
+            case GUN_SG:     trailcolorshotgun         = *color; break;
+            case GUN_CG:     trailcolorchaingun        = *color; break;
+            case GUN_RL:     trailcolorrocketlauncher  = *color; break;
+            case GUN_RIFLE:  trailcolorrifle           = *color; break;
+            case GUN_GL:     trailcolorgrenadelauncher = *color; break;
+            case GUN_PISTOL: trailcolorpistol          = *color; break;
+        }
+    });
 
     void particletrack(physent *owner, vec &o, vec &d)
     {
@@ -1007,4 +1028,3 @@ namespace game
         }
     }
 };
-
