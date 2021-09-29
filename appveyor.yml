@@ -12,7 +12,7 @@ for:
   before_build:
     - ps: (Get-Content src/p1xbraten/version.cpp) -replace '<git-dev>', (git describe) | Set-Content src/p1xbraten/version.cpp
     - ps: (Get-Content src/vcpp/sauerbraten.nsi) -replace '<git-dev>', (git describe) | Set-Content src/vcpp/sauerbraten.nsi
-    - ps: vcpkg install curl
+    - ps: vcpkg install curl:x86-windows curl:x64-windows
   build:
     project: p1xbraten.vcxproj
     verbosity: minimal
