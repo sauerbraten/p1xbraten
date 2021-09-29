@@ -1,4 +1,4 @@
-src/**/*.a
+src/**/**.a
 src/**/*.gch
 src/**/*.o
 src/**/*.orig

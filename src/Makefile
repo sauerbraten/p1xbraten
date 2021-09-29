@@ -71,7 +71,7 @@ CLIENT_LIBS+= -lcurl
 else
 CLIENT_INCLUDES= $(INCLUDES) -I/usr/X11R6/include `sdl2-config --cflags`
 CLIENT_LIBS= -Lenet -lenet -L/usr/X11R6/lib -lX11 `sdl2-config --libs` -lSDL2_image -lSDL2_mixer -lz -lGL
-CLIENT_LIBS+= `curl-config --libs`
+CLIENT_LIBS+= -lssl -lcrypto -lpthread -L../deps/linux/lib64 -lcurl
 endif
 endif
 ifeq ($(PLATFORM),LINUX)
