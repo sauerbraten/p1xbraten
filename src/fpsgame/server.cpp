@@ -3184,7 +3184,7 @@ namespace server
                 {
                     ci->state.editstate = ci->state.state;
                     ci->state.state = CS_EDITING;
-                    ci->events.setsize(0);
+                    ci->events.deletecontents();
                     ci->state.rockets.reset();
                     ci->state.grenades.reset();
                 }
