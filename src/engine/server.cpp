@@ -54,7 +54,7 @@ static void writelog(FILE *file, const char *buf)
     size_t len = strlen(buf), carry = 0;
     if(isdedicatedserver() && logtime)
     {
-        if(!walltime) { walltime = time(NULL); walltime -= totalmillis/1000; if(!walltime) walltime++; }
+        if(!walltime || walltime > INT_MAX/2) { walltime = time(NULL); walltime -= totalmillis/1000; if(!walltime) walltime++; }
         time_t walloffset = walltime + totalmillis/1000;
         struct tm *localvals = localtime(&walloffset);
         static string ts;
