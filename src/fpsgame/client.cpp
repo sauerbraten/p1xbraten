@@ -2043,7 +2043,18 @@ namespace game
 
             case N_SERVCMD:
                 getstring(text, p);
+                handlecapprobe(text);
                 break;
+
+            case N_P1X_RECORDDEMO:
+            {
+                int val = getint(p);
+                if(val) conoutf("server requested client demo recording for the next match");
+                else if(managedgamedemonextmatch) conoutf("server canceled client demo recording for the next match");
+                else if(managedgamedemofname[0]) enddemorecord();
+                managedgamedemonextmatch = val!=0;
+                break;
+            }
 
             default:
                 neterr("type", cn < 0);

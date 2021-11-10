@@ -143,7 +143,10 @@ CLIENT_OBJS= \
 	fpsgame/server.o \
 	p1xbraten/weaponstats.o \
 	fpsgame/waypoint.o \
-	fpsgame/weapon.o
+	fpsgame/weapon.o \
+	p1xbraten/servercommands.o \
+	p1xbraten/capability_probing.o \
+	p1xbraten/managed_games.o
 
 CLIENT_PCH= shared/cube.h.gch engine/engine.h.gch fpsgame/game.h.gch
 
@@ -167,7 +170,9 @@ SERVER_OBJS= \
 	engine/server-standalone.o \
 	engine/worldio-standalone.o \
 	fpsgame/entities-standalone.o \
-	fpsgame/server-standalone.o
+	fpsgame/server-standalone.o \
+	p1xbraten/servercommands-standalone.o \
+	p1xbraten/managed_games-standalone.o
 
 MASTER_OBJS= \
 	shared/crypto-standalone.o \
@@ -555,6 +560,18 @@ fpsgame/weapon.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
 fpsgame/weapon.o: shared/ents.h shared/command.h shared/glexts.h
 fpsgame/weapon.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
 fpsgame/weapon.o: p1xbraten/weaponstats.h
+p1xbraten/servercommands.o: fpsgame/game.h shared/cube.h shared/tools.h
+p1xbraten/servercommands.o: shared/geom.h shared/ents.h shared/command.h
+p1xbraten/servercommands.o: shared/glexts.h shared/glemu.h shared/iengine.h
+p1xbraten/servercommands.o: shared/igame.h fpsgame/ai.h
+p1xbraten/capability_probing.o: fpsgame/game.h shared/cube.h shared/tools.h
+p1xbraten/capability_probing.o: shared/geom.h shared/ents.h shared/command.h
+p1xbraten/capability_probing.o: shared/glexts.h shared/glemu.h
+p1xbraten/capability_probing.o: shared/iengine.h shared/igame.h fpsgame/ai.h
+p1xbraten/managed_games.o: fpsgame/game.h shared/cube.h shared/tools.h
+p1xbraten/managed_games.o: shared/geom.h shared/ents.h shared/command.h
+p1xbraten/managed_games.o: shared/glexts.h shared/glemu.h shared/iengine.h
+p1xbraten/managed_games.o: shared/igame.h fpsgame/ai.h
 
 shared/cube.h.gch: shared/tools.h shared/geom.h shared/ents.h
 shared/cube.h.gch: shared/command.h shared/glexts.h shared/glemu.h
@@ -595,6 +612,16 @@ fpsgame/server-standalone.o: shared/iengine.h shared/igame.h fpsgame/ai.h
 fpsgame/server-standalone.o: fpsgame/capture.h fpsgame/ctf.h
 fpsgame/server-standalone.o: fpsgame/collect.h fpsgame/extinfo.h
 fpsgame/server-standalone.o: fpsgame/aiman.h
+p1xbraten/servercommands-standalone.o: fpsgame/game.h shared/cube.h
+p1xbraten/servercommands-standalone.o: shared/tools.h shared/geom.h
+p1xbraten/servercommands-standalone.o: shared/ents.h shared/command.h
+p1xbraten/servercommands-standalone.o: shared/iengine.h shared/igame.h
+p1xbraten/servercommands-standalone.o: fpsgame/ai.h
+p1xbraten/managed_games-standalone.o: fpsgame/game.h shared/cube.h
+p1xbraten/managed_games-standalone.o: shared/tools.h shared/geom.h
+p1xbraten/managed_games-standalone.o: shared/ents.h shared/command.h
+p1xbraten/managed_games-standalone.o: shared/iengine.h shared/igame.h
+p1xbraten/managed_games-standalone.o: fpsgame/ai.h
 engine/master-standalone.o: shared/cube.h shared/tools.h shared/geom.h
 engine/master-standalone.o: shared/ents.h shared/command.h shared/iengine.h
 engine/master-standalone.o: shared/igame.h

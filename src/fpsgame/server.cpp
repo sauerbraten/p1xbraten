@@ -292,13 +292,6 @@ namespace server
     COMMAND(maprotationreset, "");
     COMMANDN(maprotation, addmaprotations, "ss2V");
 
-    struct demofile
-    {
-        string info;
-        uchar *data;
-        int len;
-    };
-
     vector<demofile> demos;
 
     bool demonextmatch = false;
@@ -501,7 +494,7 @@ namespace server
         return false;
     }
 
-    const char *colorname(clientinfo *ci, const char *name = NULL)
+    const char *colorname(clientinfo *ci, const char *name)
     {
         if(!name) name = ci->name;
         if(name[0] && !duplicatename(ci, name) && ci->state.aitype == AI_NONE) return name;
@@ -756,12 +749,13 @@ namespace server
         char *timestr = ctime(&t), *trim = timestr + strlen(timestr);
         while(trim>timestr && iscubespace(*--trim)) *trim = '\0';
         formatstring(d.info, "%s: %s, %s, %.2f%s", timestr, modename(gamemode), smapname, len > 1024*1024 ? len/(1024*1024.f) : len/1024.0f, len > 1024*1024 ? "MB" : "kB");
-        sendservmsgf("demo \"%s\" recorded", d.info);
+        sendservmsgf("demo \"%s\" recorded on server", d.info);
         d.data = new uchar[len];
         d.len = len;
         demotmp->seek(0, SEEK_SET);
         demotmp->read(d.data, len);
         DELETEP(demotmp);
+        if(managedgame) savedemo(d);
     }
         
     void enddemorecord()
@@ -805,7 +799,7 @@ namespace server
         stream *f = opengzfile(NULL, "wb", demotmp);
         if(!f) { DELETEP(demotmp); return; }
 
-        sendservmsg("recording demo");
+        sendservmsg("recording server demo");
 
         demorecord = f;
 
@@ -1032,9 +1026,10 @@ namespace server
         else enddemorecord();
     }
 
-    void pausegame(bool val, clientinfo *ci = NULL)
+    void pausegame(bool val, clientinfo *ci)
     {
         if(gamepaused==val) return;
+        if(!val) resuming = false;
         gamepaused = val;
         sendf(-1, 1, "riii", N_PAUSEGAME, gamepaused ? 1 : 0, ci ? ci->clientnum : -1);
     }
@@ -1538,6 +1533,7 @@ namespace server
     {
         packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
         int chan = welcomepacket(p, ci);
+        if(!ci->local) probeforclientdemoupload(p);
         sendpacket(ci->clientnum, chan, p.finalize());
     }
 
@@ -1802,6 +1798,9 @@ namespace server
         }
 
         if(smode) smode->setup();
+
+        if(managedgamenextmatch) setupmanagedgame();
+        else cleanupmanagedgame();
 
         if(isdedicatedserver()) logoutf("started %s on %s", modename(mode, "unknown mode"), smapname);
     }
@@ -2252,7 +2251,8 @@ namespace server
             {
                 if(demorecord) enddemorecord();
                 interm = -1;
-                checkvotes(true);
+                if(managedgame) managedgameended();
+                else checkvotes(true);
             }
         }
 
@@ -2267,6 +2267,7 @@ namespace server
         ci->state.timeplayed += lastmillis - ci->state.lasttimeplayed;
         if(!ci->local && (!ci->privilege || ci->warned)) aiman::removeai(ci);
         sendf(-1, 1, "ri3", N_SPECTATOR, ci->clientnum, 1);
+        if(managedgame) pausegame(true, ci);
     }
 
     struct crcinfo
@@ -2405,6 +2406,7 @@ namespace server
             ci->state.timeplayed += lastmillis - ci->state.lasttimeplayed;
             savescore(ci);
             sendf(-1, 1, "ri2", N_CDIS, n);
+            if(managedgame && ci->state.state!=CS_SPECTATOR) pausegame(true);
             clients.removeobj(ci);
             aiman::removeai(ci);
             if(!numclients(-1, false, true)) noclients(); // bans clear when server empties
@@ -2665,7 +2667,7 @@ namespace server
             authchallenged(id, val, desc);
     }
 
-    void receivefile(int sender, uchar *data, int len)
+    void receivemapdata(int sender, uchar *data, int len)
     {
         if(!m_edit || len <= 0 || len > 4*1024*1024) return;
         clientinfo *ci = getinfo(sender);
@@ -2726,7 +2728,7 @@ namespace server
 
     void parsepacket(int sender, int chan, packetbuf &p)     // has to parse exactly each byte of the packet
     {
-        if(sender<0 || p.packet->flags&ENET_PACKET_FLAG_UNSEQUENCED || chan > 2) return;
+        if(sender<0 || p.packet->flags&ENET_PACKET_FLAG_UNSEQUENCED || chan >= numchannels()) return;
         char text[MAXTRANS];
         int type;
         clientinfo *ci = sender>=0 ? getinfo(sender) : NULL, *cq = ci, *cm = ci;
@@ -2788,7 +2790,12 @@ namespace server
         }
         else if(chan==2)
         {
-            receivefile(sender, p.buf, p.maxlen);
+            receivemapdata(sender, p.buf, p.maxlen);
+            return;
+        }
+        else if(chan==3)
+        {
+            receiveclientdemo(sender, p.buf, p.maxlen);
             return;
         }
 
@@ -2976,6 +2983,7 @@ namespace server
                     putint(cm->messages, N_SPAWN);
                     sendstate(cq->state, cm->messages);
                 });
+                if(managedgame) onspawn(cq);
                 break;
             }
 
@@ -3052,6 +3060,7 @@ namespace server
                 QUEUE_MSG;
                 getstring(text, p);
                 filtertext(text, text, true, true);
+                if(text[0]=='#' && handleservcmd(cq, &text[1])) break;
                 QUEUE_STR(text);
                 if(isdedicatedserver() && cq) logoutf("%s (cn %d): %s", colorname(cq), cq->clientnum, text);
                 break;
@@ -3422,6 +3431,11 @@ namespace server
             {
                 int val = getint(p);
                 if(ci->privilege < (restrictpausegame ? PRIV_ADMIN : PRIV_MASTER) && !ci->local) break;
+                if(managedgame && !val)
+                {
+                    if(!resuming) resumewithcountdown(ci);
+                    break;
+                }
                 pausegame(val > 0, ci);
                 break;
             }
@@ -3505,6 +3519,13 @@ namespace server
 
             case N_SERVCMD:
                 getstring(text, p);
+                handleservcmd(ci, text);
+                break;
+            
+            case N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED:
+                if(!ci || ci->local) return;
+                conoutf("client %d supports the client demo upload protocol extension!", ci->clientnum);
+                ci->supportsclientdemoupload = true;
                 break;
                      
             #define PARSEMESSAGES 1
@@ -3541,7 +3562,7 @@ namespace server
     int serverport(int infoport) { return infoport < 0 ? SAUERBRATEN_SERVER_PORT : infoport-1; }
     const char *defaultmaster() { return "master.sauerbraten.org"; }
     int masterport() { return SAUERBRATEN_MASTER_PORT; }
-    int numchannels() { return 3; }
+    int numchannels() { return 4; } // 0: positional data, 1: reliable, 2: getdemo/sendmap, 3: sendclientdemo
 
     #include "extinfo.h"
 

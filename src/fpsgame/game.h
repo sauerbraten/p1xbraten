@@ -213,6 +213,9 @@ enum
     S_FLAGFAIL
 };
 
+// protocol extensions
+static const char * const CAP_PROBE_CLIENT_DEMO_UPLOAD = "capability_probe_protocol_extension_p1x_client_demo_upload";
+
 // network messages codes, c2s, c2c, s2c
 
 enum
@@ -242,6 +245,7 @@ enum
     N_INITTOKENS, N_TAKETOKEN, N_EXPIRETOKENS, N_DROPTOKENS, N_DEPOSITTOKENS, N_STEALTOKENS,
     N_SERVCMD,
     N_DEMOPACKET,
+    N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED = 1000, N_P1X_RECORDDEMO, // guarded by CAP_PROBE_CLIENT_DEMO_UPLOAD
     NUMMSG
 };
 
@@ -272,6 +276,7 @@ static const int msgsizes[] =               // size inclusive message token, 0 f
     N_INITTOKENS, 0, N_TAKETOKEN, 2, N_EXPIRETOKENS, 0, N_DROPTOKENS, 0, N_DEPOSITTOKENS, 2, N_STEALTOKENS, 0,
     N_SERVCMD, 0,
     N_DEMOPACKET, 0,
+    N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED, 1, N_P1X_RECORDDEMO, 1,
     -1
 };
 
@@ -871,6 +876,12 @@ namespace game
     extern void recordpacket(int chan, void *data, int len);
     extern bool recordmsg(int type, const char *fmt = NULL, ...);
     extern void enddemorecord();
+
+    // managed games
+    extern void handlecapprobe(const char *msg);
+    extern bool managedgamedemonextmatch;
+    extern string managedgamedemofname;
+    extern void sendclientdemo();
 }
 
 #include "fragmessages.h"
@@ -1052,6 +1063,7 @@ namespace server
         void *authchallenge;
         int authkickvictim;
         char *authkickreason;
+        bool supportsclientdemoupload;
 
         clientinfo() : getdemo(NULL), getmap(NULL), clipboard(NULL), authchallenge(NULL), authkickreason(NULL) { reset(); }
         ~clientinfo() { events.deletecontents(); cleanclipboard(); cleanauth(); }
@@ -1161,6 +1173,7 @@ namespace server
             cleanclipboard();
             cleanauth();
             mapchange();
+            supportsclientdemoupload = false;
         }
 
         int geteventmillis(int servmillis, int clientmillis)
@@ -1177,6 +1190,7 @@ namespace server
     extern vector<clientinfo *> clients;
 
     extern const char *modename(int n, const char *unknown = "unknown");
+    extern int mastermode;
     extern const char *mastermodename(int n, const char *unknown = "unknown");
     extern void startintermission();
     extern void stopdemo();
@@ -1189,6 +1203,39 @@ namespace server
     extern int msgsizelookup(int msg);
     extern bool serveroption(const char *arg);
     extern bool delayspawn(int type);
+
+    // server commands
+    extern bool handleservcmd(clientinfo *ci, const char *cmd);
+
+    // demos
+    struct demofile
+    {
+        string info;
+        uchar *data;
+        int len;
+    };
+    extern bool demonextmatch;
+    extern char *demodir;
+    extern bool savedemo(demofile &d, const char *povname = "server");
+
+    // managed games
+    extern bool managedgame, managedgamenextmatch;
+    extern void probeforclientdemoupload(packetbuf &p);
+    extern void preparemanagedgame(clientinfo *referee);
+    extern void setupmanagedgame();
+    extern void cleanupmanagedgame();
+    extern void onspawn(clientinfo *ci);
+    extern void managedgameended();
+    extern int gamemode;
+    extern string smapname;
+    extern bool resuming;
+    extern int restrictpausegame;
+    extern void pausegame(bool val, clientinfo *ci = NULL);
+    extern void resumewithcountdown(clientinfo *ci);
+    extern void sendspawn(clientinfo *ci);
+    extern clientinfo *getinfo(int cn);
+    extern const char *colorname(clientinfo *ci, const char *name = NULL);
+    extern void receiveclientdemo(int sender, uchar *data, int len);
 }
 
 // additional colors

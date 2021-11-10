@@ -37,6 +37,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [authservers.patch](#authserverspatch)
   - [serverlogging.patch](#serverloggingpatch)
   - [server_ogzs.patch](#server_ogzspatch)
+  - [managed_games.patch](#managed_gamespatch)
 - [Installation](#installation)
   - [Windows](#windows)
   - [macOS](#macos)
@@ -264,6 +265,18 @@ Improves logging when running a dedicated server:
 ### [server_ogzs.patch](./patches/server_ogzs.patch)
 
 - allows using slim .ogz files (see https://github.com/sauerbraten/genserverogz) on the server without getting `checkmaps` errors
+
+### [managed_games.patch](./patches/managed_games.patch)
+
+- adds the `#competitive` server command, that will (for the next match only):
+  - enable server demo recording and request client demo recording from p1xbraten users
+  - wait for all players to have loaded the map before starting
+  - respawn all players on game start
+  - auto-pause the game when a player disconnects or goes to spec
+  - show a count down before resuming
+  - accept client demo uploads at intermission
+  - save all demo files of the match to disk
+  - not auto-load the next map
 
 
 ## Installation

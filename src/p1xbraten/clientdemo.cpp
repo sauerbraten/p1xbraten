@@ -28,6 +28,7 @@ namespace game {
         if(!demo) return;
         DELETEP(demo);
         conoutf("stopped client demo recording");
+        if(intermission && managedgamedemofname[0]) sendclientdemo();
     }
 
     void recordpacket(int chan, void *data, int len)
@@ -174,6 +175,7 @@ namespace game {
         filtertext(fname, fname, false);
         len = strlen(fname);
         if(len < 4 || strcasecmp(&fname[len-4], ".dmo")) concatstring(fname, ".dmo");
+        if(managedgamedemonextmatch) copystring(managedgamedemofname, fname);
 
         if(const char *buf = server::getdemofile(fname, true)) demo = openrawfile(buf, "w+b");
         if(!demo) demo = openrawfile(fname, "w+b");
@@ -185,6 +187,7 @@ namespace game {
         conoutf("recording client demo");
 
         demonextmatch = false;
+        managedgamedemonextmatch = false;
         demorecord = f;
 
         demoheader hdr;
