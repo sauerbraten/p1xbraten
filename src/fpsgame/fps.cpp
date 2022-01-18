@@ -1135,6 +1135,8 @@ namespace game
         }
     }
 
+    MOD(VARP, crosshairreloadfade, 0, 1, 1);
+
     int selectcrosshair(vec &color)
     {
         fpsent *d = hudplayer();
@@ -1159,7 +1161,7 @@ namespace game
             if(d->health<=25) color = vec(1, 0, 0);
             else if(d->health<=50) color = vec(1, 0.5f, 0);
         }
-        if(d->gunwait) color.mul(0.5f);
+        if(d->gunwait && crosshairreloadfade) color.mul(0.5f);
         return crosshair;
     }
 

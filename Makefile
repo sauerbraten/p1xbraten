@@ -54,6 +54,7 @@ apply-patches:
 	$(PATCH) < patches/clientdemo.patch
 	$(PATCH) < patches/colored_weapon_trails.patch
 	$(PATCH) < patches/serverevents.patch
+	$(PATCH) < patches/crosshairreloadfade.patch
 	unix2dos src/vcpp/sauerbraten.nsi
 	unix2dos src/vcpp/sauerbraten.vcxproj
 	cd src && make depend

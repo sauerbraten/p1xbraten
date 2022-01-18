@@ -32,6 +32,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [checkupdate.patch](#checkupdatepatch)
   - [clientdemo.patch](#clientdemopatch)
   - [colored_weapon_trails.patch](#colored_weapon_trailspatch)
+  - [crosshairreloadfade.patch](#crosshairreloadfadepatch)
 - [Server Patches](#server-patches)
   - [authservers.patch](#authserverspatch)
   - [serverlogging.patch](#serverloggingpatch)
@@ -235,6 +236,10 @@ Client-side demos record the game as you experience it, and work independently o
 - adds the `trailcolor[shotgun|chaingun|rocketlauncher|rifle|grenadelauncher|pistol]` vars that change the respective weapon's projectile/particle trail
 - adds the `settrailcolor <SG|CG|RL|RI|GL|PI> <color>` command (for convenience: changing the variables directly also works)
 
+### [crosshairreloadfade.patch](./patches/crosshairreloadfade.patch)
+
+- adds `crosshairreloadfade` variable: set to 0 to disable the "crosshair-goes-dark-while-weapon-reloads" effect
+  
 
 ## Server Patches
 
