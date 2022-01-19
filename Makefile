@@ -50,7 +50,6 @@ apply-patches:
 	$(PATCH) < patches/playerspeed.patch
 	$(PATCH) < patches/up_down_hover.patch
 	$(PATCH) < patches/paused_spec_movement.patch
-	$(PATCH) < patches/checkupdate.patch
 	$(PATCH) < patches/clientdemo.patch
 	$(PATCH) < patches/colored_weapon_trails.patch
 	$(PATCH) < patches/serverevents.patch
