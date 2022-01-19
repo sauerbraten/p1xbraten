@@ -45,6 +45,8 @@ This repository contains the source for my client mod, as well as the patches ap
 - [Menu](#menu)
 - [Project Structure](#project-structure)
 - [Building your own binary](#building-your-own-binary)
+  - [Build dependencies](#build-dependencies)
+  - [Building](#building)
   - [Using fresh upstream sources](#using-fresh-upstream-sources)
   - [Debugging](#debugging)
 
@@ -325,6 +327,14 @@ If you do not want to use the p1xbraten menus, run `/usep1xbratenmenus 0`.
 
 *You don't have to do this if you already followed the installation instructions above and just want to play!*
 
+### Build dependencies
+
+- development headers of the ususal Sauerbraten build dependencies like libz, libSDL2[-image|-mixer]
+- libarchive-zip-perl / perl-Archive-Zip
+- development headers of libcurl (when checkupdate.patch is included and you're building targets other than linux64)
+
+### Building
+  
 On Linux and macOS, just run `make install` **inside the src/ directory** (given you installed the usual Sauerbraten dependencies). On Windows, open [src/vcpp/sauerbraten.vcxproj](./src/vcpp/sauerbraten.vcxproj) with Visual Studio and build in there.
 
 This will put the resulting binary into the usual place inside this repo. To use it, you have to copy it over to the same place in your actual Sauerbraten installation. On Linux, the [start.sh](./start.sh) script will launch the new binary from inside this repository, using the Sauerbraten files in $SAUER_DIR and `~/.p1xbraten` as user data directory.
