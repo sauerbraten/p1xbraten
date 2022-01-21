@@ -241,9 +241,9 @@ Client-side demos record the game as you experience it, and work independently o
   
 ### [better_console.patch](./patches/better_console.patch)
 
-- adds name completion to chat console (press `Tab`)
-- allows using `Ctrl`-`Left`/`Right` (`Option` on Mac) to jump over words in the console input
-- allows using `Ctrl`-`Backspace`/`Delete` (`Option` on Mac) to delete entire words in the console input
+- adds name completion to chat console (press <kbd>Tab</kbd>)
+- allows using <kbd>Ctrl</kbd>-<kbd>Left</kbd>/<kbd>Right</kbd> (<kbd>Option</kbd> on Mac) to jump over words in the console input
+- allows using <kbd>Ctrl</kbd>-<kbd>Backspace</kbd>/<kbd>Delete</kbd> (<kbd>Option</kbd> on Mac) to delete entire words in the console input
 
 With these changes, you can put the following into your autoexec.cfg for cleaner command prompts (replace the keys to your liking):
 ```
