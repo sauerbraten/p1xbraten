@@ -1123,14 +1123,14 @@ namespace game
         static int lastdemopos = -1000;
         if(totalmillis - lastupdate < 33 && !force)
         {
-            if(demorecord && totalmillis - lastdemopos >= 4 && player1->state == CS_ALIVE)
+            if(demorecord && totalmillis - lastdemopos >= 8 && player1->state == CS_ALIVE) // 125pps player1 positions
             {
                 static packetbuf q(100);
                 sendposition(player1, q);
                 q.reset();
                 lastdemopos = totalmillis;
             }
-            return; // don't update faster than 30fps
+            return; // don't update faster than 30pps
         }
         lastupdate = totalmillis;
         sendpositions();
