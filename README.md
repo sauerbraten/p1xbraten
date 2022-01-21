@@ -235,6 +235,8 @@ Client-side demos record the game as you experience it, and work independently o
 - adds the `trailcolor[shotgun|chaingun|rocketlauncher|rifle|grenadelauncher|pistol]` vars that change the respective weapon's projectile/particle trail
 - adds the `settrailcolor <SG|CG|RL|RI|GL|PI> <color>` command (for convenience: changing the variables directly also works)
 
+You can also adjust the trail colors in the options menu.
+
 ### [crosshairreloadfade.patch](./patches/crosshairreloadfade.patch)
 
 - adds `crosshairreloadfade` variable: set to 0 to disable the "crosshair-goes-dark-while-weapon-reloads" effect
@@ -245,11 +247,13 @@ Client-side demos record the game as you experience it, and work independently o
 - allows using <kbd>Ctrl</kbd>-<kbd>Left</kbd>/<kbd>Right</kbd> (<kbd>Option</kbd> on Mac) to jump over words in the console input
 - allows using <kbd>Ctrl</kbd>-<kbd>Backspace</kbd>/<kbd>Delete</kbd> (<kbd>Option</kbd> on Mac) to delete entire words in the console input
 
-With these changes, you can put the following into your autoexec.cfg for cleaner command prompts (replace the keys to your liking):
+Also, you can put the following into your autoexec.cfg for cleaner command prompts (replace the keys to your liking):
 ```
 bind "SLASH"     [inputcommand "" [$commandbuf] "/" "cx"]
 bind "BACKQUOTE" [inputcommand "" [$commandbuf] "/" "cx"]
+bind "CARET"     [inputcommand "" [$commandbuf] "/" "cx"] // BACKQUOTE on German keyboards
 bind "BACKSLASH" [inputcommand "" [servcmd $commandbuf] "#"] // works for #commands on zeromod & spaghetti, hopefully soon on remod
+bind "HASH"      [inputcommand "" [servcmd $commandbuf] "#"] // only works with German keyboard layout
 ```
 
 ## Server Patches
