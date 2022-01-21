@@ -287,6 +287,7 @@ Improves logging when running a dedicated server:
   - accept client demo uploads at intermission
   - save all demo files of the match to disk
   - not auto-load the next map
+- adds the (admin-only) `#do` server command to evaluate arbitrary cubescript on the server, for example `#do persistteams 1`, `#do servermotd "happy fragging"` or `#do concat $serverauth`
 
 
 ## Installation
