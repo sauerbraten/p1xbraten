@@ -1492,6 +1492,8 @@ namespace game
                     broadcastp1xbratenversion();
                 }
                 copystring(d->name, text, MAXNAMELEN+1);
+                filternonalphanum(text, text, MAXNAMELEN);
+                copystring(d->alphanumname, text, MAXNAMELEN);
                 getstring(text, p);
                 filtertext(d->team, text, false, false, MAXTEAMLEN);
                 d->playermodel = getint(p);
@@ -1508,6 +1510,8 @@ namespace game
                     {
                         if(!isignored(d->clientnum)) conoutf(CON_INFO + (d->state==CS_SPECTATOR ? CON_NONZEN : 0), "%s is now known as %s", colorname(d), colorname(d, text));
                         copystring(d->name, text, MAXNAMELEN+1);
+                        filternonalphanum(text, text, MAXNAMELEN);
+                        copystring(d->alphanumname, text, MAXNAMELEN);
                     }
                 }
                 break;

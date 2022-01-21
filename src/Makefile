@@ -142,7 +142,8 @@ CLIENT_OBJS= \
 	fpsgame/weapon.o \
 	p1xbraten/servercommands.o \
 	p1xbraten/capability_probing.o \
-	p1xbraten/managed_games.o
+	p1xbraten/managed_games.o \
+	p1xbraten/namecomplete.o
 
 CLIENT_PCH= shared/cube.h.gch engine/engine.h.gch fpsgame/game.h.gch
 
@@ -562,6 +563,10 @@ p1xbraten/managed_games.o: fpsgame/game.h shared/cube.h shared/tools.h
 p1xbraten/managed_games.o: shared/geom.h shared/ents.h shared/command.h
 p1xbraten/managed_games.o: shared/glexts.h shared/glemu.h shared/iengine.h
 p1xbraten/managed_games.o: shared/igame.h fpsgame/ai.h
+p1xbraten/namecomplete.o: fpsgame/game.h shared/cube.h shared/tools.h
+p1xbraten/namecomplete.o: shared/geom.h shared/ents.h shared/command.h
+p1xbraten/namecomplete.o: shared/glexts.h shared/glemu.h shared/iengine.h
+p1xbraten/namecomplete.o: shared/igame.h fpsgame/ai.h
 
 shared/cube.h.gch: shared/tools.h shared/geom.h shared/ents.h
 shared/cube.h.gch: shared/command.h shared/glexts.h shared/glemu.h

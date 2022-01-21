@@ -32,6 +32,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [clientdemo.patch](#clientdemopatch)
   - [colored_weapon_trails.patch](#colored_weapon_trailspatch)
   - [crosshairreloadfade.patch](#crosshairreloadfadepatch)
+  - [better_console.patch](#better_consolepatch)
 - [Server Patches](#server-patches)
   - [authservers.patch](#authserverspatch)
   - [serverlogging.patch](#serverloggingpatch)
@@ -238,6 +239,18 @@ Client-side demos record the game as you experience it, and work independently o
 
 - adds `crosshairreloadfade` variable: set to 0 to disable the "crosshair-goes-dark-while-weapon-reloads" effect
   
+### [better_console.patch](./patches/better_console.patch)
+
+- adds name completion to chat console (press `Tab`)
+- allows using `Ctrl`-`Left`/`Right` (`Option` on Mac) to jump over words in the console input
+- allows using `Ctrl`-`Backspace`/`Delete` (`Option` on Mac) to delete entire words in the console input
+
+With these changes, you can put the following into your autoexec.cfg for cleaner command prompts (replace the keys to your liking):
+```
+bind "SLASH"     [inputcommand "" [$commandbuf] "/" "cx"]
+bind "BACKQUOTE" [inputcommand "" [$commandbuf] "/" "cx"]
+bind "BACKSLASH" [inputcommand "" [servcmd $commandbuf] "#"] // works for #commands on zeromod & spaghetti, hopefully soon on remod
+```
 
 ## Server Patches
 

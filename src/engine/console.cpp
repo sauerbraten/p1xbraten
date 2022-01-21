@@ -9,7 +9,7 @@ reversequeue<cline, MAXCONLINES> conlines;
 int commandmillis = -1;
 string commandbuf;
 char *commandaction = NULL, *commandprompt = NULL;
-enum { CF_COMPLETE = 1<<0, CF_EXECUTE = 1<<1 };
+enum { CF_COMPLETE = 1<<0, CF_EXECUTE = 1<<1, CF_GAMECOMPLETE = 1<<2 };
 int commandflags = 0, commandpos = -1;
 
 VARFP(maxcon, 10, 200, MAXCONLINES, { while(conlines.length() > maxcon) delete[] conlines.pop().line; });
@@ -258,7 +258,7 @@ ICOMMAND(searchbinds,     "s", (char *action), searchbinds(action, keym::ACTION_
 ICOMMAND(searchspecbinds, "s", (char *action), searchbinds(action, keym::ACTION_SPECTATOR));
 ICOMMAND(searcheditbinds, "s", (char *action), searchbinds(action, keym::ACTION_EDITING));
 
-void inputcommand(char *init, char *action = NULL, char *prompt = NULL, char *flags = NULL) // turns input to the command line on or off
+void inputcommand(char *init, char *action = NULL, char *prompt = NULL, const char *flags = NULL) // turns input to the command line on or off
 {
     commandmillis = init ? totalmillis : -1;
     textinput(commandmillis >= 0, TI_CONSOLE);
@@ -273,13 +273,13 @@ void inputcommand(char *init, char *action = NULL, char *prompt = NULL, char *fl
     if(flags) while(*flags) switch(*flags++)
     {
         case 'c': commandflags |= CF_COMPLETE; break;
+        case 'g': commandflags |= CF_GAMECOMPLETE; break;
         case 'x': commandflags |= CF_EXECUTE; break;
-        case 's': commandflags |= CF_COMPLETE|CF_EXECUTE; break;
     }
-    else if(init) commandflags |= CF_COMPLETE|CF_EXECUTE;
+    if(init && init[0] == '/') commandflags |= CF_COMPLETE|CF_EXECUTE;
 }
 
-ICOMMAND(saycommand, "C", (char *init), inputcommand(init));
+ICOMMAND(saycommand, "C", (char *init), inputcommand(init, NULL, NULL, "g"));
 COMMAND(inputcommand, "ssss");
 
 void pasteconsole()
@@ -336,7 +336,7 @@ struct hline
 
     void run()
     {
-        if(flags&CF_EXECUTE && buf[0]=='/') execute(buf+1);
+        if(flags&CF_EXECUTE || buf[0]=='/') execute(buf[0]=='/' ? buf+1 : buf);
         else if(action)
         {
             alias("commandbuf", buf);
@@ -444,8 +444,10 @@ bool consolekey(int code, bool isdown)
 
     #ifdef __APPLE__
         #define MOD_KEYS (KMOD_LGUI|KMOD_RGUI)
+        #define SKIPWORD_KEYS (KMOD_LALT|KMOD_RALT)
     #else
         #define MOD_KEYS (KMOD_LCTRL|KMOD_RCTRL)
+        #define SKIPWORD_KEYS (KMOD_LCTRL|KMOD_RCTRL)
     #endif
 
     if(isdown)
@@ -468,7 +470,15 @@ bool consolekey(int code, bool isdown)
             {
                 int len = (int)strlen(commandbuf);
                 if(commandpos<0) break;
-                memmove(&commandbuf[commandpos], &commandbuf[commandpos+1], len - commandpos);
+                int end = commandpos+1;
+                if(SDL_GetModState()&SKIPWORD_KEYS)
+                {
+                    // extend range to the end of the next word
+                    const char *space = strchr(commandbuf+end, ' ');
+                    if(!space) end = len;
+                    else end = space-commandbuf+1;
+                }
+                memmove(&commandbuf[commandpos], &commandbuf[end], len - end + 1);
                 resetcomplete();
                 if(commandpos>=len-1) commandpos = -1;
                 break;
@@ -476,22 +486,50 @@ bool consolekey(int code, bool isdown)
 
             case SDLK_BACKSPACE:
             {
-                int len = (int)strlen(commandbuf), i = commandpos>=0 ? commandpos : len;
-                if(i<1) break;
-                memmove(&commandbuf[i-1], &commandbuf[i], len - i + 1);
+                int len = (int)strlen(commandbuf), end = commandpos>=0 ? commandpos : len;
+                if(end<1) break;
+                int start = end-1;
+                if(SDL_GetModState()&SKIPWORD_KEYS)
+                {
+                    int prevpos = start; char prevchar = commandbuf[start]; commandbuf[start] = 0; // temporarily shorten commandbuf to end-1
+                    // extend range to beginning of the previous word
+                    const char *space = strrchr(commandbuf, ' ');
+                    if(!space) start = 0;
+                    else start = space-commandbuf+1;
+                    commandbuf[prevpos] = prevchar;
+                }
+                memmove(&commandbuf[start], &commandbuf[end], len - end + 1);
                 resetcomplete();
-                if(commandpos>0) commandpos--;
+                if(commandpos>0) commandpos = start;
                 else if(!commandpos && len<=1) commandpos = -1;
                 break;
             }
 
             case SDLK_LEFT:
-                if(commandpos>0) commandpos--;
-                else if(commandpos<0) commandpos = (int)strlen(commandbuf)-1;
+                if(SDL_GetModState()&SKIPWORD_KEYS && commandpos!=0)
+                {
+                    int prevpos = 0; char prevchar = ' '; // temporarily shorten commandbuf to commandpos-1
+                    if(commandpos>0) { prevpos = commandpos-1; prevchar = commandbuf[prevpos]; commandbuf[prevpos] = 0; }
+                    const char *space = strrchr(commandbuf, ' ');
+                    if(!space) commandpos = 0;
+                    else commandpos = space-commandbuf+1;
+                    if(prevpos>0) commandbuf[prevpos] = prevchar;
+                }
+                else
+                {
+                    if(commandpos>0) commandpos--;
+                    else if(commandpos<0) commandpos = (int)strlen(commandbuf)-1;
+                }
                 break;
 
             case SDLK_RIGHT:
-                if(commandpos>=0 && ++commandpos>=(int)strlen(commandbuf)) commandpos = -1;
+                if(SDL_GetModState()&SKIPWORD_KEYS && commandpos>=0)
+                {
+                    const char *space = strchr(commandbuf+commandpos+1, ' ');
+                    if(!space) commandpos = -1;
+                    else commandpos = space-commandbuf;
+                }
+                else if(commandpos>=0 && ++commandpos>=(int)strlen(commandbuf)) commandpos = -1;
                 break;
 
             case SDLK_UP:
@@ -504,9 +542,14 @@ bool consolekey(int code, bool isdown)
                 break;
 
             case SDLK_TAB:
-                if(commandflags&CF_COMPLETE)
+                if(commandflags&CF_COMPLETE || (commandflags&CF_GAMECOMPLETE && commandbuf[0]=='/'))
                 {
-                    complete(commandbuf, sizeof(commandbuf), commandflags&CF_EXECUTE ? "/" : NULL);
+                    complete(commandbuf, sizeof(commandbuf), commandbuf[0]=='/' ? "/" : NULL);
+                    if(commandpos>=0 && commandpos>=(int)strlen(commandbuf)) commandpos = -1;
+                }
+                else if(commandflags&CF_GAMECOMPLETE)
+                {
+                    game::complete(commandbuf, sizeof(commandbuf));
                     if(commandpos>=0 && commandpos>=(int)strlen(commandbuf)) commandpos = -1;
                 }
                 break;
@@ -668,7 +711,7 @@ static hashtable<char *, filesval *> completions;
 int completesize = 0;
 char *lastcomplete = NULL;
 
-void resetcomplete() { completesize = 0; }
+void resetcomplete() { completesize = 0; game::resetcomplete(); }
 
 void addcomplete(char *command, int type, char *dir, char *ext)
 {

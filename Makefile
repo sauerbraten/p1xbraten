@@ -55,6 +55,7 @@ apply-patches:
 	$(PATCH) < patches/serverevents.patch
 	$(PATCH) < patches/crosshairreloadfade.patch
 	$(PATCH) < patches/managed_games.patch
+	$(PATCH) < patches/better_console.patch
 	unix2dos src/vcpp/sauerbraten.nsi
 	unix2dos src/vcpp/sauerbraten.vcxproj
 	cd src && make depend
