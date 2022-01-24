@@ -1,0 +1,22 @@
+diff --git src/fpsgame/server.cpp src/fpsgame/server.cpp
+index 4f4d1a4..0e60658 100644
+--- src/fpsgame/server.cpp
++++ src/fpsgame/server.cpp
+@@ -2516,6 +2516,9 @@ namespace server
+     }
+     COMMAND(addauthserver, "ssisi");
+ 
++    vector<char *> autoauthdomains;
++    ICOMMAND(addautoauthdomain, "s", (char *domain), autoauthdomains.add(newstring(domain)));
++
+     bool requestauthserverf(const char *keydomain, const char *fmt, ...)
+     {
+         keydomain = newstring(keydomain);
+@@ -2718,6 +2721,7 @@ namespace server
+         if(restorescore(ci)) sendresume(ci);
+         sendinitclient(ci);
+         if(isdedicatedserver()) logoutf("join: %s (cn %d)", ci->name, ci->clientnum);
++        if(!ci->local) loopv(autoauthdomains) sendf(ci->clientnum, 1, "ris", N_REQAUTH, autoauthdomains[i]);
+ 
+         aiman::addclient(ci);
+ 

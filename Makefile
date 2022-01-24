@@ -1,6 +1,6 @@
 .PHONY: build install clean apply-patches gzip-cfgs embed-cfgs clean-sauer update-src apply-to-vanilla check-env
 
-PATCH=patch --strip=0 --remove-empty-files --ignore-whitespace
+PATCH=patch --strip=0 --remove-empty-files --ignore-whitespace --no-backup-if-mismatch
 
 ifndef SAUER_DIR
 ifneq (,$(wildcard ~/sauerbraten-code))
@@ -56,6 +56,7 @@ apply-patches:
 	$(PATCH) < patches/crosshairreloadfade.patch
 	$(PATCH) < patches/managed_games.patch
 	$(PATCH) < patches/better_console.patch
+	$(PATCH) < patches/autoauthdomains.patch
 	unix2dos src/vcpp/sauerbraten.nsi
 	unix2dos src/vcpp/sauerbraten.vcxproj
 	cd src && make depend

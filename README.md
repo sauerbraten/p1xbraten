@@ -38,6 +38,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [serverlogging.patch](#serverloggingpatch)
   - [server_ogzs.patch](#server_ogzspatch)
   - [managed_games.patch](#managed_gamespatch)
+  - [autoauthdomains.patch](#autoauthdomainspatch)
 - [Installation](#installation)
   - [Windows](#windows)
   - [macOS](#macos)
@@ -262,7 +263,7 @@ These are the patches that make p1x.pw different from other servers.
 
 ### [authservers.patch](./patches/authservers.patch)
 
-- adds `/addauthserver <key_domain> <hostname> <port> <privilege>` server command to add an additional auth backend (other than the master server)
+- adds `addauthserver <key_domain> <hostname> <port> <privilege>` server command to add an additional auth backend (other than the master server)
 
 For example, you can put `addauthserver "p1x.pw" "p1x.pw" 28787 "m"` into your `server-init.cfg` to allow users registered with my master server to claim auth on your server.
 
@@ -282,7 +283,7 @@ Improves logging when running a dedicated server:
 
 ### [managed_games.patch](./patches/managed_games.patch)
 
-- adds the `#competitive` server command, that will (for the next match only):
+- adds the `#competitive` remote command, that will (for the next match only):
   - enable server demo recording and request client demo recording from p1xbraten users
   - wait for all players to have loaded the map before starting
   - respawn all players on game start
@@ -291,7 +292,11 @@ Improves logging when running a dedicated server:
   - accept client demo uploads at intermission
   - save all demo files of the match to disk
   - not auto-load the next map
-- adds the (admin-only) `#do` server command to evaluate arbitrary cubescript on the server, for example `#do persistteams 1`, `#do servermotd "happy fragging"` or `#do concat $serverauth`
+- adds the (admin-only) `#do` remote command to evaluate arbitrary cubescript on the server, for example `#do persistteams 1`, `#do servermotd "happy fragging"` or `#do concat $serverauth`
+
+### [autoauthdomains.patch](./patches/autoauthdomains.patch)
+
+- adds the `addautoauthdomain` command to request an auth key automatically right after a player joined (*not* before joining; this won't let the player connect in private mode: only the server auth domain can be used for that!)
 
 
 ## Installation
