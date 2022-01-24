@@ -1,4 +1,7 @@
 #!/bin/sh
+
+cd $(dirname $0) # change into script directory in case it's called from somewhere else
+
 # SAUER_DIR should refer to the directory in which Sauerbraten data files are placed.
 #SAUER_DIR=~/sauerbraten
 if [ -z "${SAUER_DIR}" ]
