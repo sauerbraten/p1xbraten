@@ -544,7 +544,8 @@ bool consolekey(int code, bool isdown)
             case SDLK_TAB:
                 if(commandflags&CF_COMPLETE || (commandflags&CF_GAMECOMPLETE && commandbuf[0]=='/'))
                 {
-                    complete(commandbuf, sizeof(commandbuf), commandbuf[0]=='/' ? "/" : NULL);
+                    bool prefixslash = commandbuf[0]=='/' || (!commandaction && !(commandflags&CF_GAMECOMPLETE));
+                    complete(commandbuf, sizeof(commandbuf), prefixslash ? "/" : NULL);
                     if(commandpos>=0 && commandpos>=(int)strlen(commandbuf)) commandpos = -1;
                 }
                 else if(commandflags&CF_GAMECOMPLETE)

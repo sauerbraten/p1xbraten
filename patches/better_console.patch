@@ -146,14 +146,15 @@ index 3664668..ffe61ef 100644
                  break;
  
              case SDLK_UP:
-@@ -504,9 +542,14 @@ bool consolekey(int code, bool isdown)
+@@ -504,9 +542,15 @@ bool consolekey(int code, bool isdown)
                  break;
  
              case SDLK_TAB:
 -                if(commandflags&CF_COMPLETE)
 +                if(commandflags&CF_COMPLETE || (commandflags&CF_GAMECOMPLETE && commandbuf[0]=='/'))
 +                {
-+                    complete(commandbuf, sizeof(commandbuf), commandbuf[0]=='/' ? "/" : NULL);
++                    bool prefixslash = commandbuf[0]=='/' || (!commandaction && !(commandflags&CF_GAMECOMPLETE));
++                    complete(commandbuf, sizeof(commandbuf), prefixslash ? "/" : NULL);
 +                    if(commandpos>=0 && commandpos>=(int)strlen(commandbuf)) commandpos = -1;
 +                }
 +                else if(commandflags&CF_GAMECOMPLETE)
@@ -163,7 +164,7 @@ index 3664668..ffe61ef 100644
                      if(commandpos>=0 && commandpos>=(int)strlen(commandbuf)) commandpos = -1;
                  }
                  break;
-@@ -668,7 +711,7 @@ static hashtable<char *, filesval *> completions;
+@@ -668,7 +712,7 @@ static hashtable<char *, filesval *> completions;
  int completesize = 0;
  char *lastcomplete = NULL;
  
