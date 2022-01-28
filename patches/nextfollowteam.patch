@@ -35,14 +35,7 @@ index 1f6919b..64993a9 100644
  
      void nextfollow(int dir)
      {
-@@ -52,16 +55,13 @@ namespace game
-             stopfollowing();
-             return;
-         }
--        int cur = following >= 0 ? following : (dir < 0 ? clients.length() - 1 : 0);
-+        int cur = following >= 0 ? following : (dir > 0 ? clients.length() - 1 : 0);
-         loopv(clients)
-         {
+@@ -58,10 +61,7 @@ namespace game
              cur = (cur + dir + clients.length()) % clients.length();
              if(clients[cur] && clients[cur]->state!=CS_SPECTATOR)
              {
