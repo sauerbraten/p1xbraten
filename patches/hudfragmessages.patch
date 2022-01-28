@@ -30,7 +30,7 @@ Index: src/fpsgame/fps.cpp
              cur = (cur + dir + clients.length()) % clients.length();
              if(clients[cur] && clients[cur]->state!=CS_SPECTATOR)
              {
-+                if(following != cur) clearfragmessages();
++                if(following!=cur) clearfragmessages();
                  if(following<0) conoutf("follow on");
                  following = cur;
                  followdir = dir;

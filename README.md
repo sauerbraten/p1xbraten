@@ -34,6 +34,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [crosshairreloadfade.patch](#crosshairreloadfadepatch)
   - [better_console.patch](#better_consolepatch)
   - [parseplayer.patch](#parseplayerpatch)
+  - [nextfollowteam.patch](#nextfollowteampatch)
 - [Server Patches](#server-patches)
   - [authservers.patch](#authserverspatch)
   - [serverlogging.patch](#serverloggingpatch)
@@ -267,6 +268,16 @@ bind "T"         [inputcommand "" "" "" "cx"] // instead of saycommand
 
 - improves player name matching in `setmaster`, `setteam`, `ignore`, `kick`, `spectator`, `follow` and `goto` commands: after the normal full matching, if three or more characters are given, the argument is tried to be matched as a case-insensitive prefix, then a case-insensitive substring of a player's name
 
+### [nextfollowteam.patch](./patches/nextfollowteam.patch)
+
+- "fixes" `nextfollow` to start at the first/last player when cycling forwards/backwards, instead of second or second to last respectively
+- adds the `nextfollowteam` command that will cycle through players grouped by team and falls back to vanilla's `nextfollow` in non-team modes (which just iterates through CNs from low to high)
+
+To use it, put the following lines into your autoexec.cfg (and remember you'll have to change them back to `nextfollow` before using the autoexec.cfg with other clients!):
+```
+specbind "MOUSE1" [nextfollowteam]
+specbind "MOUSE2" [nextfollowteam -1]
+```
 
 ## Server Patches
 

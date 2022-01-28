@@ -31,19 +31,22 @@ namespace game
         intret(f ? f->clientnum : -1);
     });
 
+    void follow(int cn, int dir = 0)
+    {
+        int ofollowing = following;
+        following = cn;
+        if(following==player1->clientnum) following = -1;
+        followdir = dir;
+        if(following!=ofollowing) clearfragmessages();
+        conoutf("follow %s", following>=0 ? "on" : "off");
+    }
+
 	void follow(char *arg)
     {
-        if(arg[0] ? player1->state==CS_SPECTATOR : following>=0)
-        {
-            int ofollowing = following;
-            following = arg[0] ? parseplayer(arg) : -1;
-            if(following==player1->clientnum) following = -1;
-            followdir = 0;
-            if(following!=ofollowing) clearfragmessages();
-            conoutf("follow %s", following>=0 ? "on" : "off");
-        }
+        if(arg[0] && player1->state==CS_SPECTATOR) follow(parseplayer(arg));
+        else if(following>=0) follow(-1);
 	}
-    COMMAND(follow, "s");
+    ICOMMAND(follow, "s", (char *arg), follow(arg));
 
     void nextfollow(int dir)
     {
@@ -52,16 +55,13 @@ namespace game
             stopfollowing();
             return;
         }
-        int cur = following >= 0 ? following : (dir < 0 ? clients.length() - 1 : 0);
+        int cur = following >= 0 ? following : (dir > 0 ? clients.length() - 1 : 0);
         loopv(clients)
         {
             cur = (cur + dir + clients.length()) % clients.length();
             if(clients[cur] && clients[cur]->state!=CS_SPECTATOR)
             {
-                if(following != cur) clearfragmessages();
-                if(following<0) conoutf("follow on");
-                following = cur;
-                followdir = dir;
+                follow(cur, dir);
                 return;
             }
         }
@@ -69,6 +69,43 @@ namespace game
     }
     ICOMMAND(nextfollow, "i", (int *dir), nextfollow(*dir < 0 ? -1 : 1));
 
+    void nextfollowteam(int dir)
+    {
+        if(player1->state!=CS_SPECTATOR || clients.empty()) { stopfollowing(); return; }
+        if(!m_teammode || !clients.inrange(following) || clients[following]->state==CS_SPECTATOR) { nextfollow(dir); return; }
+        char *followingteam = clients[following]->team;
+        int cur = following;
+        loopv(clients)
+        {
+            cur = (cur + dir + clients.length()) % clients.length();
+            if(!clients[cur] || clients[cur]->state==CS_SPECTATOR) continue;
+            if(strcmp(clients[cur]->team, followingteam)) continue;
+            if(dir<0 ? cur>=following : cur<=following) break; // wrapped around, move on to next team
+            // found next player in current team
+            follow(cur, dir);
+            return;
+        }
+        // pick next team
+        int numgroups = groupplayers();
+        const char *nextteam = followingteam;
+        loopv(groups) if(!strcmp(groups[i]->team, followingteam))
+        {
+            nextteam = groups[(i+dir+numgroups)%numgroups]->team;
+            break;
+        }
+        // find player with lowest cn in next team
+        cur = 0;
+        loopv(clients)
+        {
+            cur = (cur + dir + clients.length()) % clients.length();
+            if(!clients[cur] || clients[cur]->state==CS_SPECTATOR) continue;
+            if(strcmp(clients[cur]->team, nextteam)) continue;
+            follow(cur, dir);
+            return;
+        }
+        nextfollow(dir);
+    }
+    ICOMMAND(nextfollowteam, "i", (int *dir), nextfollowteam(*dir < 0 ? -1 : 1));
 
     const char *getclientmap() { return clientmap; }
 
