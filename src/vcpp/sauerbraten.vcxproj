@@ -165,7 +165,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/MACHINE:I386 /SAFESEH:NO %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>enet.lib;zdll.lib;opengl32.lib;SDL2.lib;SDL2_image.lib;ws2_32.lib;SDL2_mixer.lib;winmm.lib;dbghelp.lib;kernel32.lib;user32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>enet.lib;zdll.lib;opengl32.lib;SDL2.lib;SDL2_image.lib;ws2_32.lib;SDL2_mixer.lib;winmm.lib;dbghelp.lib;kernel32.lib;user32.lib;Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
@@ -215,7 +215,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/MACHINE:X64 /SAFESEH:NO %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>enet.lib;zdll.lib;opengl32.lib;SDL2.lib;SDL2_image.lib;ws2_32.lib;SDL2_mixer.lib;winmm.lib;dbghelp.lib;kernel32.lib;user32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>enet.lib;zdll.lib;opengl32.lib;SDL2.lib;SDL2_image.lib;ws2_32.lib;SDL2_mixer.lib;winmm.lib;dbghelp.lib;kernel32.lib;user32.lib;Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>..\lib64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
@@ -257,7 +257,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/MACHINE:I386 /SAFESEH:NO %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>enet.lib;zdll.lib;opengl32.lib;SDL2.lib;SDL2_image.lib;SDL2_mixer.lib;ws2_32.lib;winmm.lib;dbghelp.lib;kernel32.lib;user32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>enet.lib;zdll.lib;opengl32.lib;SDL2.lib;SDL2_image.lib;ws2_32.lib;SDL2_mixer.lib;winmm.lib;dbghelp.lib;kernel32.lib;user32.lib;Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
@@ -296,7 +296,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/MACHINE:X64 /SAFESEH:NO %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>enet.lib;zdll.lib;opengl32.lib;SDL2.lib;SDL2_image.lib;SDL2_mixer.lib;ws2_32.lib;winmm.lib;dbghelp.lib;kernel32.lib;user32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>enet.lib;zdll.lib;opengl32.lib;SDL2.lib;SDL2_image.lib;ws2_32.lib;SDL2_mixer.lib;winmm.lib;dbghelp.lib;kernel32.lib;user32.lib;Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>..\lib64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
@@ -342,7 +342,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/MACHINE:I386 /SAFESEH:NO %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>enet.lib;zdll.lib;opengl32.lib;SDL2.lib;SDL2_image.lib;ws2_32.lib;SDL2_mixer.lib;winmm.lib;dbghelp.lib;kernel32.lib;user32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>enet.lib;zdll.lib;opengl32.lib;SDL2.lib;SDL2_image.lib;ws2_32.lib;SDL2_mixer.lib;winmm.lib;dbghelp.lib;kernel32.lib;user32.lib;Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
@@ -388,7 +388,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/MACHINE:X64 /SAFESEH:NO %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>enet.lib;zdll.lib;opengl32.lib;SDL2.lib;SDL2_image.lib;ws2_32.lib;SDL2_mixer.lib;winmm.lib;dbghelp.lib;kernel32.lib;user32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>enet.lib;zdll.lib;opengl32.lib;SDL2.lib;SDL2_image.lib;ws2_32.lib;SDL2_mixer.lib;winmm.lib;dbghelp.lib;kernel32.lib;user32.lib;Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>..\lib64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>

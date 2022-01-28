@@ -33,6 +33,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [colored_weapon_trails.patch](#colored_weapon_trailspatch)
   - [crosshairreloadfade.patch](#crosshairreloadfadepatch)
   - [better_console.patch](#better_consolepatch)
+  - [parseplayer.patch](#parseplayerpatch)
 - [Server Patches](#server-patches)
   - [authservers.patch](#authserverspatch)
   - [serverlogging.patch](#serverloggingpatch)
@@ -261,6 +262,11 @@ If you want to keep using <kbd>Tab</kbd> to complete commands in the chat prompt
 ```
 bind "T"         [inputcommand "" "" "" "cx"] // instead of saycommand
 ```
+
+### [parseplayer.patch](./patches/parseplayer.patch)
+
+- improves player name matching in `setmaster`, `setteam`, `ignore`, `kick`, `spectator`, `follow` and `goto` commands: after the normal full matching, if three or more characters are given, the argument is tried to be matched as a case-insensitive prefix, then a case-insensitive substring of a player's name
+
 
 ## Server Patches
 
