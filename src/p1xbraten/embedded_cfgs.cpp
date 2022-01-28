@@ -18,9 +18,9 @@ namespace game {
         }
     };
 
-    struct embeddedfile<582> gamehudcfg = {
+    struct embeddedfile<640> gamehudcfg = {
         "data/p1xbraten/gamehud.cfg.gz",
-        0x1110ccca,
+        0x3cdb48db,
         {
             #include "../../data/p1xbraten/gamehud.cfg.gz.xxd"
         }

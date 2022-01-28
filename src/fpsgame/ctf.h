@@ -1279,7 +1279,7 @@ struct ctfclientmode : clientmode
 	}
 
     bool hasflag(fpsent *d) {
-        if(!d) return false;
+        if(!m_ctf || !d) return false;
         loopv(flags) if(flags[i].owner == d) return true;
         return false;
     }
