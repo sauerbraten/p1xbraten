@@ -261,7 +261,7 @@ bind "HASH"      [inputcommand "" [servcmd $commandbuf] "#"] // only works with 
 
 If you want to keep using <kbd>Tab</kbd> to complete commands in the chat prompt (without explicitly typing '/' at the beginning), use this bind:
 ```
-bind "T"         [inputcommand "" "" "" "cx"] // instead of saycommand
+bind "T"         [inputcommand "" "" "" "c"] // instead of saycommand
 ```
 
 ### [parseplayer.patch](./patches/parseplayer.patch)
