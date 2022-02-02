@@ -250,6 +250,13 @@ You can also adjust the trail colors in the options menu.
 - allows using <kbd>Ctrl</kbd>-<kbd>Left</kbd>/<kbd>Right</kbd> (<kbd>Option</kbd> on Mac) to jump over words in the console input
 - allows using <kbd>Ctrl</kbd>-<kbd>Backspace</kbd>/<kbd>Delete</kbd> (<kbd>Option</kbd> on Mac) to delete entire words in the console input
 
+Name completion tries old-style prefix matching first, then will also try substring matching to suggest more names. In addition to vanilla's matching at the end of the line, it also works in the middle of the input, as long as the cursor is placed in front of a space character.
+
+If you want to keep using <kbd>Tab</kbd> to complete commands in the chat prompt (without explicitly typing '/' at the beginning), use this bind:
+```
+bind "T" [inputcommand "" "" "" "c"] // instead of saycommand
+```
+
 Also, you can put the following into your autoexec.cfg for cleaner command prompts (replace the keys to your liking):
 ```
 bind "SLASH"     [inputcommand "" [$commandbuf] "/" "cx"]
@@ -257,11 +264,6 @@ bind "BACKQUOTE" [inputcommand "" [$commandbuf] "/" "cx"]
 bind "CARET"     [inputcommand "" [$commandbuf] "/" "cx"] // BACKQUOTE on German keyboards
 bind "BACKSLASH" [inputcommand "" [servcmd $commandbuf] "#"] // works for #commands on zeromod & spaghetti, hopefully soon on remod
 bind "HASH"      [inputcommand "" [servcmd $commandbuf] "#"] // only works with German keyboard layout
-```
-
-If you want to keep using <kbd>Tab</kbd> to complete commands in the chat prompt (without explicitly typing '/' at the beginning), use this bind:
-```
-bind "T"         [inputcommand "" "" "" "c"] // instead of saycommand
 ```
 
 ### [parseplayer.patch](./patches/parseplayer.patch)

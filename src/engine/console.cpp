@@ -550,7 +550,7 @@ bool consolekey(int code, bool isdown)
                 }
                 else if(commandflags&CF_GAMECOMPLETE)
                 {
-                    game::complete(commandbuf, sizeof(commandbuf));
+                    game::complete(commandbuf, commandpos, sizeof(commandbuf));
                     if(commandpos>=0 && commandpos>=(int)strlen(commandbuf)) commandpos = -1;
                 }
                 break;
@@ -580,12 +580,14 @@ bool consolekey(int code, bool isdown)
             }
             histpos = history.length();
             inputcommand(NULL);
+            resetcomplete();
             if(h) h->run();
         }
         else if(code==SDLK_ESCAPE)
         {
             histpos = history.length();
             inputcommand(NULL);
+            resetcomplete();
         }
     }
 

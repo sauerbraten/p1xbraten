@@ -50,7 +50,7 @@ namespace game
     extern const char *savedservers();
     extern void loadconfigs();
     extern int writeembeddedcfgs();
-    extern void complete(char *s, int maxlen);
+    extern void complete(char *s, int cursor, int maxlen);
     extern void resetcomplete();
 
     extern void updateworld();
