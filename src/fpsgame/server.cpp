@@ -2267,7 +2267,6 @@ namespace server
         ci->state.timeplayed += lastmillis - ci->state.lasttimeplayed;
         if(!ci->local && (!ci->privilege || ci->warned)) aiman::removeai(ci);
         sendf(-1, 1, "ri3", N_SPECTATOR, ci->clientnum, 1);
-        if(managedgame) pausegame(true, ci);
     }
 
     struct crcinfo
@@ -3249,7 +3248,7 @@ namespace server
                 clientinfo *spinfo = (clientinfo *)getclientinfo(spectator); // no bots
                 if(!spinfo || !spinfo->connected || (spinfo->state.state==CS_SPECTATOR ? val : !val)) break;
 
-                if(spinfo->state.state!=CS_SPECTATOR && val) forcespectator(spinfo);
+                if(spinfo->state.state!=CS_SPECTATOR && val) { forcespectator(spinfo); if(managedgame) pausegame(true, ci); }
                 else if(spinfo->state.state==CS_SPECTATOR && !val) unspectate(spinfo);
 
                 if(cq && cq != ci && cq->ownernum != ci->clientnum) cq = NULL;
