@@ -592,7 +592,7 @@ namespace server
         if(!ci) return false;
         if(!ci->local && !ci->state.canpickup(sents[i].type))
         {
-            sendf(sender, 1, "ri3", N_ITEMACC, i, -1);
+            sendf(ci->ownernum, 1, "ri3", N_ITEMACC, i, -1);
             return false;
         }
         sents[i].spawned = false;
