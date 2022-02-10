@@ -38,7 +38,7 @@ namespace game
         if(following==player1->clientnum) following = -1;
         followdir = dir;
         if(following!=ofollowing) clearfragmessages();
-        conoutf("follow %s", following>=0 ? "on" : "off");
+        if((ofollowing>=0) != (following>=0)) conoutf("follow %s", following>=0 ? "on" : "off");
     }
 
 	void follow(char *arg)
