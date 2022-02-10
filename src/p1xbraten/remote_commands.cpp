@@ -14,7 +14,7 @@ namespace server {
     bool handleservcmd(clientinfo *sender, const char *cmd)
     {
         if(!strncmp(cmd, "do ", strlen("do "))) { runclientscript(sender, &cmd[strlen("do ")]); return true; }
-        else if(!strcmp(cmd, "competitive")) { preparemanagedgame(sender); return true; }
+        else if(!strcmp(cmd, "competitive"))    { preparemanagedgame(sender);                   return true; }
         return false;
     }
 

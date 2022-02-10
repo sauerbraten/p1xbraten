@@ -1206,7 +1206,7 @@ namespace server
     extern bool serveroption(const char *arg);
     extern bool delayspawn(int type);
 
-    // server commands
+    // remote commands
     extern bool handleservcmd(clientinfo *ci, const char *cmd);
 
     // demos

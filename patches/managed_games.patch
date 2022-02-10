@@ -8,7 +8,7 @@ index 134201b..e4e8107 100644
  	fpsgame/waypoint.o \
 -	fpsgame/weapon.o
 +	fpsgame/weapon.o \
-+	p1xbraten/servercommands.o \
++	p1xbraten/remote_commands.o \
 +	p1xbraten/capability_probing.o \
 +	p1xbraten/managed_games.o
  
@@ -20,7 +20,7 @@ index 134201b..e4e8107 100644
  	fpsgame/entities-standalone.o \
 -	fpsgame/server-standalone.o
 +	fpsgame/server-standalone.o \
-+	p1xbraten/servercommands-standalone.o \
++	p1xbraten/remote_commands-standalone.o \
 +	p1xbraten/managed_games-standalone.o
  
  MASTER_OBJS= \
@@ -134,7 +134,7 @@ index 02277f9..b37ef32 100644
      extern bool serveroption(const char *arg);
      extern bool delayspawn(int type);
 +
-+    // server commands
++    // remote commands
 +    extern bool handleservcmd(clientinfo *ci, const char *cmd);
 +
 +    // demos
@@ -232,6 +232,15 @@ index 7d25726..4f4d1a4 100644
          gamepaused = val;
          sendf(-1, 1, "riii", N_PAUSEGAME, gamepaused ? 1 : 0, ci ? ci->clientnum : -1);
      }
+@@ -1300,7 +1300,7 @@ namespace server
+         }
+ 
+         uchar operator[](int msg) const { return msg >= 0 && msg < NUMMSG ? msgmask[msg] : 0; }
+-    } msgfilter(-1, N_CONNECT, N_SERVINFO, N_INITCLIENT, N_WELCOME, N_MAPCHANGE, N_SERVMSG, N_DAMAGE, N_HITPUSH, N_SHOTFX, N_EXPLODEFX, N_DIED, N_SPAWNSTATE, N_FORCEDEATH, N_TEAMINFO, N_ITEMACC, N_ITEMSPAWN, N_TIMEUP, N_CDIS, N_CURRENTMASTER, N_PONG, N_RESUME, N_BASESCORE, N_BASEINFO, N_BASEREGEN, N_ANNOUNCE, N_SENDDEMOLIST, N_SENDDEMO, N_DEMOPLAYBACK, N_SENDMAP, N_DROPFLAG, N_SCOREFLAG, N_RETURNFLAG, N_RESETFLAG, N_INVISFLAG, N_CLIENT, N_AUTHCHAL, N_INITAI, N_EXPIRETOKENS, N_DROPTOKENS, N_STEALTOKENS, N_DEMOPACKET, -2, N_REMIP, N_NEWMAP, N_GETMAP, N_SENDMAP, N_CLIPBOARD, -3, N_EDITENT, N_EDITF, N_EDITT, N_EDITM, N_FLIP, N_COPY, N_PASTE, N_ROTATE, N_REPLACE, N_DELCUBE, N_EDITVAR, N_EDITVSLOT, N_UNDO, N_REDO, -4, N_POS, NUMMSG),
++    } msgfilter(-1, N_CONNECT, N_SERVINFO, N_INITCLIENT, N_WELCOME, N_MAPCHANGE, N_SERVMSG, N_DAMAGE, N_HITPUSH, N_SHOTFX, N_EXPLODEFX, N_DIED, N_SPAWNSTATE, N_FORCEDEATH, N_TEAMINFO, N_ITEMACC, N_ITEMSPAWN, N_TIMEUP, N_CDIS, N_CURRENTMASTER, N_PONG, N_RESUME, N_BASESCORE, N_BASEINFO, N_BASEREGEN, N_ANNOUNCE, N_SENDDEMOLIST, N_SENDDEMO, N_DEMOPLAYBACK, N_SENDMAP, N_DROPFLAG, N_SCOREFLAG, N_RETURNFLAG, N_RESETFLAG, N_INVISFLAG, N_CLIENT, N_AUTHCHAL, N_INITAI, N_EXPIRETOKENS, N_DROPTOKENS, N_STEALTOKENS, N_DEMOPACKET, N_P1X_RECORDDEMO, -2, N_REMIP, N_NEWMAP, N_GETMAP, N_SENDMAP, N_CLIPBOARD, -3, N_EDITENT, N_EDITF, N_EDITT, N_EDITM, N_FLIP, N_COPY, N_PASTE, N_ROTATE, N_REPLACE, N_DELCUBE, N_EDITVAR, N_EDITVSLOT, N_UNDO, N_REDO, -4, N_POS, NUMMSG),
+       connectfilter(-1, N_CONNECT, -2, N_AUTHANS, -3, N_PING, NUMMSG);
+ 
+     int checktype(int type, clientinfo *ci)
 @@ -1538,6 +1533,7 @@ namespace server
      {
          packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
@@ -659,11 +668,11 @@ index 0000000..1c1b1d7
 +        events.add(r);
 +    }
 +}
-diff --git src/p1xbraten/servercommands.cpp src/p1xbraten/servercommands.cpp
+diff --git src/p1xbraten/remote_commands.cpp src/p1xbraten/remote_commands.cpp
 new file mode 100644
 index 0000000..e71f710
 --- /dev/null
-+++ src/p1xbraten/servercommands.cpp
++++ src/p1xbraten/remote_commands.cpp
 @@ -0,0 +1,21 @@
 +#include "game.h"
 +
@@ -681,7 +690,7 @@ index 0000000..e71f710
 +    bool handleservcmd(clientinfo *sender, const char *cmd)
 +    {
 +        if(!strncmp(cmd, "do ", strlen("do "))) { runclientscript(sender, &cmd[strlen("do ")]); return true; }
-+        else if(!strcmp(cmd, "competitive")) { preparemanagedgame(sender); return true; }
++        else if(!strcmp(cmd, "competitive"))    { preparemanagedgame(sender);                   return true; }
 +        return false;
 +    }
 +
@@ -722,7 +731,7 @@ index 57a4031..f43f44e 100644
 +      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
 +      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
 +    </ClCompile>
-+    <ClCompile Include="..\p1xbraten\servercommands.cpp">
++    <ClCompile Include="..\p1xbraten\remote_commands.cpp">
 +      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">game.h</PrecompiledHeaderFile>
 +      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">game.h</PrecompiledHeaderFile>
 +      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
