@@ -1185,18 +1185,18 @@ namespace server
             if(authdesc && authdesc[0])
             {
                 formatstring(msg, "%s claimed %s as '\fs\f5%s\fr' [\fs\f0%s\fr]", colorname(ci), name, authname, authdesc);
-                if(isdedicatedserver()) logoutf("privilege: %s (cn: %d) claimed %s as '%s' [%s]", ci->name, ci->clientnum, name, authname, authdesc);
+                if(isdedicatedserver()) logoutf("privilege: %s (cn %d) claimed %s as '%s' [%s]", ci->name, ci->clientnum, name, authname, authdesc);
         } 
             else
             {
                 formatstring(msg, "%s claimed %s as '\fs\f5%s\fr'", colorname(ci), name, authname);
-                if(isdedicatedserver()) logoutf("privilege: %s (cn: %d) claimed %s as '%s'", ci->name, ci->clientnum, name, authname);
+                if(isdedicatedserver()) logoutf("privilege: %s (cn %d) claimed %s as '%s'", ci->name, ci->clientnum, name, authname);
             }
         }
         else
         {
             formatstring(msg, "%s %s %s", colorname(ci), val ? "claimed" : "relinquished", name);
-            if(isdedicatedserver()) logoutf("privilege: %s (cn: %d) %s %s", ci->name, ci->clientnum, val ? "claimed" : "relinquished", name);
+            if(isdedicatedserver()) logoutf("privilege: %s (cn %d) %s %s", ci->name, ci->clientnum, val ? "claimed" : "relinquished", name);
         }
         packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
         putint(p, N_SERVMSG);

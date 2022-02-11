@@ -41,6 +41,17 @@ Index: src/engine/server.cpp
      while(carry < len)
      {
          size_t numu = encodeutf8(ubuf, sizeof(ubuf)-1, &((const uchar *)buf)[carry], len - carry, &carry);
+@@ -339,8 +339,8 @@ void disconnect_client(int n, int reason)
+     delclient(clients[n]);
+     const char *msg = disconnectreason(reason);
+     string s;
+-    if(msg) formatstring(s, "client (%s) disconnected because: %s", clients[n]->hostname, msg);
+-    else formatstring(s, "client (%s) disconnected", clients[n]->hostname);
++    if(msg) formatstring(s, "client %s (cn %d) disconnected because: %s", clients[n]->hostname, n, msg);
++    else formatstring(s, "client %s (cn %d) disconnected", clients[n]->hostname, n);
+     logoutf("%s", s);
+     server::sendservmsg(s);
+ }
 @@ -661,7 +675,7 @@
                  c.peer->data = &c;
                  string hn;
@@ -72,19 +83,19 @@ Index: src/fpsgame/server.cpp
 +            if(authdesc && authdesc[0])
 +            {
 +                formatstring(msg, "%s claimed %s as '\fs\f5%s\fr' [\fs\f0%s\fr]", colorname(ci), name, authname, authdesc);
-+                if(isdedicatedserver()) logoutf("privilege: %s (cn: %d) claimed %s as '%s' [%s]", ci->name, ci->clientnum, name, authname, authdesc);
++                if(isdedicatedserver()) logoutf("privilege: %s (cn %d) claimed %s as '%s' [%s]", ci->name, ci->clientnum, name, authname, authdesc);
          }
 -        else formatstring(msg, "%s %s %s", colorname(ci), val ? "claimed" : "relinquished", name);
 +            else
 +            {
 +                formatstring(msg, "%s claimed %s as '\fs\f5%s\fr'", colorname(ci), name, authname);
-+                if(isdedicatedserver()) logoutf("privilege: %s (cn: %d) claimed %s as '%s'", ci->name, ci->clientnum, name, authname);
++                if(isdedicatedserver()) logoutf("privilege: %s (cn %d) claimed %s as '%s'", ci->name, ci->clientnum, name, authname);
 +            }
 +        }
 +        else
 +        {
 +            formatstring(msg, "%s %s %s", colorname(ci), val ? "claimed" : "relinquished", name);
-+            if(isdedicatedserver()) logoutf("privilege: %s (cn: %d) %s %s", ci->name, ci->clientnum, val ? "claimed" : "relinquished", name);
++            if(isdedicatedserver()) logoutf("privilege: %s (cn %d) %s %s", ci->name, ci->clientnum, val ? "claimed" : "relinquished", name);
 +        }
          packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
          putint(p, N_SERVMSG);
