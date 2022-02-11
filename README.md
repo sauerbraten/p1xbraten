@@ -41,6 +41,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [server_ogzs.patch](#server_ogzspatch)
   - [managed_games.patch](#managed_gamespatch)
   - [autoauthdomains.patch](#autoauthdomainspatch)
+  - [proxy_setip.patch](#proxy_setippatch)
 - [Installation](#installation)
   - [Windows](#windows)
   - [macOS](#macos)
@@ -321,6 +322,12 @@ Improves logging when running a dedicated server:
 ### [autoauthdomains.patch](./patches/autoauthdomains.patch)
 
 - adds the `addautoauthdomain` command to request an auth key automatically right after a player joined (*not* before joining; this won't let the player connect in private mode: only the server auth domain can be used for that!)
+
+### [proxy_setip.patch](./patches/proxy_setip.patch)
+
+- adds the `addtrustedproxyip` command to declare a packet source IP as belonging to a trusted proxy
+  
+This patch adds support for the [SauerDuels proxy](https://github.com/sauerduels/sauer-proxy) which can be used to obfuscate the IP of tournament servers. The `setip` protocol extension allows the proxy to forward the client's real IP, replacing the proxy's IP.
 
 
 ## Installation

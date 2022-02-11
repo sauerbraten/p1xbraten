@@ -245,6 +245,7 @@ enum
     N_INITTOKENS, N_TAKETOKEN, N_EXPIRETOKENS, N_DROPTOKENS, N_DEPOSITTOKENS, N_STEALTOKENS,
     N_SERVCMD,
     N_DEMOPACKET,
+    N_P1X_SETIP = 900, // only from proxy to server
     N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED = 1000, N_P1X_RECORDDEMO, // guarded by CAP_PROBE_CLIENT_DEMO_UPLOAD
     NUMMSG
 };
@@ -276,6 +277,7 @@ static const int msgsizes[] =               // size inclusive message token, 0 f
     N_INITTOKENS, 0, N_TAKETOKEN, 2, N_EXPIRETOKENS, 0, N_DROPTOKENS, 0, N_DEPOSITTOKENS, 2, N_STEALTOKENS, 0,
     N_SERVCMD, 0,
     N_DEMOPACKET, 0,
+    N_P1X_SETIP, 2,
     N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED, 1, N_P1X_RECORDDEMO, 1,
     -1
 };
@@ -1238,6 +1240,9 @@ namespace server
     extern clientinfo *getinfo(int cn);
     extern const char *colorname(clientinfo *ci, const char *name = NULL);
     extern void receiveclientdemo(int sender, uchar *data, int len);
+
+    // proxy support
+    extern void setip(clientinfo *sender, uint ip);
 }
 
 // additional colors

@@ -143,6 +143,7 @@ CLIENT_OBJS= \
 	p1xbraten/remote_commands.o \
 	p1xbraten/capability_probing.o \
 	p1xbraten/managed_games.o \
+	p1xbraten/proxy_real_ip.o \
 	p1xbraten/namecomplete.o
 
 CLIENT_PCH= shared/cube.h.gch engine/engine.h.gch fpsgame/game.h.gch
@@ -169,7 +170,8 @@ SERVER_OBJS= \
 	fpsgame/entities-standalone.o \
 	fpsgame/server-standalone.o \
 	p1xbraten/remote_commands-standalone.o \
-	p1xbraten/managed_games-standalone.o
+	p1xbraten/managed_games-standalone.o \
+	p1xbraten/proxy_real_ip.o
 
 MASTER_OBJS= \
 	shared/crypto-standalone.o \
@@ -563,6 +565,10 @@ p1xbraten/managed_games.o: fpsgame/game.h shared/cube.h shared/tools.h
 p1xbraten/managed_games.o: shared/geom.h shared/ents.h shared/command.h
 p1xbraten/managed_games.o: shared/glexts.h shared/glemu.h shared/iengine.h
 p1xbraten/managed_games.o: shared/igame.h fpsgame/ai.h
+p1xbraten/proxy_real_ip.o: fpsgame/game.h shared/cube.h shared/tools.h
+p1xbraten/proxy_real_ip.o: shared/geom.h shared/ents.h shared/command.h
+p1xbraten/proxy_real_ip.o: shared/glexts.h shared/glemu.h shared/iengine.h
+p1xbraten/proxy_real_ip.o: shared/igame.h fpsgame/ai.h
 p1xbraten/namecomplete.o: fpsgame/game.h shared/cube.h shared/tools.h
 p1xbraten/namecomplete.o: shared/geom.h shared/ents.h shared/command.h
 p1xbraten/namecomplete.o: shared/glexts.h shared/glemu.h shared/iengine.h

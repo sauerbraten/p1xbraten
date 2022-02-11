@@ -112,6 +112,7 @@ struct client                   // server side version of "dynent" type
     ENetPeer *peer;
     string hostname;
     void *info;
+    ENetAddress real; // set by proxy via setip remote command
 };
 
 vector<client *> clients;
@@ -187,7 +188,18 @@ int getservermtu() { return serverhost ? serverhost->mtu : -1; }
 void *getclientinfo(int i) { return !clients.inrange(i) || clients[i]->type==ST_EMPTY ? NULL : clients[i]->info; }
 ENetPeer *getclientpeer(int i) { return clients.inrange(i) && clients[i]->type==ST_TCPIP ? clients[i]->peer : NULL; }
 int getnumclients()        { return clients.length(); }
-uint getclientip(int n)    { return clients.inrange(n) && clients[n]->type==ST_TCPIP ? clients[n]->peer->address.host : 0; }
+uint getclientip(int n)
+{
+    if(!clients.inrange(n) || clients[n]->type==ST_TCPIP) return 0;
+    return clients[n]->real.host ? clients[n]->real.host : clients[n]->peer->address.host;
+}
+int setclientrealip(int n, uint ip)
+{
+    if(!clients.inrange(n)) return -1;
+    clients[n]->real.host = ip;
+    return enet_address_get_host_ip(&clients[n]->real, clients[n]->hostname, strlen("xxx.xxx.xxx.xxx"));
+}
+const char *getclienthostname(int n) { return clients.inrange(n) && clients[n]->type==ST_TCPIP ? clients[n]->hostname : NULL; }
 
 void sendpacket(int n, int chan, ENetPacket *packet, int exclude)
 {

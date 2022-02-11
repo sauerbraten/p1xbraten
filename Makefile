@@ -59,6 +59,7 @@ apply-patches:
 	$(PATCH) < patches/autoauthdomains.patch
 	$(PATCH) < patches/parseplayer.patch
 	$(PATCH) < patches/nextfollowteam.patch
+	$(PATCH) < patches/proxy_setip.patch
 	unix2dos src/vcpp/sauerbraten.nsi
 	unix2dos src/vcpp/sauerbraten.vcxproj
 	cd src && make depend

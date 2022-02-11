@@ -1,0 +1,176 @@
+depends on managed_games.patch
+
+diff --git src/Makefile src/Makefile
+index 52829d9..061fc09 100644
+--- src/Makefile
++++ src/Makefile
+@@ -143,6 +143,7 @@ CLIENT_OBJS= \
+ 	p1xbraten/remote_commands.o \
+ 	p1xbraten/capability_probing.o \
+ 	p1xbraten/managed_games.o \
++	p1xbraten/proxy_real_ip.o \
+ 	p1xbraten/namecomplete.o
+ 
+ CLIENT_PCH= shared/cube.h.gch engine/engine.h.gch fpsgame/game.h.gch
+@@ -169,7 +170,8 @@ SERVER_OBJS= \
+ 	fpsgame/entities-standalone.o \
+ 	fpsgame/server-standalone.o \
+ 	p1xbraten/remote_commands-standalone.o \
+-	p1xbraten/managed_games-standalone.o
++	p1xbraten/managed_games-standalone.o \
++	p1xbraten/proxy_real_ip.o
+ 
+ MASTER_OBJS= \
+ 	shared/crypto-standalone.o \
+diff --git src/engine/server.cpp src/engine/server.cpp
+index 3017f57..4aa8d18 100644
+--- src/engine/server.cpp
++++ src/engine/server.cpp
+@@ -112,6 +112,7 @@ struct client                   // server side version of "dynent" type
+     ENetPeer *peer;
+     string hostname;
+     void *info;
++    ENetAddress real; // set by proxy via setip remote command
+ };
+ 
+ vector<client *> clients;
+@@ -187,7 +188,18 @@ int getservermtu() { return serverhost ? serverhost->mtu : -1; }
+ void *getclientinfo(int i) { return !clients.inrange(i) || clients[i]->type==ST_EMPTY ? NULL : clients[i]->info; }
+ ENetPeer *getclientpeer(int i) { return clients.inrange(i) && clients[i]->type==ST_TCPIP ? clients[i]->peer : NULL; }
+ int getnumclients()        { return clients.length(); }
+-uint getclientip(int n)    { return clients.inrange(n) && clients[n]->type==ST_TCPIP ? clients[n]->peer->address.host : 0; }
++uint getclientip(int n)
++{
++    if(!clients.inrange(n) || clients[n]->type==ST_TCPIP) return 0;
++    return clients[n]->real.host ? clients[n]->real.host : clients[n]->peer->address.host;
++}
++int setclientrealip(int n, uint ip)
++{
++    if(!clients.inrange(n)) return -1;
++    clients[n]->real.host = ip;
++    return enet_address_get_host_ip(&clients[n]->real, clients[n]->hostname, strlen("xxx.xxx.xxx.xxx"));
++}
++const char *getclienthostname(int n) { return clients.inrange(n) && clients[n]->type==ST_TCPIP ? clients[n]->hostname : NULL; }
+ 
+ void sendpacket(int n, int chan, ENetPacket *packet, int exclude)
+ {
+diff --git src/fpsgame/game.h src/fpsgame/game.h
+index 392b59c..a0af230 100644
+--- src/fpsgame/game.h
++++ src/fpsgame/game.h
+@@ -245,6 +245,7 @@ enum
+     N_INITTOKENS, N_TAKETOKEN, N_EXPIRETOKENS, N_DROPTOKENS, N_DEPOSITTOKENS, N_STEALTOKENS,
+     N_SERVCMD,
+     N_DEMOPACKET,
++    N_P1X_SETIP = 900, // only from proxy to server
+     N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED = 1000, N_P1X_RECORDDEMO, // guarded by CAP_PROBE_CLIENT_DEMO_UPLOAD
+     NUMMSG
+ };
+@@ -276,6 +277,7 @@ static const int msgsizes[] =               // size inclusive message token, 0 f
+     N_INITTOKENS, 0, N_TAKETOKEN, 2, N_EXPIRETOKENS, 0, N_DROPTOKENS, 0, N_DEPOSITTOKENS, 2, N_STEALTOKENS, 0,
+     N_SERVCMD, 0,
+     N_DEMOPACKET, 0,
++    N_P1X_SETIP, 2,
+     N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED, 1, N_P1X_RECORDDEMO, 1,
+     -1
+ };
+@@ -1238,6 +1240,9 @@ namespace server
+     extern clientinfo *getinfo(int cn);
+     extern const char *colorname(clientinfo *ci, const char *name = NULL);
+     extern void receiveclientdemo(int sender, uchar *data, int len);
++
++    // proxy support
++    extern void setip(clientinfo *sender, uint ip);
+ }
+ 
+ // additional colors
+diff --git src/fpsgame/server.cpp src/fpsgame/server.cpp
+index 4272bd7..8b407e5 100644
+--- src/fpsgame/server.cpp
++++ src/fpsgame/server.cpp
+@@ -1301,7 +1301,7 @@ namespace server
+ 
+         uchar operator[](int msg) const { return msg >= 0 && msg < NUMMSG ? msgmask[msg] : 0; }
+     } msgfilter(-1, N_CONNECT, N_SERVINFO, N_INITCLIENT, N_WELCOME, N_MAPCHANGE, N_SERVMSG, N_DAMAGE, N_HITPUSH, N_SHOTFX, N_EXPLODEFX, N_DIED, N_SPAWNSTATE, N_FORCEDEATH, N_TEAMINFO, N_ITEMACC, N_ITEMSPAWN, N_TIMEUP, N_CDIS, N_CURRENTMASTER, N_PONG, N_RESUME, N_BASESCORE, N_BASEINFO, N_BASEREGEN, N_ANNOUNCE, N_SENDDEMOLIST, N_SENDDEMO, N_DEMOPLAYBACK, N_SENDMAP, N_DROPFLAG, N_SCOREFLAG, N_RETURNFLAG, N_RESETFLAG, N_INVISFLAG, N_CLIENT, N_AUTHCHAL, N_INITAI, N_EXPIRETOKENS, N_DROPTOKENS, N_STEALTOKENS, N_DEMOPACKET, N_P1X_RECORDDEMO, -2, N_REMIP, N_NEWMAP, N_GETMAP, N_SENDMAP, N_CLIPBOARD, -3, N_EDITENT, N_EDITF, N_EDITT, N_EDITM, N_FLIP, N_COPY, N_PASTE, N_ROTATE, N_REPLACE, N_DELCUBE, N_EDITVAR, N_EDITVSLOT, N_UNDO, N_REDO, -4, N_POS, NUMMSG),
+-      connectfilter(-1, N_CONNECT, -2, N_AUTHANS, -3, N_PING, NUMMSG);
++      connectfilter(-1, N_CONNECT, -2, N_AUTHANS, -3, N_PING, N_P1X_SETIP, NUMMSG);
+ 
+     int checktype(int type, clientinfo *ci)
+     {
+@@ -2785,6 +2785,10 @@ namespace server
+                     getint(p);
+                     break;
+ 
++                case N_P1X_SETIP:
++                    setip(ci, getint(p));
++                    break;
++
+                 default:
+                     disconnect_client(sender, DISC_MSGERR);
+                     return;
+diff --git src/p1xbraten/proxy_real_ip.cpp src/p1xbraten/proxy_real_ip.cpp
+new file mode 100644
+index 0000000..bd130e3
+--- /dev/null
++++ src/p1xbraten/proxy_real_ip.cpp
+@@ -0,0 +1,22 @@
++#include "game.h"
++
++namespace server {
++
++    vector<char *> proxyips;
++    ICOMMAND(addtrustedproxyip, "s", (char *domain), proxyips.add(newstring(domain)));
++
++    bool hastrustedproxyip(clientinfo *ci) // false after setip!
++    {
++        const char *ip = getclienthostname(ci->clientnum);
++        loopv(proxyips) if(!strcmp(ip, proxyips[i])) return true;
++        return false;
++    }
++
++    void setip(clientinfo *sender, uint realip)
++    {
++        if(!sender || !hastrustedproxyip(sender)) return;
++        if(setclientrealip(sender->clientnum, realip))
++            logoutf("failed setting real IP of %s (cn: %d) to %u (sent by proxy)", sender->name, sender->clientnum, realip);
++    }
++
++}
+diff --git src/shared/iengine.h src/shared/iengine.h
+index 8c20981..60ba746 100644
+--- src/shared/iengine.h
++++ src/shared/iengine.h
+@@ -473,6 +473,8 @@ extern void flushserver(bool force);
+ extern int getservermtu();
+ extern int getnumclients();
+ extern uint getclientip(int n);
++extern int setclientrealip(int n, uint ip);
++extern const char *getclienthostname(int n);
+ extern void localconnect();
+ extern const char *disconnectreason(int reason);
+ extern void disconnect_client(int n, int reason);
+diff --git src/vcpp/sauerbraten.vcxproj src/vcpp/sauerbraten.vcxproj
+index 26d2dd2..b713960 100644
+--- src/vcpp/sauerbraten.vcxproj
++++ src/vcpp/sauerbraten.vcxproj
+@@ -1179,6 +1179,20 @@
+       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
+       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
+     </ClCompile>
++    <ClCompile Include="..\p1xbraten\proxy_real_ip.cpp">
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++    </ClCompile>
+     <ClCompile Include="..\fpsgame\movable.cpp">
+       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">game.h</PrecompiledHeaderFile>
+       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">game.h</PrecompiledHeaderFile>
