@@ -745,10 +745,11 @@ namespace server
         if(!demotmp) return;
         int len = (int)min(demotmp->size(), stream::offset((maxdemosize<<20) + 0x10000));
         demofile &d = demos.add();
+        static string timestr;
         time_t t = time(NULL);
-        char *timestr = ctime(&t), *trim = timestr + strlen(timestr);
-        while(trim>timestr && iscubespace(*--trim)) *trim = '\0';
-        formatstring(d.info, "%s: %s, %s, %.2f%s", timestr, modename(gamemode), smapname, len > 1024*1024 ? len/(1024*1024.f) : len/1024.0f, len > 1024*1024 ? "MB" : "kB");
+        size_t timestrlen = strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S UTC", gmtime(&t));
+        timestr[min(timestrlen, sizeof(timestr)-1)] = '\0';
+        formatstring(d.info, "%s on %s, ended %s (%.2f %s)", modename(gamemode), smapname, timestr, len > 1024*1024 ? len/(1024*1024.f) : len/1024.0f, len > 1024*1024 ? "MB" : "kB");
         sendservmsgf("demo \"%s\" recorded on server", d.info);
         d.data = new uchar[len];
         d.len = len;
