@@ -10,6 +10,7 @@ This repository contains the source for my client mod, as well as the patches ap
 </p>
 
 - [Patches](#patches)
+  - [upstreamed to SVN](#upstreamed-to-svn)
   - [moviehud.patch](#moviehudpatch)
   - [scoreboard.patch](#scoreboardpatch)
   - [hudfragmessages.patch](#hudfragmessagespatch)
@@ -57,6 +58,13 @@ This repository contains the source for my client mod, as well as the patches ap
 ## Patches
 
 a.k.a. Features
+
+### upstreamed to SVN
+
+- "fixes" `nextfollow` to start at the first/last player when cycling forwards/backwards, instead of second or second to last respectively
+- allows using <kbd>Ctrl</kbd>-<kbd>Left</kbd>/<kbd>Right</kbd> (<kbd>Option</kbd> on Mac) to jump over words in the console input
+- allows using <kbd>Ctrl</kbd>-<kbd>Backspace</kbd>/<kbd>Delete</kbd> (<kbd>Option</kbd> on Mac) to delete entire words in the console input
+- improves player name matching in `setmaster`, `setteam`, `ignore`, `kick`, `spectator`, `follow` and `goto` commands: after the normal full matching, (if `parseplayer`>0) the argument is tried to be matched as a case-insensitive prefix, then a case-insensitive substring of a player's name
 
 ### [moviehud.patch](./patches/moviehud.patch)
 
@@ -247,8 +255,6 @@ You can also adjust the trail colors in the options menu.
 ### [better_console.patch](./patches/better_console.patch)
 
 - adds name completion to chat console (press <kbd>Tab</kbd>)
-- allows using <kbd>Ctrl</kbd>-<kbd>Left</kbd>/<kbd>Right</kbd> (<kbd>Option</kbd> on Mac) to jump over words in the console input
-- allows using <kbd>Ctrl</kbd>-<kbd>Backspace</kbd>/<kbd>Delete</kbd> (<kbd>Option</kbd> on Mac) to delete entire words in the console input
 
 Name completion tries old-style prefix matching first, then will also try substring matching to suggest more names. In addition to vanilla's matching at the end of the line, it also works in the middle of the input, as long as the cursor is placed in front of a space character.
 
@@ -268,7 +274,6 @@ bind "HASH"      [inputcommand "" [servcmd $commandbuf] "#"] // only works with 
 
 ### [nextfollowteam.patch](./patches/nextfollowteam.patch)
 
-- "fixes" `nextfollow` to start at the first/last player when cycling forwards/backwards, instead of second or second to last respectively
 - adds the `nextfollowteam` command that will cycle through players grouped by team and falls back to vanilla's `nextfollow` in non-team modes (which just iterates through CNs from low to high)
 
 To use it, put the following lines into your autoexec.cfg (and remember you'll have to change them back to `nextfollow` before using the autoexec.cfg with other clients!):
