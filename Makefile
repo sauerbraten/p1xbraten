@@ -61,6 +61,7 @@ apply-patches:
 	$(PATCH) < patches/nextfollowteam.patch
 	$(PATCH) < patches/proxy_setip.patch
 	$(PATCH) < patches/server_demo_name.patch
+	$(PATCH) < patches/spec_teleports.patch
 	unix2dos src/vcpp/sauerbraten.nsi
 	unix2dos src/vcpp/sauerbraten.vcxproj
 	cd src && make depend

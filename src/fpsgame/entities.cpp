@@ -335,8 +335,13 @@ namespace entities
 
     void checkitems(fpsent *d)
     {
-        if(d->state!=CS_ALIVE) return;
         vec o = d->feetpos();
+        if(d->state==CS_SPECTATOR) loopv(ents)
+        {
+            extentity &e = *ents[i];
+            if(e.type==TELEPORT && e.o.dist(o)<16) trypickup(i, d);
+        }
+        if(d->state!=CS_ALIVE) return;
         loopv(ents)
         {
             extentity &e = *ents[i];
