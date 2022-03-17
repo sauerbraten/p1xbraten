@@ -1,8 +1,6 @@
 #include "game.h"
 #include "weaponstats.h"
-#ifdef WIN32
-#include <shlwapi.h> // for StrStrIA (= strcasestr)
-#endif
+
 namespace game
 {
     VARP(minradarscale, 0, 384, 10000);
@@ -367,6 +365,7 @@ namespace game
     }
     ICOMMAND(isai, "ii", (int *cn, int *type), intret(isai(*cn, *type) ? 1 : 0));
 
+    VARP(playersearch, 0, 3, 10);
     int parseplayer(const char *arg)
     {
         char *end;
@@ -382,29 +381,26 @@ namespace game
             fpsent *o = players[i];
             if(!strcmp(arg, o->name)) return o->clientnum;
         }
-        // try case insensitive
+        // nothing found, try case insensitive
         loopv(players)
         {
             fpsent *o = players[i];
-            if(!strcasecmp(arg, o->name)) return o->clientnum;
+            if(cubecaseequal(o->name, arg)) return o->clientnum;
         }
-        if(strlen(arg)>2)
+        int len = strlen(arg);
+        if(playersearch && len >= playersearch)
         {
             // try case insensitive prefix
             loopv(players)
             {
                 fpsent *o = players[i];
-                if(!strncasecmp(arg, o->name, strlen(arg))) return o->clientnum;
+                if(cubecaseequal(o->name, arg, len)) return o->clientnum;
             }
             // try case insensitive substring
             loopv(players)
             {
                 fpsent *o = players[i];
-#ifdef WIN32
-                if(StrStrIA(o->name, arg)) return o->clientnum;
-#else
-                if(strcasestr(o->name, arg)) return o->clientnum;
-#endif
+                if(cubecasefind(o->name, arg)) return o->clientnum;
             }
         }
         return -1;
@@ -525,10 +521,10 @@ namespace game
         }
     });
 
-    void setteam(const char *playername, const char *teamname)
+    void setteam(const char *arg1, const char *arg2)
     {
-        int i = parseplayer(playername);
-        if(i>=0) addmsg(N_SETTEAM, "ris", i, teamname);
+        int i = parseplayer(arg1);
+        if(i>=0) addmsg(N_SETTEAM, "ris", i, arg2);
     }
     COMMAND(setteam, "ss");
 

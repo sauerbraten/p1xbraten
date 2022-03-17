@@ -1,13 +1,11 @@
 #include "game.h"
-#ifdef WIN32
-#include <shlwapi.h> // for StrStrIA (= strcasestr)
-#endif
 
 namespace game
 {
     char *completeword = NULL;               // substring of commandbuf/s to be completed
     const char *lastcompletealphanum = NULL; // points to alphanum version of last suggested ci->name
     size_t lastcompletelen = 0;              // strlen of last suggested ci->name
+    extern int playersearch;                 // same threshold as parseplayer()
 
     void complete(char *s, int cursor, int maxlen) // completes client names
     {
@@ -20,8 +18,8 @@ namespace game
             char prevchar;
             if(cursor>=0) { prevchar = s[cursor]; s[cursor] = 0; } // temporarily shorten s to end at cursor
             completeword = strrchr(s, ' ');
-            if(!completeword) completeword = s; // no space in front of cursor -> use whole commandbuf
-            else completeword++;                // move to first char, behind the space we found
+            if(!completeword) completeword = s;     // no space in front of cursor -> use whole commandbuf
+            else completeword++;                    // move to first char, behind the space we found
             lastcompletelen = strlen(completeword); // we will replace this many chars with our first suggestion
             filternonalphanum(alphanumword, completeword, maxlen); // used for matching
             comparelen = strlen(alphanumword);                     // used for matching
@@ -34,9 +32,9 @@ namespace game
         {
             fpsent *ci = clients[i];
             if(!ci) continue;
-            if(strncasecmp(ci->alphanumname, alphanumword, comparelen)==0 &&                        // match prefix
-               (!lastcompletealphanum || strcasecmp(ci->alphanumname, lastcompletealphanum) > 0) && // ensure it (alphabetically) comes after last suggestion
-               (!nextcompletealphanum || strcasecmp(ci->alphanumname, nextcompletealphanum) < 0)    // only pick as next suggestion when it comes before current pick
+            if(cubecaseequal(ci->alphanumname, alphanumword, comparelen) &&                         // match prefix
+               (!lastcompletealphanum || cubecasecmp(ci->alphanumname, lastcompletealphanum) > 0) && // ensure it (alphabetically) comes after last suggestion
+               (!nextcompletealphanum || cubecasecmp(ci->alphanumname, nextcompletealphanum) < 0)    // only pick as next suggestion when it comes before current pick
             )
             {
                 nextcompletealphanum = ci->alphanumname;
@@ -44,18 +42,14 @@ namespace game
             }
         }
         if(!skipprefixcheck) lastcompletealphanum = NULL;
-        if(!nextcomplete && comparelen>=2) loopv(clients) // only if prefix matching didn't produce a new suggestion, and 2 or more chars given: try matching substring (ignoring case)
+        if(!nextcomplete && (int)comparelen>=playersearch) loopv(clients) // only if prefix matching didn't produce a new suggestion, and enough chars given: try matching substring (ignoring case)
         {
             fpsent *ci = clients[i];
             if(!ci) continue;
             if(
-#ifdef WIN32
-                StrStrIA(ci->alphanumname, alphanumword) &&
-#else
-                strcasestr(ci->alphanumname, alphanumword) &&                                        // match substring
-#endif
-                (!lastcompletealphanum || strcasecmp(ci->alphanumname, lastcompletealphanum) > 0) && // ensure it (alphabetically) comes after last suggestion
-                (!nextcompletealphanum || strcasecmp(ci->alphanumname, nextcompletealphanum) < 0)    // only pick as next suggestion when it comes before current pick
+                cubecasefind(ci->alphanumname, alphanumword) &&                                      // match substring
+                (!lastcompletealphanum || cubecasecmp(ci->alphanumname, lastcompletealphanum) > 0) && // ensure it (alphabetically) comes after last suggestion
+                (!nextcompletealphanum || cubecasecmp(ci->alphanumname, nextcompletealphanum) < 0)    // only pick as next suggestion when it comes before current pick
             )
             {
                 nextcompletealphanum = ci->alphanumname;

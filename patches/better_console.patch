@@ -60,93 +60,7 @@ index 3664668..ffe61ef 100644
          else if(action)
          {
              alias("commandbuf", buf);
-@@ -444,8 +444,10 @@ bool consolekey(int code, bool isdown)
- 
-     #ifdef __APPLE__
-         #define MOD_KEYS (KMOD_LGUI|KMOD_RGUI)
-+        #define SKIPWORD_KEYS (KMOD_LALT|KMOD_RALT)
-     #else
-         #define MOD_KEYS (KMOD_LCTRL|KMOD_RCTRL)
-+        #define SKIPWORD_KEYS (KMOD_LCTRL|KMOD_RCTRL)
-     #endif
- 
-     if(isdown)
-@@ -468,7 +470,15 @@ bool consolekey(int code, bool isdown)
-             {
-                 int len = (int)strlen(commandbuf);
-                 if(commandpos<0) break;
--                memmove(&commandbuf[commandpos], &commandbuf[commandpos+1], len - commandpos);
-+                int end = commandpos+1;
-+                if(SDL_GetModState()&SKIPWORD_KEYS)
-+                {
-+                    // extend range to the end of the next word
-+                    const char *space = strchr(commandbuf+end, ' ');
-+                    if(!space) end = len;
-+                    else end = space-commandbuf+1;
-+                }
-+                memmove(&commandbuf[commandpos], &commandbuf[end], len - end + 1);
-                 resetcomplete();
-                 if(commandpos>=len-1) commandpos = -1;
-                 break;
-@@ -476,22 +486,50 @@ bool consolekey(int code, bool isdown)
- 
-             case SDLK_BACKSPACE:
-             {
--                int len = (int)strlen(commandbuf), i = commandpos>=0 ? commandpos : len;
--                if(i<1) break;
--                memmove(&commandbuf[i-1], &commandbuf[i], len - i + 1);
-+                int len = (int)strlen(commandbuf), end = commandpos>=0 ? commandpos : len;
-+                if(end<1) break;
-+                int start = end-1;
-+                if(SDL_GetModState()&SKIPWORD_KEYS)
-+                {
-+                    int prevpos = start; char prevchar = commandbuf[start]; commandbuf[start] = 0; // temporarily shorten commandbuf to end-1
-+                    // extend range to beginning of the previous word
-+                    const char *space = strrchr(commandbuf, ' ');
-+                    if(!space) start = 0;
-+                    else start = space-commandbuf+1;
-+                    commandbuf[prevpos] = prevchar;
-+                }
-+                memmove(&commandbuf[start], &commandbuf[end], len - end + 1);
-                 resetcomplete();
--                if(commandpos>0) commandpos--;
-+                if(commandpos>0) commandpos = start;
-                 else if(!commandpos && len<=1) commandpos = -1;
-                 break;
-             }
- 
-             case SDLK_LEFT:
--                if(commandpos>0) commandpos--;
--                else if(commandpos<0) commandpos = (int)strlen(commandbuf)-1;
-+                if(SDL_GetModState()&SKIPWORD_KEYS && commandpos!=0)
-+                {
-+                    int prevpos = 0; char prevchar = ' '; // temporarily shorten commandbuf to commandpos-1
-+                    if(commandpos>0) { prevpos = commandpos-1; prevchar = commandbuf[prevpos]; commandbuf[prevpos] = 0; }
-+                    const char *space = strrchr(commandbuf, ' ');
-+                    if(!space) commandpos = 0;
-+                    else commandpos = space-commandbuf+1;
-+                    if(prevpos>0) commandbuf[prevpos] = prevchar;
-+                }
-+                else
-+                {
-+                    if(commandpos>0) commandpos--;
-+                    else if(commandpos<0) commandpos = (int)strlen(commandbuf)-1;
-+                }
-                 break;
- 
-             case SDLK_RIGHT:
--                if(commandpos>=0 && ++commandpos>=(int)strlen(commandbuf)) commandpos = -1;
-+                if(SDL_GetModState()&SKIPWORD_KEYS && commandpos>=0)
-+                {
-+                    const char *space = strchr(commandbuf+commandpos+1, ' ');
-+                    if(!space) commandpos = -1;
-+                    else commandpos = space-commandbuf;
-+                }
-+                else if(commandpos>=0 && ++commandpos>=(int)strlen(commandbuf)) commandpos = -1;
-                 break;
- 
-             case SDLK_UP:
-@@ -504,9 +542,15 @@ bool consolekey(int code, bool isdown)
+@@ -504,9 +504,15 @@ bool consolekey(int code, bool isdown)
                  break;
  
              case SDLK_TAB:
@@ -164,7 +78,7 @@ index 3664668..ffe61ef 100644
                      if(commandpos>=0 && commandpos>=(int)strlen(commandbuf)) commandpos = -1;
                  }
                  break;
-@@ -536,12 +580,14 @@ bool consolekey(int code, bool isdown)
+@@ -536,12 +540,14 @@ bool consolekey(int code, bool isdown)
              }
              histpos = history.length();
              inputcommand(NULL);
@@ -179,7 +93,7 @@ index 3664668..ffe61ef 100644
          }
      }
 
-@@ -668,7 +714,7 @@ static hashtable<char *, filesval *> completions;
+@@ -668,7 +676,7 @@ static hashtable<char *, filesval *> completions;
  int completesize = 0;
  char *lastcomplete = NULL;
  
@@ -244,17 +158,15 @@ new file mode 100644
 index 0000000..90dc855
 --- /dev/null
 +++ src/p1xbraten/namecomplete.cpp
-@@ -0,0 +1,98 @@
+@@ -0,0 +1,92 @@
 +#include "game.h"
-+#ifdef WIN32
-+#include <shlwapi.h> // for StrStrIA (= strcasestr)
-+#endif
 +
 +namespace game
 +{
 +    char *completeword = NULL;               // substring of commandbuf/s to be completed
 +    const char *lastcompletealphanum = NULL; // points to alphanum version of last suggested ci->name
 +    size_t lastcompletelen = 0;              // strlen of last suggested ci->name
++    extern int playersearch;                 // same threshold as parseplayer()
 +
 +    void complete(char *s, int cursor, int maxlen) // completes client names
 +    {
@@ -267,8 +179,8 @@ index 0000000..90dc855
 +            char prevchar;
 +            if(cursor>=0) { prevchar = s[cursor]; s[cursor] = 0; } // temporarily shorten s to end at cursor
 +            completeword = strrchr(s, ' ');
-+            if(!completeword) completeword = s; // no space in front of cursor -> use whole commandbuf
-+            else completeword++;                // move to first char, behind the space we found
++            if(!completeword) completeword = s;     // no space in front of cursor -> use whole commandbuf
++            else completeword++;                    // move to first char, behind the space we found
 +            lastcompletelen = strlen(completeword); // we will replace this many chars with our first suggestion
 +            filternonalphanum(alphanumword, completeword, maxlen); // used for matching
 +            comparelen = strlen(alphanumword);                     // used for matching
@@ -281,9 +193,9 @@ index 0000000..90dc855
 +        {
 +            fpsent *ci = clients[i];
 +            if(!ci) continue;
-+            if(strncasecmp(ci->alphanumname, alphanumword, comparelen)==0 &&                        // match prefix
-+               (!lastcompletealphanum || strcasecmp(ci->alphanumname, lastcompletealphanum) > 0) && // ensure it (alphabetically) comes after last suggestion
-+               (!nextcompletealphanum || strcasecmp(ci->alphanumname, nextcompletealphanum) < 0)    // only pick as next suggestion when it comes before current pick
++            if(cubecaseequal(ci->alphanumname, alphanumword, comparelen) &&                         // match prefix
++               (!lastcompletealphanum || cubecasecmp(ci->alphanumname, lastcompletealphanum) > 0) && // ensure it (alphabetically) comes after last suggestion
++               (!nextcompletealphanum || cubecasecmp(ci->alphanumname, nextcompletealphanum) < 0)    // only pick as next suggestion when it comes before current pick
 +            )
 +            {
 +                nextcompletealphanum = ci->alphanumname;
@@ -291,18 +203,14 @@ index 0000000..90dc855
 +            }
 +        }
 +        if(!skipprefixcheck) lastcompletealphanum = NULL;
-+        if(!nextcomplete && comparelen>=2) loopv(clients) // only if prefix matching didn't produce a new suggestion, and 2 or more chars given: try matching substring (ignoring case)
++        if(!nextcomplete && (int)comparelen>=playersearch) loopv(clients) // only if prefix matching didn't produce a new suggestion, and enough chars given: try matching substring (ignoring case)
 +        {
 +            fpsent *ci = clients[i];
 +            if(!ci) continue;
 +            if(
-+#ifdef WIN32
-+                StrStrIA(ci->alphanumname, alphanumword) &&
-+#else
-+                strcasestr(ci->alphanumname, alphanumword) &&                                        // match substring
-+#endif
-+                (!lastcompletealphanum || strcasecmp(ci->alphanumname, lastcompletealphanum) > 0) && // ensure it (alphabetically) comes after last suggestion
-+                (!nextcompletealphanum || strcasecmp(ci->alphanumname, nextcompletealphanum) < 0)    // only pick as next suggestion when it comes before current pick
++                cubecasefind(ci->alphanumname, alphanumword) &&                                      // match substring
++                (!lastcompletealphanum || cubecasecmp(ci->alphanumname, lastcompletealphanum) > 0) && // ensure it (alphabetically) comes after last suggestion
++                (!nextcompletealphanum || cubecasecmp(ci->alphanumname, nextcompletealphanum) < 0)    // only pick as next suggestion when it comes before current pick
 +            )
 +            {
 +                nextcompletealphanum = ci->alphanumname;
@@ -360,60 +268,6 @@ diff --git src/vcpp/sauerbraten.vcxproj src/vcpp/sauerbraten.vcxproj
 index 7d46df0..b18b8dd 100644
 --- src/vcpp/sauerbraten.vcxproj
 +++ src/vcpp/sauerbraten.vcxproj
-@@ -165,7 +165,7 @@
-     </ResourceCompile>
-     <Link>
-       <AdditionalOptions>/MACHINE:I386 /SAFESEH:NO %(AdditionalOptions)</AdditionalOptions>
--      <AdditionalDependencies>enet.lib;zdll.lib;opengl32.lib;SDL2.lib;SDL2_image.lib;ws2_32.lib;SDL2_mixer.lib;winmm.lib;dbghelp.lib;kernel32.lib;user32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-+      <AdditionalDependencies>enet.lib;zdll.lib;opengl32.lib;SDL2.lib;SDL2_image.lib;ws2_32.lib;SDL2_mixer.lib;winmm.lib;dbghelp.lib;kernel32.lib;user32.lib;Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-       <SuppressStartupBanner>true</SuppressStartupBanner>
-       <AdditionalLibraryDirectories>..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-@@ -215,7 +215,7 @@
-     </ResourceCompile>
-     <Link>
-       <AdditionalOptions>/MACHINE:X64 /SAFESEH:NO %(AdditionalOptions)</AdditionalOptions>
--      <AdditionalDependencies>enet.lib;zdll.lib;opengl32.lib;SDL2.lib;SDL2_image.lib;ws2_32.lib;SDL2_mixer.lib;winmm.lib;dbghelp.lib;kernel32.lib;user32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-+      <AdditionalDependencies>enet.lib;zdll.lib;opengl32.lib;SDL2.lib;SDL2_image.lib;ws2_32.lib;SDL2_mixer.lib;winmm.lib;dbghelp.lib;kernel32.lib;user32.lib;Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-       <SuppressStartupBanner>true</SuppressStartupBanner>
-       <AdditionalLibraryDirectories>..\lib64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-@@ -257,7 +257,7 @@
-     </ResourceCompile>
-     <Link>
-       <AdditionalOptions>/MACHINE:I386 /SAFESEH:NO %(AdditionalOptions)</AdditionalOptions>
--      <AdditionalDependencies>enet.lib;zdll.lib;opengl32.lib;SDL2.lib;SDL2_image.lib;SDL2_mixer.lib;ws2_32.lib;winmm.lib;dbghelp.lib;kernel32.lib;user32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-+      <AdditionalDependencies>enet.lib;zdll.lib;opengl32.lib;SDL2.lib;SDL2_image.lib;ws2_32.lib;SDL2_mixer.lib;winmm.lib;dbghelp.lib;kernel32.lib;user32.lib;Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-       <SuppressStartupBanner>true</SuppressStartupBanner>
-       <AdditionalLibraryDirectories>..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-@@ -296,7 +296,7 @@
-     </ResourceCompile>
-     <Link>
-       <AdditionalOptions>/MACHINE:X64 /SAFESEH:NO %(AdditionalOptions)</AdditionalOptions>
--      <AdditionalDependencies>enet.lib;zdll.lib;opengl32.lib;SDL2.lib;SDL2_image.lib;SDL2_mixer.lib;ws2_32.lib;winmm.lib;dbghelp.lib;kernel32.lib;user32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-+      <AdditionalDependencies>enet.lib;zdll.lib;opengl32.lib;SDL2.lib;SDL2_image.lib;ws2_32.lib;SDL2_mixer.lib;winmm.lib;dbghelp.lib;kernel32.lib;user32.lib;Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-       <SuppressStartupBanner>true</SuppressStartupBanner>
-       <AdditionalLibraryDirectories>..\lib64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-@@ -342,7 +342,7 @@
-     </ResourceCompile>
-     <Link>
-       <AdditionalOptions>/MACHINE:I386 /SAFESEH:NO %(AdditionalOptions)</AdditionalOptions>
--      <AdditionalDependencies>enet.lib;zdll.lib;opengl32.lib;SDL2.lib;SDL2_image.lib;ws2_32.lib;SDL2_mixer.lib;winmm.lib;dbghelp.lib;kernel32.lib;user32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-+      <AdditionalDependencies>enet.lib;zdll.lib;opengl32.lib;SDL2.lib;SDL2_image.lib;ws2_32.lib;SDL2_mixer.lib;winmm.lib;dbghelp.lib;kernel32.lib;user32.lib;Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-       <SuppressStartupBanner>true</SuppressStartupBanner>
-       <AdditionalLibraryDirectories>..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-@@ -388,7 +388,7 @@
-     </ResourceCompile>
-     <Link>
-       <AdditionalOptions>/MACHINE:X64 /SAFESEH:NO %(AdditionalOptions)</AdditionalOptions>
--      <AdditionalDependencies>enet.lib;zdll.lib;opengl32.lib;SDL2.lib;SDL2_image.lib;ws2_32.lib;SDL2_mixer.lib;winmm.lib;dbghelp.lib;kernel32.lib;user32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-+      <AdditionalDependencies>enet.lib;zdll.lib;opengl32.lib;SDL2.lib;SDL2_image.lib;ws2_32.lib;SDL2_mixer.lib;winmm.lib;dbghelp.lib;kernel32.lib;user32.lib;Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-       <SuppressStartupBanner>true</SuppressStartupBanner>
-       <AdditionalLibraryDirectories>..\lib64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
 @@ -1309,6 +1309,20 @@
        <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
        <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>

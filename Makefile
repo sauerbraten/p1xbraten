@@ -57,7 +57,7 @@ apply-patches:
 	$(PATCH) < patches/managed_games.patch
 	$(PATCH) < patches/better_console.patch
 	$(PATCH) < patches/autoauthdomains.patch
-	$(PATCH) < patches/parseplayer.patch
+	# $(PATCH) < patches/parseplayer.patch
 	$(PATCH) < patches/nextfollowteam.patch
 	$(PATCH) < patches/proxy_setip.patch
 	$(PATCH) < patches/server_demo_name.patch

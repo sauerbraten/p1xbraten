@@ -438,16 +438,38 @@ bool consoleinput(const char *str, int len)
     return true;
 }
 
+static char *skipword(char *s)
+{
+    while(int c = *s++) if(!iscubespace(c))
+    {
+        while(int c = *s++) if(iscubespace(c)) break;
+        break;
+    }
+    return s-1;
+}
+
+static char *skipwordrev(char *s, int n = -1)
+{
+    char *e = s + strlen(s);
+    if(n >= 0) e = min(e, &s[n]);
+    while(--e >= s) if(!iscubespace(*e))
+    {
+        while(--e >= s && !iscubespace(*e));
+        break;
+    }
+    return e+1;
+}
+
 bool consolekey(int code, bool isdown)
 {
     if(commandmillis < 0) return false;
 
     #ifdef __APPLE__
         #define MOD_KEYS (KMOD_LGUI|KMOD_RGUI)
-        #define SKIPWORD_KEYS (KMOD_LALT|KMOD_RALT)
+        #define SKIP_KEYS (KMOD_LALT|KMOD_RALT)
     #else
         #define MOD_KEYS (KMOD_LCTRL|KMOD_RCTRL)
-        #define SKIPWORD_KEYS (KMOD_LCTRL|KMOD_RCTRL)
+        #define SKIP_KEYS (KMOD_LCTRL|KMOD_RCTRL)
     #endif
 
     if(isdown)
@@ -459,7 +481,7 @@ bool consolekey(int code, bool isdown)
                 break;
 
             case SDLK_HOME:
-                if(strlen(commandbuf)) commandpos = 0;
+                if(commandbuf[0]) commandpos = 0;
                 break;
 
             case SDLK_END:
@@ -471,14 +493,8 @@ bool consolekey(int code, bool isdown)
                 int len = (int)strlen(commandbuf);
                 if(commandpos<0) break;
                 int end = commandpos+1;
-                if(SDL_GetModState()&SKIPWORD_KEYS)
-                {
-                    // extend range to the end of the next word
-                    const char *space = strchr(commandbuf+end, ' ');
-                    if(!space) end = len;
-                    else end = space-commandbuf+1;
-                }
-                memmove(&commandbuf[commandpos], &commandbuf[end], len - end + 1);
+                if(SDL_GetModState()&SKIP_KEYS) end = skipword(&commandbuf[commandpos]) - commandbuf;
+                memmove(&commandbuf[commandpos], &commandbuf[end], len + 1 - end);
                 resetcomplete();
                 if(commandpos>=len-1) commandpos = -1;
                 break;
@@ -486,19 +502,11 @@ bool consolekey(int code, bool isdown)
 
             case SDLK_BACKSPACE:
             {
-                int len = (int)strlen(commandbuf), end = commandpos>=0 ? commandpos : len;
-                if(end<1) break;
-                int start = end-1;
-                if(SDL_GetModState()&SKIPWORD_KEYS)
-                {
-                    int prevpos = start; char prevchar = commandbuf[start]; commandbuf[start] = 0; // temporarily shorten commandbuf to end-1
-                    // extend range to beginning of the previous word
-                    const char *space = strrchr(commandbuf, ' ');
-                    if(!space) start = 0;
-                    else start = space-commandbuf+1;
-                    commandbuf[prevpos] = prevchar;
-                }
-                memmove(&commandbuf[start], &commandbuf[end], len - end + 1);
+                int len = (int)strlen(commandbuf), i = commandpos>=0 ? commandpos : len;
+                if(i<1) break;
+                int start = i-1;
+                if(SDL_GetModState()&SKIP_KEYS) start = skipwordrev(commandbuf, i) - commandbuf;
+                memmove(&commandbuf[start], &commandbuf[i], len - i + 1);
                 resetcomplete();
                 if(commandpos>0) commandpos = start;
                 else if(!commandpos && len<=1) commandpos = -1;
@@ -506,39 +514,37 @@ bool consolekey(int code, bool isdown)
             }
 
             case SDLK_LEFT:
-                if(SDL_GetModState()&SKIPWORD_KEYS && commandpos!=0)
-                {
-                    int prevpos = 0; char prevchar = ' '; // temporarily shorten commandbuf to commandpos-1
-                    if(commandpos>0) { prevpos = commandpos-1; prevchar = commandbuf[prevpos]; commandbuf[prevpos] = 0; }
-                    const char *space = strrchr(commandbuf, ' ');
-                    if(!space) commandpos = 0;
-                    else commandpos = space-commandbuf+1;
-                    if(prevpos>0) commandbuf[prevpos] = prevchar;
-                }
-                else
-                {
-                    if(commandpos>0) commandpos--;
-                    else if(commandpos<0) commandpos = (int)strlen(commandbuf)-1;
-                }
+                if(SDL_GetModState()&SKIP_KEYS) commandpos = skipwordrev(commandbuf, commandpos) - commandbuf;
+                else if(commandpos>0) commandpos--;
+                else if(commandpos<0) commandpos = (int)strlen(commandbuf)-1;
                 break;
 
             case SDLK_RIGHT:
-                if(SDL_GetModState()&SKIPWORD_KEYS && commandpos>=0)
+                if(commandpos>=0)
                 {
-                    const char *space = strchr(commandbuf+commandpos+1, ' ');
-                    if(!space) commandpos = -1;
-                    else commandpos = space-commandbuf;
+                    if(SDL_GetModState()&SKIP_KEYS) commandpos = skipword(&commandbuf[commandpos]) - commandbuf;
+                    else ++commandpos;
+                    if(commandpos>=(int)strlen(commandbuf)) commandpos = -1;
                 }
-                else if(commandpos>=0 && ++commandpos>=(int)strlen(commandbuf)) commandpos = -1;
                 break;
 
             case SDLK_UP:
                 if(histpos > history.length()) histpos = history.length();
-                if(histpos > 0) history[--histpos]->restore(); 
+                if(histpos > 0)
+                {
+                    if(SDL_GetModState()&SKIP_KEYS) histpos = 0;
+                    else --histpos;
+                    history[histpos]->restore();
+                }
                 break;
 
             case SDLK_DOWN:
-                if(histpos + 1 < history.length()) history[++histpos]->restore();
+                if(histpos + 1 < history.length())
+                {
+                    if(SDL_GetModState()&SKIP_KEYS) histpos = history.length()-1;
+                    else ++histpos;
+                    history[histpos]->restore();
+                }
                 break;
 
             case SDLK_TAB:
