@@ -190,7 +190,7 @@ ENetPeer *getclientpeer(int i) { return clients.inrange(i) && clients[i]->type==
 int getnumclients()        { return clients.length(); }
 uint getclientip(int n)
 {
-    if(!clients.inrange(n) || clients[n]->type==ST_TCPIP) return 0;
+    if(!clients.inrange(n) || clients[n]->type!=ST_TCPIP) return 0;
     return clients[n]->real.host ? clients[n]->real.host : clients[n]->peer->address.host;
 }
 int setclientrealip(int n, uint ip)
