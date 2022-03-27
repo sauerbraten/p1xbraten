@@ -161,6 +161,8 @@ namespace game {
         return 1;
     }
 
+    bool demoinfomsg(packetbuf &p);
+
     void setupdemorecord()
     {
         if(!m_mp(gamemode) || m_edit || m_collect || demo || demorecord) return;
@@ -201,6 +203,7 @@ namespace game {
 
         packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
         welcomepacket(p);
+        demoinfomsg(p);
         recordpacket(1, p.buf, p.len);
     }
 

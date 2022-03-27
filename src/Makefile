@@ -144,7 +144,8 @@ CLIENT_OBJS= \
 	p1xbraten/capability_probing.o \
 	p1xbraten/managed_games.o \
 	p1xbraten/proxy_real_ip.o \
-	p1xbraten/namecomplete.o
+	p1xbraten/namecomplete.o \
+	p1xbraten/demo_info_message.o
 
 CLIENT_PCH= shared/cube.h.gch engine/engine.h.gch fpsgame/game.h.gch
 
@@ -171,7 +172,8 @@ SERVER_OBJS= \
 	fpsgame/server-standalone.o \
 	p1xbraten/remote_commands-standalone.o \
 	p1xbraten/managed_games-standalone.o \
-	p1xbraten/proxy_real_ip.o
+	p1xbraten/proxy_real_ip.o \
+	p1xbraten/demo_info_message-standalone.o
 
 MASTER_OBJS= \
 	shared/crypto-standalone.o \
@@ -573,6 +575,10 @@ p1xbraten/namecomplete.o: fpsgame/game.h shared/cube.h shared/tools.h
 p1xbraten/namecomplete.o: shared/geom.h shared/ents.h shared/command.h
 p1xbraten/namecomplete.o: shared/glexts.h shared/glemu.h shared/iengine.h
 p1xbraten/namecomplete.o: shared/igame.h fpsgame/ai.h
+p1xbraten/demo_info_message.o: fpsgame/game.h shared/cube.h shared/tools.h
+p1xbraten/demo_info_message.o: shared/geom.h shared/ents.h shared/command.h
+p1xbraten/demo_info_message.o: shared/glexts.h shared/glemu.h
+p1xbraten/demo_info_message.o: shared/iengine.h shared/igame.h fpsgame/ai.h
 
 shared/cube.h.gch: shared/tools.h shared/geom.h shared/ents.h
 shared/cube.h.gch: shared/command.h shared/glexts.h shared/glemu.h
@@ -623,6 +629,11 @@ p1xbraten/managed_games-standalone.o: shared/tools.h shared/geom.h
 p1xbraten/managed_games-standalone.o: shared/ents.h shared/command.h
 p1xbraten/managed_games-standalone.o: shared/iengine.h shared/igame.h
 p1xbraten/managed_games-standalone.o: fpsgame/ai.h
+p1xbraten/demo_info_message-standalone.o: fpsgame/game.h shared/cube.h
+p1xbraten/demo_info_message-standalone.o: shared/tools.h shared/geom.h
+p1xbraten/demo_info_message-standalone.o: shared/ents.h shared/command.h
+p1xbraten/demo_info_message-standalone.o: shared/iengine.h shared/igame.h
+p1xbraten/demo_info_message-standalone.o: fpsgame/ai.h
 engine/master-standalone.o: shared/cube.h shared/tools.h shared/geom.h
 engine/master-standalone.o: shared/ents.h shared/command.h shared/iengine.h
 engine/master-standalone.o: shared/igame.h

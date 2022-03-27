@@ -788,6 +788,7 @@ namespace server
     }
 
     int welcomepacket(packetbuf &p, clientinfo *ci);
+    bool demoinfomsg(packetbuf &p);
     void sendwelcome(clientinfo *ci);
 
     void setupdemorecord()
@@ -813,6 +814,7 @@ namespace server
 
         packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
         welcomepacket(p, NULL);
+        demoinfomsg(p);
         writedemo(1, p.buf, p.len);
     }
 

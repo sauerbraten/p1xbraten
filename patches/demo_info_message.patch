@@ -1,0 +1,149 @@
+diff --git src/Makefile src/Makefile
+index 061fc09..ef4cd51 100644
+--- src/Makefile
++++ src/Makefile
+@@ -144,7 +144,8 @@ CLIENT_OBJS= \
+ 	p1xbraten/capability_probing.o \
+ 	p1xbraten/managed_games.o \
+ 	p1xbraten/proxy_real_ip.o \
+-	p1xbraten/namecomplete.o
++	p1xbraten/namecomplete.o \
++	p1xbraten/demo_info_message.o
+ 
+ CLIENT_PCH= shared/cube.h.gch engine/engine.h.gch fpsgame/game.h.gch
+ 
+@@ -171,7 +172,8 @@ SERVER_OBJS= \
+ 	fpsgame/server-standalone.o \
+ 	p1xbraten/remote_commands-standalone.o \
+ 	p1xbraten/managed_games-standalone.o \
+-	p1xbraten/proxy_real_ip.o
++	p1xbraten/proxy_real_ip.o \
++	p1xbraten/demo_info_message-standalone.o
+ 
+ MASTER_OBJS= \
+ 	shared/crypto-standalone.o \
+diff --git src/fpsgame/server.cpp src/fpsgame/server.cpp
+index ae9528d..0bde4c8 100644
+--- src/fpsgame/server.cpp
++++ src/fpsgame/server.cpp
+@@ -788,6 +788,7 @@ namespace server
+     }
+ 
+     int welcomepacket(packetbuf &p, clientinfo *ci);
++    bool demoinfomsg(packetbuf &p);
+     void sendwelcome(clientinfo *ci);
+ 
+     void setupdemorecord()
+@@ -813,6 +814,7 @@ namespace server
+ 
+         packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
+         welcomepacket(p, NULL);
++        demoinfomsg(p);
+         writedemo(1, p.buf, p.len);
+     }
+ 
+diff --git src/p1xbraten/clientdemo.cpp src/p1xbraten/clientdemo.cpp
+index 48e29ec..e5c44f7 100644
+--- src/p1xbraten/clientdemo.cpp
++++ src/p1xbraten/clientdemo.cpp
+@@ -161,6 +161,8 @@ namespace game {
+         return 1;
+     }
+ 
++    bool demoinfomsg(packetbuf &p);
++
+     void setupdemorecord()
+     {
+         if(!m_mp(gamemode) || m_edit || m_collect || demo || demorecord) return;
+@@ -201,6 +203,7 @@ namespace game {
+ 
+         packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
+         welcomepacket(p);
++        demoinfomsg(p);
+         recordpacket(1, p.buf, p.len);
+     }
+ 
+diff --git src/p1xbraten/demo_info_message.cpp src/p1xbraten/demo_info_message.cpp
+new file mode 100644
+index 0000000..5cdab5a
+--- /dev/null
++++ src/p1xbraten/demo_info_message.cpp
+@@ -0,0 +1,53 @@
++#include "game.h"
++
++bool _demoinfomsg(packetbuf &p, const char *serverhostport, const char *serverdesc)
++{
++    if(!serverhostport) return false;
++
++    static string serverstr;
++    if(serverdesc && serverdesc[0]) formatstring(serverstr, "%s (%s)", serverdesc, serverhostport);
++    else copystring(serverstr, serverhostport);
++
++    static string timestr;
++    time_t t = time(NULL);
++    size_t timestrlen = strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S UTC", gmtime(&t));
++    timestr[min(timestrlen, sizeof(timestr)-1)] = '\0';
++
++    putint(p, N_SERVMSG);
++    defformatstring(msg, "recorded on %s, starting at %s", serverstr, timestr);
++    sendstring(msg, p);
++    return true;
++}
++
++extern ENetHost *serverhost;
++
++namespace server {
++    const char *serverhostport()
++    {
++        if(!serverhost) return "<unkown>";
++        static string hostport;
++        if(enet_address_get_host_ip(&serverhost->address, hostport, MAXSTRLEN) || !strcmp(hostport, "0.0.0.0")) copystring(hostport, "<unknown>");
++        concformatstring(hostport,":%d", serverhost->address.port);
++        return hostport;
++    }
++
++    extern char *serverdesc;
++
++    bool demoinfomsg(packetbuf &p) { return _demoinfomsg(p, serverhostport(), serverdesc); }
++}
++
++#ifndef STANDALONE
++namespace game {
++    const char *serverhostport()
++    {
++        const ENetAddress *addr = connectedpeer();
++        if(!remote || !addr) return "localhost";
++        static string hostport;
++        if (enet_address_get_host_ip(addr, hostport, MAXSTRLEN)) return "<unknown>";
++        concformatstring(hostport,":%d", addr->port);
++        return hostport;
++    }
++
++    bool demoinfomsg(packetbuf &p) { return _demoinfomsg(p, serverhostport(), servinfo); }
++}
++#endif
+diff --git src/vcpp/sauerbraten.vcxproj src/vcpp/sauerbraten.vcxproj
+index 0dbabbf..c3a0fb0 100644
+--- src/vcpp/sauerbraten.vcxproj
++++ src/vcpp/sauerbraten.vcxproj
+@@ -1337,6 +1337,20 @@
+       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
+       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
+     </ClCompile>
++    <ClCompile Include="..\p1xbraten\demo_info_message.cpp">
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">game.h</PrecompiledHeaderFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
++    </ClCompile>
+     <ClCompile Include="..\fpsgame\weapon.cpp">
+       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">game.h</PrecompiledHeaderFile>
+       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">game.h</PrecompiledHeaderFile>
