@@ -96,6 +96,7 @@
             case EXT_UPTIME:
             {
                 putint(p, totalsecs); //in seconds
+                if(req.remaining() && req.get()) putint(p, -9); // -9 = p1xbraten server mod ID
                 break;
             }
 

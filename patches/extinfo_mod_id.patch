@@ -1,0 +1,12 @@
+diff --git src/fpsgame/extinfo.h src/fpsgame/extinfo.h
+index 0e747e7..a2073d8 100644
+--- src/fpsgame/extinfo.h
++++ src/fpsgame/extinfo.h
+@@ -96,6 +96,7 @@
+             case EXT_UPTIME:
+             {
+                 putint(p, totalsecs); //in seconds
++                if(req.remaining() && req.get()) putint(p, -9); // -9 = p1xbraten server mod ID
+                 break;
+             }
+ 

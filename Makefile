@@ -62,6 +62,7 @@ apply-patches:
 	$(PATCH) < patches/server_demo_name.patch
 	$(PATCH) < patches/spec_teleports.patch
 	$(PATCH) < patches/demo_info_message.patch
+	$(PATCH) < patches/extinfo_mod_id.patch
 	unix2dos src/vcpp/sauerbraten.nsi
 	unix2dos src/vcpp/sauerbraten.vcxproj
 	cd src && make depend
