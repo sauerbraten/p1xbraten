@@ -1,5 +1,6 @@
 #include "game.h"
 
+#ifndef STANDALONE
 namespace game {
 
     bool managedgamedemonextmatch = false;
@@ -22,6 +23,7 @@ namespace game {
         conoutf("client demo sent");
     }
 }
+#endif
 
 
 namespace server {

@@ -418,9 +418,10 @@ new file mode 100644
 index 0000000..1c1b1d7
 --- /dev/null
 +++ src/p1xbraten/managed_games.cpp
-@@ -0,0 +1,249 @@
+@@ -0,0 +1,251 @@
 +#include "game.h"
 +
++#ifndef STANDALONE
 +namespace game {
 +
 +    bool managedgamedemonextmatch = false;
@@ -443,6 +444,7 @@ index 0000000..1c1b1d7
 +        conoutf("client demo sent");
 +    }
 +}
++#endif
 +
 +
 +namespace server {
