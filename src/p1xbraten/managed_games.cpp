@@ -37,7 +37,7 @@ namespace server {
     bool managedgame = false;
     bool managedgamenextmatch = false;
 
-    void preparemanagedgame(clientinfo *referee)
+    void setupmanagedgame(clientinfo *referee)
     {
         if(!referee || (!referee->local && !referee->privilege)) return;
         if(mastermode < MM_LOCKED) { mastermode = MM_LOCKED; sendf(-1, 1, "rii", N_MASTERMODE, mastermode); }
@@ -63,7 +63,7 @@ namespace server {
 
     static vector<clientinfo *> notyetspawned;
 
-    void setupmanagedgame()
+    void startmanagedgame()
     {
         managedgame = true;
         managedgamenextmatch = false;
@@ -84,7 +84,8 @@ namespace server {
         loopv(clients)
         {
             clientinfo *ci = clients[i];
-            if(ci->state.state!=CS_SPECTATOR) sendf(ci->clientnum, 1, "rii", N_P1X_RECORDDEMO, 0);
+            if(ci->state.state==CS_SPECTATOR) continue;
+            if(ci->supportsclientdemoupload) sendf(ci->clientnum, 1, "rii", N_P1X_RECORDDEMO, 0);
         }
     }
 
@@ -180,27 +181,24 @@ namespace server {
     void onspawn(clientinfo *ci)
     {
         if(!notyetspawned.length()) return;
-        loopv(notyetspawned) if(notyetspawned[i]==ci)
+        loopv(notyetspawned) if(notyetspawned[i]==ci) notyetspawned.remove(i);
+        if(!notyetspawned.length())
         {
-            notyetspawned.remove(i);
-            if(!notyetspawned.length())
-            {
-                sendf(-1, 1, "ris", N_SERVMSG, "all players ready, game starts in 3");
+            sendf(-1, 1, "ris", N_SERVMSG, "all players ready, game starts in 3");
 
-                messageevent *m2 = new messageevent;
-                m2->millis = totalmillis + 1*COUNTDOWN_INTERVAL;
-                copystring(m2->msg, "... 2");
-                events.add(m2);
+            messageevent *m2 = new messageevent;
+            m2->millis = totalmillis + 1*COUNTDOWN_INTERVAL;
+            copystring(m2->msg, "... 2");
+            events.add(m2);
 
-                messageevent *m1 = new messageevent;
-                m1->millis = totalmillis + 2*COUNTDOWN_INTERVAL;
-                copystring(m1->msg, "... 1");
-                events.add(m1);
+            messageevent *m1 = new messageevent;
+            m1->millis = totalmillis + 2*COUNTDOWN_INTERVAL;
+            copystring(m1->msg, "... 1");
+            events.add(m1);
 
-                startevent *u = new startevent;
-                u->millis = totalmillis + 3*COUNTDOWN_INTERVAL;
-                events.add(u);
-            }
+            startevent *u = new startevent;
+            u->millis = totalmillis + 3*COUNTDOWN_INTERVAL;
+            events.add(u);
         }
     }
 

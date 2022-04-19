@@ -1225,8 +1225,8 @@ namespace server
     // managed games
     extern bool managedgame, managedgamenextmatch;
     extern void probeforclientdemoupload(packetbuf &p);
-    extern void preparemanagedgame(clientinfo *referee);
-    extern void setupmanagedgame();
+    extern void setupmanagedgame(clientinfo *referee);
+    extern void startmanagedgame();
     extern void cleanupmanagedgame();
     extern void onspawn(clientinfo *ci);
     extern void managedgameended();

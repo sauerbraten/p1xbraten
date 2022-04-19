@@ -1802,7 +1802,7 @@ namespace server
 
         if(smode) smode->setup();
 
-        if(managedgamenextmatch) setupmanagedgame();
+        if(managedgamenextmatch) startmanagedgame();
         else cleanupmanagedgame();
 
         if(isdedicatedserver()) logoutf("started %s on %s", modename(mode, "unknown mode"), smapname);
