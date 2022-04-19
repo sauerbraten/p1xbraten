@@ -140,10 +140,10 @@ Index: src/fpsgame/scoreboard.cpp
 
  namespace game
  {
-@@ -14,6 +15,12 @@
-     VARP(showconnecting, 0, 0, 1);
+@@ -15,6 +15,12 @@
      VARP(hidefrags, 0, 1, 1);
      VARP(showdeaths, 0, 0, 1);
+     VARP(tiesort, 0, 0, 2);
 +    MOD(VARP, showsuicides, 0, 0, 1);
 +    MOD(VARP, showflags, 0, 0, 1);
 +    MOD(VARP, showkpd, 0, 0, 1);
@@ -153,7 +153,7 @@ Index: src/fpsgame/scoreboard.cpp
 
      static hashset<teaminfo> teaminfos;
 
-@@ -138,17 +145,15 @@
+@@ -149,17 +156,15 @@
 
      int statuscolor(fpsent *d, int color)
      {
@@ -174,7 +174,7 @@ Index: src/fpsgame/scoreboard.cpp
          const ENetAddress *address = connectedpeer();
          if(showservinfo && address)
          {
-@@ -163,14 +168,13 @@
+@@ -174,14 +179,13 @@
          g.pushlist();
          g.spring();
          g.text(server::modename(gamemode), COL_WHITE);
@@ -191,7 +191,7 @@ Index: src/fpsgame/scoreboard.cpp
              if(intermission) g.text("intermission", COL_WHITE);
              else
              {
-@@ -182,11 +186,12 @@
+@@ -193,11 +197,12 @@
                  g.poplist();
              }
          }
@@ -206,7 +206,7 @@ Index: src/fpsgame/scoreboard.cpp
 
          int numgroups = groupplayers();
          loopk(numgroups)
-@@ -194,7 +199,7 @@
+@@ -205,7 +210,7 @@
              if((k%2)==0) g.pushlist(); // horizontal
 
              scoregroup &sg = *groups[k];
@@ -215,7 +215,7 @@ Index: src/fpsgame/scoreboard.cpp
 
              g.pushlist(); // vertical
              g.pushlist(); // horizontal
-@@ -206,124 +211,148 @@
+@@ -217,124 +222,148 @@
                      b; \
                  }
 
@@ -434,7 +434,7 @@ Index: src/fpsgame/scoreboard.cpp
                      });
                      g.poplist();
                  }
-@@ -331,10 +360,10 @@
+@@ -342,10 +371,10 @@
 
              if(showclientnum || player1->privilege>=PRIV_MASTER)
              {
@@ -448,7 +448,7 @@ Index: src/fpsgame/scoreboard.cpp
                  g.poplist();
              }
 
-@@ -347,81 +376,79 @@
+@@ -358,81 +387,79 @@
              g.poplist(); // horizontal
              g.poplist(); // vertical
 

@@ -15,6 +15,7 @@ namespace game
     VARP(showconnecting, 0, 0, 1);
     VARP(hidefrags, 0, 1, 1);
     VARP(showdeaths, 0, 0, 1);
+    VARP(tiesort, 0, 0, 2);
     MOD(VARP, showsuicides, 0, 0, 1);
     MOD(VARP, showflags, 0, 0, 1);
     MOD(VARP, showkpd, 0, 0, 1);
@@ -48,9 +49,19 @@ namespace game
         {
             if(a->flags > b->flags) return true;
             if(a->flags < b->flags) return false;
+            if(tiesort)
+            {
+                if(a == player1) return tiesort == 1;
+                if(b == player1) return tiesort != 1;
+            }
         }
         if(a->frags > b->frags) return true;
         if(a->frags < b->frags) return false;
+        if(tiesort)
+        {
+            if(a == player1) return tiesort == 1;
+            if(b == player1) return tiesort != 1;
+        }
         return strcmp(a->name, b->name) < 0;
     }
 
