@@ -1,14 +1,8 @@
-.PHONY: build install clean apply-patches gzip-cfgs embed-cfgs clean-sauer update-src apply-to-vanilla check-env
+SHELL := /bin/bash
 
-PATCH=patch --strip=0 --remove-empty-files --ignore-whitespace --no-backup-if-mismatch
+.PHONY: build install clean anticheat linux macos windows apply-patches gzip-cfgs embed-cfgs clean-sauer update-src from-patches changes-to-patch ensure-sauer-dir
 
-ifndef SAUER_DIR
-ifneq (,$(wildcard ~/sauerbraten-code))
-	SAUER_DIR=~/sauerbraten-code
-endif
-endif
-
-build: update-src apply-patches embed-cfgs
+build:
 	cd src && make --jobs=8
 
 install:
@@ -18,17 +12,36 @@ clean:
 	cd src && make clean
 	cd src/enet && make clean
 
+key:
+	dd if=/dev/random bs=1 count=256 of=src/anticheat/key
+	xxd -i src/anticheat/key src/anticheat/key.h
+
+linux macos windows: export ANTICHEAT=1
+linux macos windows: | clean key
+	source secrets.env && go run encrypt_credentials.go < src/anticheat/key && \
+	cd src && \
+	export TARGET="x86_64-$@" && \
+	make --jobs=8 install
+
+debian: clean
+	dd if=/dev/random of=Dockertrigger count=64 && \
+	podman build \
+	--file Dockerfile.debian-11 \
+	--security-opt label=disable \
+	--volume=$(PWD)/src:/src \
+	--volume=$(PWD)/bin_unix:/bin_unix \
+	--volume=$(PWD)/data:/data:ro \
+	.
+
+PATCH=patch --strip=0 --remove-empty-files --ignore-whitespace --no-backup-if-mismatch
+
 apply-patches:
-	dos2unix src/vcpp/sauerbraten.vcxproj
-	dos2unix src/vcpp/sauerbraten.nsi
-	$(PATCH) < patches/scaffolding.patch
 	$(PATCH) < patches/modconfig.patch
 	$(PATCH) < patches/modversion.patch
 	$(PATCH) < patches/moviehud.patch
 	$(PATCH) < patches/hasflag.patch
 	$(PATCH) < patches/colors.patch
 	$(PATCH) < patches/scoreboard.patch
-	$(PATCH) < patches/macos_builds.patch
 	$(PATCH) < patches/hudfragmessages.patch
 	$(PATCH) < patches/fullconsole.patch
 	$(PATCH) < patches/hudscore.patch
@@ -39,7 +52,6 @@ apply-patches:
 	$(PATCH) < patches/tex_commands.patch
 	$(PATCH) < patches/decouple_framedrawing.patch
 	$(PATCH) < patches/crosshaircolor.patch
-	$(PATCH) < patches/win_builds.patch
 	$(PATCH) < patches/chat_highlight_words.patch
 	$(PATCH) < patches/zenmode.patch
 	$(PATCH) < patches/authservers.patch
@@ -63,8 +75,7 @@ apply-patches:
 	$(PATCH) < patches/spec_teleports.patch
 	$(PATCH) < patches/demo_info_message.patch
 	$(PATCH) < patches/extinfo_mod_id.patch
-	unix2dos src/vcpp/sauerbraten.nsi
-	unix2dos src/vcpp/sauerbraten.vcxproj
+	$(PATCH) < patches/anticheat.patch
 	cd src && make depend
 
 gzip-cfgs:
@@ -83,22 +94,32 @@ embed-cfgs: gzip-cfgs
 	sed -i "s/0,\/\/keymapcrc/0x$(shell crc32 data/p1xbraten/keymap.cfg),/" src/p1xbraten/embedded_cfgs.cpp
 	sed -i "s/embeddedfile<0> keymapcfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/keymap.cfg.gz)> keymapcfg/" src/p1xbraten/embedded_cfgs.cpp
 
-clean-sauer: check-env
+ifndef SAUER_DIR
+ifneq (,$(wildcard ~/sauerbraten-code))
+SAUER_DIR=~/sauerbraten-code
+endif
+endif
+
+clean-sauer: ensure-sauer-dir
 	cd $(SAUER_DIR) && \
 		svn cleanup . --remove-unversioned --remove-ignored && \
 		svn revert --recursive --remove-added .
 	cd $(SAUER_DIR)/src/enet && make clean
 	cd $(SAUER_DIR)/src && make clean
 
+VANILLA_SOURCE_FILES=enet,engine,fpsgame,shared
+P1XBRATEN_SOURCE_FILES=$(VANILLA_SOURCE_FILES),p1xbraten,anticheat/anticheat.cpp
+
 update-src: clean-sauer
-	rm --recursive --force src/
-	rsync --recursive --ignore-times --times --exclude=".*" $(SAUER_DIR)/src .
+	rm --recursive --force src/{$(P1XBRATEN_SOURCE_FILES)}
+	rsync --recursive --ignore-times --times --exclude=".*" $(SAUER_DIR)/src/{$(VANILLA_SOURCE_FILES)} src/
 
-apply-to-vanilla: update-src apply-patches
-	rm --recursive --force $(SAUER_DIR)/src/*
-	rsync --recursive --ignore-times --times --exclude=".*" ./src/* $(SAUER_DIR)/src/
+from-patches: | update-src apply-patches embed-cfgs build
 
-check-env:
+changes-to-patch:
+	git diff --no-prefix --ignore-all-space --staged data/p1xbraten src/{$(P1XBRATEN_SOURCE_FILES)} > patches/new_changes.patch
+
+ensure-sauer-dir:
 ifndef SAUER_DIR
 	$(error SAUER_DIR is undefined)
 endif

@@ -1,17 +1,3 @@
-NOTE: This patch relies on colors.patch!
-
-Index: src/Makefile
-===================================================================
---- src/Makefile	(revision 6490)
-+++ src/Makefile	(working copy)
-@@ -130,6 +130,7 @@
- 	fpsgame/render.o \
- 	fpsgame/scoreboard.o \
- 	fpsgame/server.o \
-+	p1xbraten/weaponstats.o \
- 	fpsgame/waypoint.o \
- 	fpsgame/weapon.o
-
 Index: src/fpsgame/client.cpp
 ===================================================================
 --- src/fpsgame/client.cpp	(revision 6490)
@@ -758,28 +744,3 @@ Index: src/p1xbraten/weaponstats_type.h
 +};
 +
 +#endif
-Index: src/vcpp/sauerbraten.vcxproj
-===================================================================
---- src/vcpp/sauerbraten.vcxproj	(revision 6490)
-+++ src/vcpp/sauerbraten.vcxproj	(working copy)
-@@ -1208,6 +1208,20 @@
-       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
-       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
-     </ClCompile>
-+    <ClCompile Include="..\p1xbraten\weaponstats.cpp">
-+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">game.h</PrecompiledHeaderFile>
-+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">game.h</PrecompiledHeaderFile>
-+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
-+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
-+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">game.h</PrecompiledHeaderFile>
-+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">game.h</PrecompiledHeaderFile>
-+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
-+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
-+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">game.h</PrecompiledHeaderFile>
-+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">game.h</PrecompiledHeaderFile>
-+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
-+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
-+    </ClCompile>
-   </ItemGroup>
-   <ItemGroup>
-     <ResourceCompile Include="sauerbraten.rc" />

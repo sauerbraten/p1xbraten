@@ -1537,6 +1537,9 @@ namespace server
         packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
         int chan = welcomepacket(p, ci);
         if(!ci->local) probeforclientdemoupload(p);
+#ifdef ANTICHEAT
+        if(!ci->local) probeforanticheatclient(p);
+#endif
         sendpacket(ci->clientnum, chan, p.finalize());
     }
 
@@ -2338,9 +2341,30 @@ namespace server
         }
     }
 
-    bool shouldspectate(clientinfo *ci)
+    bool shouldspectate(clientinfo *ci, clientinfo *requester = NULL, bool printreason = false)
     {
-        return !ci->local && ci->warned && modifiedmapspectator && (mcrc || modifiedmapspectator > 1);
+        if(ci->local) return false;
+        if(ci->warned && modifiedmapspectator && (mcrc || modifiedmapspectator > 1))
+        {
+            if(requester && printreason)
+            {
+                defformatstring(msg, "%s has modified map \"%s\"", colorname(ci), smapname);
+                sendf(requester->clientnum, 1, "ris", N_SERVMSG, msg);
+            }
+            return true;
+        }
+#ifdef ANTICHEAT
+        if(forceanticheatclient && !ci->anticheatverified)
+    {
+            if(requester && printreason)
+            {
+                defformatstring(msg, "%s is not running an anti-cheat client", colorname(ci));
+                sendf(requester->clientnum, 1, "ris", N_SERVMSG, msg);
+            }
+            return true;
+        }
+#endif
+        return false;
     }
 
     void unspectate(clientinfo *ci)
@@ -2408,6 +2432,9 @@ namespace server
             ci->state.timeplayed += lastmillis - ci->state.lasttimeplayed;
             savescore(ci);
             sendf(-1, 1, "ri2", N_CDIS, n);
+#ifdef ANTICHEAT
+            if(ci->supportsanticheat) unregisteranticheatclient(ci);
+#endif
             if(managedgame && ci->state.state!=CS_SPECTATOR) pausegame(true);
             clients.removeobj(ci);
             aiman::removeai(ci);
@@ -2723,6 +2750,9 @@ namespace server
         if(restorescore(ci)) sendresume(ci);
         sendinitclient(ci);
         if(isdedicatedserver()) logoutf("join: %s (cn %d)", ci->name, ci->clientnum);
+#ifdef ANTICHEAT
+        if(forceanticheatclient && !ci->local) forcespectator(ci);
+#endif
         if(!ci->local) loopv(autoauthdomains) sendf(ci->clientnum, 1, "ris", N_REQAUTH, autoauthdomains[i]);
 
         aiman::addclient(ci);
@@ -3537,7 +3567,33 @@ namespace server
                 conoutf("client %d supports the client demo upload protocol extension!", ci->clientnum);
                 ci->supportsclientdemoupload = true;
                 break;
+#ifdef ANTICHEAT
+            case N_P1X_ANTICHEAT_SUPPORTED:
+                if(!ci || ci->local) return;
+                conoutf("client %d supports our anti-cheat protocol extension!", ci->clientnum);
+                ci->supportsanticheat = true;
+                sendf(sender, 1, "ris", N_SERVMSG, "\fs\f8[anti-cheat]\fr verifying your client ...");
+                registeranticheatclient(ci);
+                break;
                      
+            case N_P1X_ANTICHEAT_MESSAGE:
+            {
+                int len = getuint(p);
+                ucharbuf q = p.subbuf(len);
+                if(!ci || ci->local) return;
+                receiveanticheatmessage(ci, q);
+                break;
+            }
+
+            case N_P1X_ANTICHEAT_VIOLATION:
+            {
+                string details;
+                int code = getint(p);
+                getstring(details, p);
+                if(!ci || ci->local) return;
+                handleviolation(ci, code, details);
+            }
+#endif
             #define PARSEMESSAGES 1
             #include "capture.h"
             #include "ctf.h"

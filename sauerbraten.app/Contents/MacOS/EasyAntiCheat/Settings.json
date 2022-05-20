@@ -1,0 +1,9 @@
+{
+	"title": "sauerbraten anti-cheat client by p1x",
+	"executable": "./p1xbraten_x86_64_client",
+	"productid": "36e0587a4c3544e8b635f7f55e7ccbfe",
+	"sandboxid": "7743e9c6960a42c7a32772a6d1b8af60",
+	"deploymentid": "011295e7b04049d7978fcaa38d79bf86",
+	"requested_splash": "../data/logo_800.png",
+	"wait_for_game_process_exit": "false"
+}

@@ -1,8 +1,11 @@
 // texture.cpp: texture slot management
 
 #include "engine.h"
+#ifdef __APPLE__
+  #include <SDL2_image/SDL_image.h>
+#else
 #include "SDL_image.h"
-
+#endif
 #ifndef SDL_IMAGE_VERSION_ATLEAST
 #define SDL_IMAGE_VERSION_ATLEAST(X, Y, Z) \
     (SDL_VERSIONNUM(SDL_IMAGE_MAJOR_VERSION, SDL_IMAGE_MINOR_VERSION, SDL_IMAGE_PATCHLEVEL) >= SDL_VERSIONNUM(X, Y, Z))

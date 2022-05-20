@@ -1,0 +1,1126 @@
+Subject: [PATCH] add anticheat.patch, clean up Makefile, use Zig to
+ cross-compile
+
+---
+ src/anticheat/anticheat.cpp          | 637 +++++++++++++++++++++++++++
+ src/engine/engine.h                  |   6 +
+ src/engine/main.cpp                  |  17 +
+ src/engine/movie.cpp                 |   4 +
+ src/engine/server.cpp                |  17 +
+ src/engine/sound.cpp                 |   4 +
+ src/engine/texture.cpp               |   5 +-
+ src/fpsgame/client.cpp               |  19 +
+ src/fpsgame/game.h                   |  35 +-
+ src/fpsgame/server.cpp               |  60 ++-
+ src/p1xbraten/capability_probing.cpp |   3 +
+ src/shared/cube.h                    |   2 +-
+ src/shared/igame.h                   |  14 +-
+ 13 files changed, 817 insertions(+), 6 deletions(-)
+ create mode 100644 src/anticheat/anticheat.cpp
+
+diff --git src/anticheat/anticheat.cpp src/anticheat/anticheat.cpp
+new file mode 100644
+index 0000000..2fe07ee
+--- /dev/null
++++ src/anticheat/anticheat.cpp
+@@ -0,0 +1,637 @@
++#ifdef ANTICHEAT
++/*
++Integrates Epic's Online Services (EOS) SDK in order to provide protected anti-cheat sessions.
++
++In order to use the Anti-Cheat service, we need to have a Platform handle first. Our main
++use for the platform handle is to time communication between the SDK and Epic's backend.
++(See TickBudgetInMilliseconds and anticheattick().)
++
++Before we can create a Platform instance, we need to initialize the SDK. So when the engine
++calls initializeanticheat(), that calls initializesdk() which in turn calls
++initializeplatform() to set everything up.
++
++Before using the Anti-Cheat service on the client, we need to have a Product User ID, i.e.
++be logged in via the Connect service. triggeranticheatsession() takes care of this for us.
++
++The Anti-Cheat service requires us to provide a mechanism for it to shuttle encrypted messages
++between client and server. To do so, we have to register a "message to server" callback in
++the client and a "message to client" callback in the server, which the SDK will call whenever
++it wants data transmitted. (See *_AddNotify* functions.)
++We then pass the message back to the SDK on the other side (see ReceiveMessageFrom* functions).
++
++On top of that, the server needs to provide callbacks for "client's auth status changed" as
++well as "client action required" (read "player ain't clean").
++
++A server's anti-cheat session starts when it is launched and only ends when the process is
++terminated/killed/whatever. A client's anti-cheat session starts when triggered by a server
++and ends when the server says so or the client disconnects.
++
++Regarding this file's code structure:
++- All functions in this file starting with "on" are callbacks and only ever called by the SDK.
++- SDK & Platform setup is the same on client and server and is defined first.
++- Inside the game namespace, first come Connect related things to log the user in, then anti-
++  cheat callback functions, then all functions exposed via game.h, then the functions exposed
++  via igame.h.
++- The server namespace is organized similarly, just without the Connect stuff at the top.
++*/
++
++#include "game.h"
++#include "eos_sdk.h"
++#include "eos_logging.h"
++#include "decrypt_credentials.h"
++
++EOS_HPlatform platform = NULL;
++
++void initializeplatform(bool server = false)
++{
++    #include "credentials.cpp"
++
++    static EOS_Platform_ClientCredentials creds;
++    creds.ClientId = server ? serverId : clientId;
++    creds.ClientSecret = server ? serverSecret : clientSecret;
++
++    static EOS_Platform_Options platformoptions = {};
++    platformoptions.ApiVersion = EOS_PLATFORM_OPTIONS_API_LATEST;
++    platformoptions.bIsServer = server ? EOS_TRUE : EOS_FALSE;
++    platformoptions.EncryptionKey = NULL; // todo?
++    platformoptions.Flags = EOS_PF_DISABLE_OVERLAY;
++    platformoptions.CacheDirectory = NULL;
++    platformoptions.ProductId = "36e0587a4c3544e8b635f7f55e7ccbfe";
++    platformoptions.SandboxId = "7743e9c6960a42c7a32772a6d1b8af60";
++    platformoptions.DeploymentId = "011295e7b04049d7978fcaa38d79bf86";
++    platformoptions.TickBudgetInMilliseconds = 5;
++    platformoptions.ClientCredentials = creds;
++    platform = EOS_Platform_Create(&platformoptions);
++}
++
++void releaseplatform()
++{
++    // calling EOS_Platform_Release() makes the client hang for a second
++    // on Linux and even longer on Windows, so we just don't...
++    // if(platform) EOS_Platform_Release(platform);
++}
++
++void logeossdkmessage(const EOS_LogMessage *msg)
++{
++    int level = CON_INFO;
++    string levelname = "[info]";
++    switch(msg->Level)
++    {
++        case EOS_ELogLevel::EOS_LOG_Fatal: level = CON_ERROR; copystring(levelname, "[fatal]"); break;
++        case EOS_ELogLevel::EOS_LOG_Error: level = CON_ERROR; copystring(levelname, "[error]"); break;
++#ifdef DEBUG
++        case EOS_ELogLevel::EOS_LOG_Warning: level = CON_WARN; copystring(levelname, "[warning]"); break;
++        case EOS_ELogLevel::EOS_LOG_Info: break;
++        default: copystring(levelname, "[debug]"); break;
++#else
++        default: return; // discard
++#endif
++    }
++    conoutf(level, "\fs\f8[anti-cheat]\fr SDK: %s: %s: %s", levelname, msg->Category, msg->Message);
++#ifndef STANDALONE
++    static bool warned = false;
++    if(!warned && level > CON_WARN)
++    {
++        conoutf(CON_WARN, "\fs\f8[anti-cheat]\fr \f3something is wrong with your client; it might not get recognized by anti-cheat servers\nplease contact p1x and provide this error log");
++        warned = true;
++    }
++#endif
++}
++
++bool eossdkinitialized = false;
++
++int initializesdk(bool server = false)
++{
++    static EOS_InitializeOptions sdkoptions = {};
++    sdkoptions.ApiVersion = EOS_INITIALIZE_API_LATEST;
++    sdkoptions.ProductName = "p1xbraten anti-cheat";
++    sdkoptions.ProductVersion = "1.0";
++
++    switch (EOS_EResult e = EOS_Initialize(&sdkoptions))
++    {
++        case EOS_EResult::EOS_Success: eossdkinitialized = true; break;
++        case EOS_EResult::EOS_AlreadyConfigured: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr init: SDK is already configured"); return 1;
++        case EOS_EResult::EOS_InvalidParameters: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr init: SDK options are invalid"); return 2;
++        default: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr unexpected return value %d from EOS_Initialize()", (int) e); return 3;
++    }
++#if defined(DEBUG) || defined(STANDALONE)
++    EOS_ELogLevel loglevel = EOS_ELogLevel::EOS_LOG_VeryVerbose;
++#else
++    EOS_ELogLevel loglevel = EOS_ELogLevel::EOS_LOG_Error;
++#endif
++
++    switch (EOS_EResult e = EOS_Logging_SetLogLevel(EOS_ELogCategory::EOS_LC_ALL_CATEGORIES, loglevel))
++    {
++        case EOS_EResult::EOS_Success: break;
++        case EOS_EResult::EOS_NotConfigured: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr setting log level: SDK not configured"); return 1;
++        default: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr unexpected return value %d from EOS_Logging_SetLogLevel()", (int) e); return 3;
++    }
++
++    switch (EOS_EResult e = EOS_Logging_SetCallback(logeossdkmessage))
++    {
++        case EOS_EResult::EOS_Success: break;
++        case EOS_EResult::EOS_NotConfigured: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr setting log callback: SDK not configured"); return 1;
++        default: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr unexpected return value %d from EOS_Logging_SetCallback()", (int) e); return 3;
++    }
++
++    initializeplatform(server);
++    return 0;
++}
++
++void shutdownsdk()
++{
++    releaseplatform();
++    if(!eossdkinitialized) return;
++    switch (EOS_EResult e = EOS_Shutdown())
++    {
++        case EOS_EResult::EOS_Success: eossdkinitialized = false; break;
++        case EOS_EResult::EOS_NotConfigured: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr shutdown: SDK not configured"); return;
++        case EOS_EResult::EOS_UnexpectedError: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr shutdown: SDK already shut down"); return;
++        default: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr unexpected return value %d from EOS_Shutdown()", (int) e); return;
++    }
++}
++
++void anticheattick()
++{
++    if(platform) EOS_Platform_Tick(platform);
++}
++
++#ifndef STANDALONE
++
++namespace game {
++
++    EOS_ProductUserId eosuserid;
++
++    void startanticheatsession();
++
++    // called when EOS_Connect_CreateUser() completes (after login failed because the user is unknown to Epic)
++    void oneosusercreated(const EOS_Connect_CreateUserCallbackInfo *data)
++    {
++        // conoutf("EOS_Connect_CreateUser() completed with code %d", (int) data->ResultCode);
++        switch(EOS_EResult e = data->ResultCode)
++        {
++            case EOS_EResult::EOS_Success:
++                eosuserid = data->LocalUserId;
++                // conoutf("EOS_Connect_CreateUser() succeeded");
++                startanticheatsession();
++                break;
++            default: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr EOS_Connect_CreateUser() failed with result code %d", (int) e); break;
++        }
++    }
++
++    EOS_HConnect eosconnect;
++
++    // called when EOS_Connect_Login() completes
++    void oneoslogincompleted(const EOS_Connect_LoginCallbackInfo *data)
++    {
++        // conoutf("EOS_Connect_Login() completed with code %d", (int) data->ResultCode);
++        switch(EOS_EResult e = data->ResultCode)
++        {
++            case EOS_EResult::EOS_Success:
++                eosuserid = data->LocalUserId;
++                // conoutf("EOS_Connect_Login() succeeded");
++                startanticheatsession();
++                break;
++            case EOS_EResult::EOS_InvalidUser: // user is new to Epic, must be created
++            {
++                EOS_Connect_CreateUserOptions connectopts;
++                connectopts.ApiVersion = EOS_CONNECT_CREATEUSER_API_LATEST;
++                connectopts.ContinuanceToken = data->ContinuanceToken;
++                EOS_Connect_CreateUser(eosconnect, &connectopts, NULL, oneosusercreated);
++                break;
++            }
++            default: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr EOS_Connect_Login() failed with result code %d", (int) e); break;
++        }
++    }
++
++    void eoslogin(char *eosname)
++    {
++        if(eosuserid) return;
++        // conoutf("initializing EOS user");
++        if(!eosconnect) eosconnect = EOS_Platform_GetConnectInterface(platform);
++        if(!eosconnect) { conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr failed to get connect interface handle from SDK"); return; }
++
++        // Epic's anti-cheat framework requires a stable identity to be assigned to each client. I use
++        // the player's name and client number. In order for Epic to accept this "hack", I configured an
++        // OpenID provider as identity provider for this "product" in Epic's dev portal.
++        // Instead of a complete OpenID/OAuth implementation, just the so called "userinfo" endpoint is
++        // required. I just deployed a server that echos back the "token" submitted in the Authorization
++        // header as the user's ID.
++
++        static EOS_Connect_Credentials creds;
++        creds.ApiVersion = EOS_CONNECT_CREDENTIALS_API_LATEST;
++        creds.Type = EOS_EExternalCredentialType::EOS_ECT_OPENID_ACCESS_TOKEN;
++        creds.Token = eosname;
++
++        static EOS_Connect_LoginOptions loginopts;
++        loginopts.ApiVersion = EOS_CONNECT_LOGIN_API_LATEST;
++        loginopts.Credentials = &creds;
++        loginopts.UserLoginInfo = NULL;
++
++        EOS_Connect_Login(eosconnect, &loginopts, NULL, oneoslogincompleted);
++    }
++
++    #include <eos_anticheatclient.h>
++
++    void onmessagetoserver(const EOS_AntiCheatClient_OnMessageToServerCallbackInfo *data)
++    {
++        static uchar buf[300]; // EOS docs say message is up to 256 bytes
++        ucharbuf p(buf, sizeof(buf));
++        putint(p, N_P1X_ANTICHEAT_MESSAGE);
++        putuint(p, data->MessageDataSizeBytes);
++        p.put((const uchar *) data->MessageData, data->MessageDataSizeBytes);
++        messages.put(p.getbuf(), p.length());
++        p.empty();
++    }
++
++    bool anticheatinitialized = false;
++    EOS_HAntiCheatClient acc = NULL;
++    bool anticheatsessionactive = false;
++
++    bool anticheatready() { return eossdkinitialized; }
++
++    void startanticheatsession()
++    {
++        static EOS_AntiCheatClient_BeginSessionOptions sessionopts;
++        sessionopts.ApiVersion = EOS_ANTICHEATSERVER_BEGINSESSION_API_LATEST;
++        sessionopts.LocalUserId = eosuserid;
++        sessionopts.Mode = EOS_EAntiCheatClientMode::EOS_ACCM_ClientServer;
++        switch (EOS_EResult e = EOS_AntiCheatClient_BeginSession(acc, &sessionopts))
++        {
++            case EOS_EResult::EOS_Success: /* conoutf("\fs\f8[anti-cheat]\fr started session"); */ break;
++            case EOS_EResult::EOS_InvalidParameters: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr starting session: input data invalid"); return;
++            case EOS_EResult::EOS_AntiCheat_InvalidMode: /* conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr starting session: function not supported in current anti-cheat mode"); */ return;
++            default: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr EOS_AntiCheatClient_BeginSession() failed with result code %d", (int) e); return;
++        }
++        anticheatsessionactive = true;
++    }
++
++    void triggeranticheatsession()
++    {
++        // conoutf("\fs\f8[anti-cheat]\fr starting session");
++        if(!anticheatinitialized || !acc)
++        {
++            conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr not initialized\r");
++            conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr make sure you launch the game using the anticheat launcher");
++            return;
++        }
++        if(eosuserid) startanticheatsession();
++        else
++        {
++            // conoutf("\fs\f8[anti-cheat]\fr user not logged in, doing that now");
++            defformatstring(eosname, "%s (%d)", player1->name, player1->clientnum);
++            eoslogin(eosname);
++        }
++    }
++
++    void receiveanticheatmessage(ucharbuf &p)
++    {
++        static EOS_AntiCheatClient_ReceiveMessageFromServerOptions messageopts;
++        messageopts.ApiVersion = EOS_ANTICHEATCLIENT_RECEIVEMESSAGEFROMSERVER_API_LATEST;
++        messageopts.DataLengthBytes = p.remaining();
++        messageopts.Data = p.getbuf();
++
++        if(!anticheatinitialized || !acc) { /*conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr received N_P1X_ANTICHEAT_MESSAGE but anti-cheat not initialized");*/ return; }
++
++        switch (EOS_EResult e = EOS_AntiCheatClient_ReceiveMessageFromServer(acc, &messageopts))
++        {
++            case EOS_EResult::EOS_Success: break;
++            case EOS_EResult::EOS_InvalidParameters: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr receiving message from server: input data invalid"); return;
++            case EOS_EResult::EOS_AntiCheat_InvalidMode: /* conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr receiving message from server: function not supported in current mode"); */ return;
++            default: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr EOS_AntiCheatClient_ReceiveMessageFromServer() failed with result code %d", (int) e); return;
++        }
++    }
++
++    bool endanticheatsession()
++    {
++        if(!acc || !anticheatsessionactive) return true;
++
++        static EOS_AntiCheatClient_EndSessionOptions sessionopts;
++        sessionopts.ApiVersion = EOS_ANTICHEATSERVER_ENDSESSION_API_LATEST;
++        switch (EOS_EResult e = EOS_AntiCheatClient_EndSession(acc, &sessionopts))
++        {
++            case EOS_EResult::EOS_Success: break;
++            case EOS_EResult::EOS_InvalidParameters: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr ending session: input data invalid"); return false;
++            case EOS_EResult::EOS_AntiCheat_InvalidMode: /* conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr ending session: function not supported in current mode"); */ return false;
++            default: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr EOS_AntiCheatClient_EndSession() failed with result code %d", (int) e); return false;
++        }
++        anticheatsessionactive = false;
++        return true;
++    }
++
++    EOS_NotificationId anticheatmessagetoservercallback;
++
++    void initializeanticheat()
++    {
++        if(anticheatinitialized || (!eossdkinitialized && initializesdk())) return;
++
++        acc = EOS_Platform_GetAntiCheatClientInterface(platform);
++
++        // register c2s function for EOS messages
++        static EOS_AntiCheatClient_AddNotifyMessageToServerOptions messagecallbackopts;
++        messagecallbackopts.ApiVersion = EOS_ANTICHEATCLIENT_ADDNOTIFYMESSAGETOSERVER_API_LATEST;
++        anticheatmessagetoservercallback = EOS_AntiCheatClient_AddNotifyMessageToServer(acc, &messagecallbackopts, NULL, onmessagetoserver);
++        if(anticheatmessagetoservercallback==EOS_INVALID_NOTIFICATIONID)
++        {
++            conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr init: failed to register message-to-server callback");
++            return;
++        }
++
++        anticheatinitialized = true;
++        conoutf("\fs\f8[anti-cheat]\fr initialized");
++    }
++
++    int lastanticheatstatuspoll = -1;
++    static const int ANTICHEATSTATUSPOLLDELAY = 5000; // 5 seconds
++    void pollanticheatstatus()
++    {
++        if(!eossdkinitialized || platform==NULL) return;
++
++        if(lastanticheatstatuspoll < 0) lastanticheatstatuspoll = lastmillis;
++        if(!acc || lastmillis-lastanticheatstatuspoll < ANTICHEATSTATUSPOLLDELAY) return;
++
++        lastanticheatstatuspoll = lastmillis;
++
++        static EOS_AntiCheatClient_PollStatusOptions pollopts;
++        pollopts.ApiVersion = EOS_ANTICHEATCLIENT_POLLSTATUS_API_LATEST;
++        pollopts.OutMessageLength = MAXSTRLEN;
++
++        EOS_EAntiCheatClientViolationType violation;
++        string details;
++
++        switch (EOS_EResult e = EOS_AntiCheatClient_PollStatus(acc, &pollopts, &violation, details))
++        {
++            case EOS_EResult::EOS_NotFound: /* no violation */ break;
++            case EOS_EResult::EOS_Success:
++                // conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr violation detected: %s (%d)", details, (int) violation);
++                // violation detected, but we won't tell the client that
++                addmsg(N_P1X_ANTICHEAT_VIOLATION, "ris", (int) violation, details);
++                break;
++            case EOS_EResult::EOS_LimitExceeded:
++                conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr polling status: out string too short");
++                break;
++            default:
++                conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr EOS_AntiCheatClient_PollStatus() failed with result code %d", (int) e);
++                break;
++        }
++    }
++
++    void shutdownanticheat()
++    {
++        if(!anticheatinitialized) return;
++        // un-register c2s callback
++        if(acc && anticheatmessagetoservercallback!=EOS_INVALID_NOTIFICATIONID) EOS_AntiCheatClient_RemoveNotifyMessageToServer(acc, anticheatmessagetoservercallback);
++        eosuserid = NULL;
++        if(eossdkinitialized) shutdownsdk();
++    }
++}
++
++#endif
++
++namespace server {
++
++    #include <eos_anticheatserver.h>
++
++    bool anticheatinitialized = false;
++    EOS_HAntiCheatServer acs = NULL;
++
++    void onmessagetoclient(const EOS_AntiCheatCommon_OnMessageToClientCallbackInfo *data)
++    {
++        clientinfo *ci = (clientinfo *) data->ClientHandle;
++        if(!ci) return;
++        packetbuf p(300, ENET_PACKET_FLAG_RELIABLE); // EOS docs say message is up to 256 bytes
++        putint(p, N_P1X_ANTICHEAT_MESSAGE);
++        putuint(p, data->MessageDataSizeBytes);
++        p.put((const uchar *) data->MessageData, data->MessageDataSizeBytes);
++        ENetPacket *packet = p.finalize();
++        sendpacket(ci->clientnum, 1, packet);
++    }
++
++    MOD(VAR, forceanticheatclient, 0, 0, 1);
++
++    void onclientactionrequired(const EOS_AntiCheatCommon_OnClientActionRequiredCallbackInfo *data)
++    {
++        clientinfo *ci = (clientinfo *) data->ClientHandle;
++        if(!ci)
++        {
++            conoutf("\fs\f8[anti-cheat]\fr action required: reason %d (details: %s)", (int) data->ActionReasonCode, data->ActionReasonDetailsString);
++            return;
++        }
++        else conoutf("\fs\f8[anti-cheat]\fr action required: client %s, reason %d (details: %s)", colorname(ci), (int) data->ActionReasonCode, data->ActionReasonDetailsString);
++        if(data->ClientAction==EOS_EAntiCheatCommonClientAction::EOS_ACCCA_RemovePlayer)
++        {
++            string msg;
++            if(data->ActionReasonCode == EOS_EAntiCheatCommonClientActionReason::EOS_ACCCAR_ClientViolation)
++            {
++                formatstring(msg, "\fs\f8[anti-cheat] \f3violation by %s: %s (code: %d)\fr",
++                    colorname(ci), data->ActionReasonDetailsString, (int) data->ActionReasonCode
++                );
++            }
++            else
++            {
++                formatstring(msg, "\fs\f8[anti-cheat] \f3%s should be removed from the game: %s (code: %d)\fr",
++                    colorname(ci), data->ActionReasonDetailsString, (int) data->ActionReasonCode
++                );
++            }
++            conoutf(CON_WARN, "%s", msg);
++            if(!forceanticheatclient) notifyprivusers(PRIV_AUTH, msg);
++            else
++            {
++                sendf(-1, 1, "ris", N_SERVMSG, msg);
++                forcespectator(ci);
++                formatstring(msg, "\fs\f8[anti-cheat] \f3forced %s to spectator\fr", colorname(ci));
++            }
++        }
++    }
++
++    static const char *authstatusname(int status)
++    {
++        static string asname[3] = {"unverified", "locally verified", "verified by Epic's backend"};
++        return asname[status];
++    }
++
++    // todo: this is pretty useless since we use a dummy echo backend as "identity" provider, maybe don't print any messages?
++    void onclientauthstatuschanged(const EOS_AntiCheatCommon_OnClientAuthStatusChangedCallbackInfo *data)
++    {
++        clientinfo *ci = (clientinfo *) data->ClientHandle;
++        if(!ci) return;
++
++        int oldanticheatverified = ci->anticheatverified;
++        ci->anticheatverified = (int) data->ClientAuthStatus; // 0, 1, or 2
++
++        if(oldanticheatverified > ci->anticheatverified)
++        {
++            if(forceanticheatclient) forcespectator(ci);
++            defformatstring(msg, "\fs\f8[anti-cheat]\fr \f6%s had their auth status downgraded from %d (%s) to %d (%s)\fr",
++                colorname(ci),
++                oldanticheatverified, authstatusname(oldanticheatverified),
++                ci->anticheatverified, authstatusname(ci->anticheatverified)
++            );
++            conoutf(CON_WARN, "%s", msg);
++            notifyprivusers(PRIV_AUTH, msg);
++        }
++
++        if(oldanticheatverified < ci->anticheatverified)
++        {
++            defformatstring(msg, "\fs\f8[anti-cheat]\fr %s had their auth status upgraded from %d (%s) to %d (%s)",
++                colorname(ci),
++                oldanticheatverified, authstatusname(oldanticheatverified),
++                ci->anticheatverified, authstatusname(ci->anticheatverified)
++            );
++            conoutf(CON_WARN, "%s", msg);
++            if(ci->anticheatverified==2)
++            {
++                defformatstring(msg, "\fs\f8[anti-cheat]\fr %s is using the p1xbraten anti-cheat client", colorname(ci));
++                sendf(-1, 1, "ris", N_SERVMSG, msg);
++                if(ci->state.state==CS_SPECTATOR && mastermode<MM_LOCKED) unspectate(ci);
++            }
++        }
++    }
++
++    void probeforanticheatclient(packetbuf &p)
++    {
++        putint(p, N_SERVCMD);
++        sendstring(CAP_PROBE_ANTICHEAT, p);
++    }
++
++    bool registeranticheatclient(clientinfo *ci)
++    {
++        static string eosname;
++        formatstring(eosname, "%s (%d)", ci->name, ci->clientnum);
++        conoutf("\fs\f8[anti-cheat]\fr registering %s with Epic's backend", eosname);
++
++        static EOS_AntiCheatServer_RegisterClientOptions registeropts;
++        registeropts.ApiVersion = EOS_ANTICHEATSERVER_REGISTERCLIENT_API_LATEST;
++        registeropts.ClientHandle = (EOS_AntiCheatCommon_ClientHandle) ci;
++        registeropts.ClientType = EOS_EAntiCheatCommonClientType::EOS_ACCCT_ProtectedClient;
++        registeropts.AccountId = eosname;
++        registeropts.IpAddress = getclienthostname(ci->clientnum);
++
++        switch (EOS_EResult e = EOS_AntiCheatServer_RegisterClient(acs, &registeropts))
++        {
++            case EOS_EResult::EOS_Success:
++                sendf(ci->clientnum, 1, "ri", N_P1X_ANTICHEAT_BEGINSESSION);
++                return true;
++            case EOS_EResult::EOS_InvalidParameters: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr registering client: input data invalid"); return false;
++            default: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr EOS_AntiCheatServer_RegisterClient() failed with result code %d", (int) e); return false;
++        }
++    }
++
++    void receiveanticheatmessage(clientinfo *ci, ucharbuf &p)
++    {
++        static EOS_AntiCheatServer_ReceiveMessageFromClientOptions messageopts;
++        messageopts.ApiVersion = EOS_ANTICHEATSERVER_RECEIVEMESSAGEFROMCLIENT_API_LATEST;
++        messageopts.ClientHandle = (EOS_AntiCheatCommon_ClientHandle) ci;
++        messageopts.DataLengthBytes = p.remaining();
++        messageopts.Data = p.getbuf();
++        if(!anticheatinitialized || !acs) { conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr received N_P1X_ANTICHEAT_MESSAGE but anti-cheat not initialized"); return; }
++        switch (EOS_EResult e = EOS_AntiCheatServer_ReceiveMessageFromClient(acs, &messageopts))
++        {
++            case EOS_EResult::EOS_Success: break;
++            case EOS_EResult::EOS_InvalidParameters: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr receiving message from client: input data invalid!"); return;
++            default: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr EOS_AntiCheatServer_ReceiveMessageFromClient() failed with result code %d", (int) e); return;
++        }
++    }
++
++    void handleviolation(clientinfo *ci, int code, const char *details)
++    {
++        defformatstring(msg, "\fs\f3%s self-reported a violation: %s (code: %d)\fr", colorname(ci), details, code);
++        conoutf(CON_WARN, "%s", msg);
++        notifyprivusers(PRIV_AUTH, msg);
++    }
++
++    bool unregisteranticheatclient(clientinfo *ci)
++    {
++        static EOS_AntiCheatServer_UnregisterClientOptions unregisteropts;
++        unregisteropts.ApiVersion = EOS_ANTICHEATSERVER_UNREGISTERCLIENT_API_LATEST;
++        unregisteropts.ClientHandle = (EOS_AntiCheatCommon_ClientHandle) ci;
++
++        switch (EOS_EResult e = EOS_AntiCheatServer_UnregisterClient(acs, &unregisteropts))
++        {
++            case EOS_EResult::EOS_Success: sendf(ci->clientnum, 1, "ri", N_P1X_ANTICHEAT_ENDSESSION); return true;
++            case EOS_EResult::EOS_InvalidParameters: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr unregistering client: input data invalid"); return false;
++            default: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr EOS_AntiCheatServer_UnregisterClient() failed with result code %d", (int) e); return false;
++        }
++    }
++
++    EOS_NotificationId anticheatmessagetoclientcallback;
++    EOS_NotificationId anticheatclientactionrequiredcallback;
++    EOS_NotificationId anticheatclientauthstatuschangedcallback;
++
++    void startanticheatsession()
++    {
++        if(!acs) { conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr not initialized"); return; }
++        static EOS_AntiCheatServer_BeginSessionOptions sessionopts;
++        sessionopts.ApiVersion = EOS_ANTICHEATSERVER_BEGINSESSION_API_LATEST;
++        sessionopts.RegisterTimeoutSeconds = 60;
++        string servername;
++        filtertext(servername, serverdesc);
++        sessionopts.ServerName = servername;
++        sessionopts.bEnableGameplayData = EOS_FALSE;
++        sessionopts.LocalUserId = NULL;
++        switch (EOS_EResult e = EOS_AntiCheatServer_BeginSession(acs, &sessionopts))
++        {
++            case EOS_EResult::EOS_Success: break;
++            case EOS_EResult::EOS_InvalidParameters: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr starting session: input data invalid"); break;
++            default: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr EOS_AntiCheatServer_BeginSession() failed with result code %d", (int) e); break;
++        }
++    }
++
++    void initializeanticheat()
++    {
++        if(anticheatinitialized || (!eossdkinitialized && initializesdk(true))) return;
++
++        acs = EOS_Platform_GetAntiCheatServerInterface(platform);
++
++        // register s2c function for EOS messages
++        static EOS_AntiCheatServer_AddNotifyMessageToClientOptions messagecallbackopts;
++        messagecallbackopts.ApiVersion = EOS_ANTICHEATSERVER_ADDNOTIFYMESSAGETOCLIENT_API_LATEST;
++        anticheatmessagetoclientcallback = EOS_AntiCheatServer_AddNotifyMessageToClient(acs, &messagecallbackopts, NULL, onmessagetoclient);
++        if(anticheatmessagetoclientcallback==EOS_INVALID_NOTIFICATIONID) conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr init: failed to register onmessagetoclient callback");
++
++        // register callback for required actions
++        static EOS_AntiCheatServer_AddNotifyClientActionRequiredOptions actionrequiredopts;
++        actionrequiredopts.ApiVersion = EOS_ANTICHEATSERVER_ADDNOTIFYCLIENTACTIONREQUIRED_API_LATEST;
++        anticheatclientactionrequiredcallback = EOS_AntiCheatServer_AddNotifyClientActionRequired(acs, &actionrequiredopts, NULL, onclientactionrequired);
++        if(anticheatclientactionrequiredcallback==EOS_INVALID_NOTIFICATIONID) conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr init: failed to register onclientactionrequired callback");
++
++        // register callback for user auth status change
++        static EOS_AntiCheatServer_AddNotifyClientAuthStatusChangedOptions authchangedopts;
++        authchangedopts.ApiVersion = EOS_ANTICHEATSERVER_ADDNOTIFYCLIENTAUTHSTATUSCHANGED_API_LATEST;
++        anticheatclientauthstatuschangedcallback = EOS_AntiCheatServer_AddNotifyClientAuthStatusChanged(acs, &authchangedopts, NULL, onclientauthstatuschanged);
++        if(anticheatclientauthstatuschangedcallback==EOS_INVALID_NOTIFICATIONID) conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr init: failed to register onclientauthstatuschanged callback");
++
++        anticheatinitialized = true;
++        startanticheatsession();
++    }
++
++    bool endanticheatsession()
++    {
++        if(!acs) return true;
++
++        static EOS_AntiCheatServer_EndSessionOptions sessionopts;
++        sessionopts.ApiVersion = EOS_ANTICHEATSERVER_ENDSESSION_API_LATEST;
++        switch (EOS_EResult e = EOS_AntiCheatServer_EndSession(acs, &sessionopts))
++        {
++            case EOS_EResult::EOS_Success: return true;
++            case EOS_EResult::EOS_InvalidParameters: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr ending session: input data invalid"); return false;
++            default: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr EOS_AntiCheatServer_EndSession() failed with result code %d", (int) e); return false;
++        }
++    }
++
++    void shutdownanticheat()
++    {
++        if(!anticheatinitialized) return;
++        endanticheatsession();
++        if(acs)
++        {
++            // unregister callbacks
++            if(anticheatmessagetoclientcallback!=EOS_INVALID_NOTIFICATIONID) EOS_AntiCheatServer_RemoveNotifyMessageToClient(acs, anticheatmessagetoclientcallback);
++            if(anticheatclientactionrequiredcallback!=EOS_INVALID_NOTIFICATIONID) EOS_AntiCheatServer_RemoveNotifyClientActionRequired(acs, anticheatclientactionrequiredcallback);
++            if(anticheatclientauthstatuschangedcallback!=EOS_INVALID_NOTIFICATIONID) EOS_AntiCheatServer_RemoveNotifyClientAuthStatusChanged(acs, anticheatclientauthstatuschangedcallback);
++        }
++        if(eossdkinitialized) shutdownsdk();
++    }
++}
++
++#endif
+diff --git src/engine/engine.h src/engine/engine.h
+index 01361ed..3f32930 100644
+--- src/engine/engine.h
++++ src/engine/engine.h
+@@ -4,6 +4,12 @@
+ #include "cube.h"
+ #include "world.h"
+
++#ifdef ANTICHEAT
++// anticheat
++extern int anticheatenabled; // toggled by -e CLI flag
++extern void anticheattick();
++#endif
++
+ #ifndef STANDALONE
+
+ #include "octa.h"
+diff --git src/engine/main.cpp src/engine/main.cpp
+index 53ef550..57654d4 100644
+--- src/engine/main.cpp
++++ src/engine/main.cpp
+@@ -10,6 +10,9 @@ extern void cleargamma();
+
+ void cleanup()
+ {
++#ifdef ANTICHEAT
++    game::shutdownanticheat();
++#endif
+     recorder::stop();
+     cleanupserver();
+     SDL_ShowCursor(SDL_TRUE);
+@@ -1249,6 +1252,9 @@ int main(int argc, char **argv)
+                 break;
+             }
+             case 'x': initscript = &argv[i][2]; break;
++#ifdef ANTICHEAT
++            case 'e': anticheatenabled = 1; break;
++#endif
+             default: if(!serveroption(argv[i])) gameargs.add(argv[i]); break;
+         }
+         else gameargs.add(argv[i]);
+@@ -1354,6 +1360,14 @@ int main(int argc, char **argv)
+
+     migratep1xbraten();
+
++#ifdef ANTICHEAT
++    if(anticheatenabled)
++    {
++        logoutf("init: anti-cheat");
++        game::initializeanticheat();
++    }
++#endif
++
+     logoutf("init: mainloop");
+
+     if(execfile("once.cfg", false)) remove(findfile("once.cfg", "rb"));
+@@ -1398,6 +1412,9 @@ int main(int argc, char **argv)
+         checksleep(lastmillis);
+
+         serverslice(false, 0);
++#ifdef ANTICHEAT
++        game::pollanticheatstatus();
++#endif
+
+         // miscellaneous general game effects
+         recomputecamera();
+diff --git src/engine/movie.cpp src/engine/movie.cpp
+index 25cb491..70c0e2f 100644
+--- src/engine/movie.cpp
++++ src/engine/movie.cpp
+@@ -8,7 +8,11 @@
+ //   kino - ok
+
+ #include "engine.h"
++#ifdef __APPLE__
++  #include <SDL2_mixer/SDL_mixer.h>
++#else
+ #include "SDL_mixer.h"
++#endif
+
+ VAR(dbgmovie, 0, 0, 1);
+
+diff --git src/engine/server.cpp src/engine/server.cpp
+index 9aa7a3b..1558215 100644
+--- src/engine/server.cpp
++++ src/engine/server.cpp
+@@ -170,6 +170,9 @@ void delclient(client *c)
+
+ void cleanupserver()
+ {
++#ifdef ANTICHEAT
++    server::shutdownanticheat();
++#endif
+     if(serverhost) enet_host_destroy(serverhost);
+     serverhost = NULL;
+
+@@ -490,6 +493,10 @@ void updatetime()
+
+ void serverslice(bool dedicated, uint timeout)   // main server update, called from main loop in sp, or from below in dedicated server
+ {
++#ifdef ANTICHEAT
++    anticheattick();
++#endif
++
+     if(!serverhost)
+     {
+         server::serverupdate();
+@@ -959,6 +966,10 @@ bool setuplistenserver(bool dedicated)
+     return true;
+ }
+
++#ifdef ANTICHEAT
++MOD(VAR, anticheatenabled, 1, 0, 0);
++#endif
++
+ void initserver(bool listen, bool dedicated)
+ {
+     if(dedicated)
+@@ -976,6 +987,9 @@ void initserver(bool listen, bool dedicated)
+
+     if(listen)
+     {
++#ifdef ANTICHEAT
++        if(anticheatenabled) server::initializeanticheat();
++#endif
+         dedicatedserver = dedicated;
+         updatemasterserver();
+         if(dedicated) rundedicatedserver(); // never returns
+@@ -1027,6 +1041,9 @@ bool serveroption(char *opt)
+         case 'q': logoutf("Using home directory: %s", opt); sethomedir(opt+2); return true;
+         case 'k': logoutf("Adding package directory: %s", opt); addpackagedir(opt+2); return true;
+         case 'g': logoutf("Setting log file: %s", opt); setlogfile(opt+2); return true;
++#ifdef ANTICHEAT
++        case 'e': anticheatenabled = 1; return true;
++#endif
+ #endif
+         default: return false;
+     }
+diff --git src/engine/sound.cpp src/engine/sound.cpp
+index 38ff025..66006a2 100644
+--- src/engine/sound.cpp
++++ src/engine/sound.cpp
+@@ -1,7 +1,11 @@
+ // sound.cpp: basic positional sound using sdl_mixer
+
+ #include "engine.h"
++#ifdef __APPLE__
++  #include <SDL2_mixer/SDL_mixer.h>
++#else
+ #include "SDL_mixer.h"
++#endif
+
+ bool nosound = true;
+
+diff --git src/engine/texture.cpp src/engine/texture.cpp
+index fb662b5..62e90ec 100644
+--- src/engine/texture.cpp
++++ src/engine/texture.cpp
+@@ -1,8 +1,11 @@
+ // texture.cpp: texture slot management
+
+ #include "engine.h"
++#ifdef __APPLE__
++  #include <SDL2_image/SDL_image.h>
++#else
+ #include "SDL_image.h"
+-
++#endif
+ #ifndef SDL_IMAGE_VERSION_ATLEAST
+ #define SDL_IMAGE_VERSION_ATLEAST(X, Y, Z) \
+     (SDL_VERSIONNUM(SDL_IMAGE_MAJOR_VERSION, SDL_IMAGE_MINOR_VERSION, SDL_IMAGE_PATCHLEVEL) >= SDL_VERSIONNUM(X, Y, Z))
+diff --git src/fpsgame/client.cpp src/fpsgame/client.cpp
+index c5ae27e..6b87170 100644
+--- src/fpsgame/client.cpp
++++ src/fpsgame/client.cpp
+@@ -972,6 +972,9 @@ namespace game
+
+     void gamedisconnect(bool cleanup)
+     {
++#ifdef ANTICHEAT
++        endanticheatsession();
++#endif
+         if(remote) stopfollowing();
+         ignores.setsize(0);
+         connected = remote = false;
+@@ -2076,7 +2079,23 @@ namespace game
+                 managedgamedemonextmatch = val!=0;
+                 break;
+             }
++#ifdef ANTICHEAT
++            case N_P1X_ANTICHEAT_BEGINSESSION:
++                triggeranticheatsession();
++                break;
+
++            case N_P1X_ANTICHEAT_MESSAGE:
++            {
++                int len = getuint(p);
++                ucharbuf q = p.subbuf(len);
++                receiveanticheatmessage(q);
++                break;
++            }
++
++            case N_P1X_ANTICHEAT_ENDSESSION:
++                endanticheatsession();
++                break;
++#endif
+             default:
+                 neterr("type", cn < 0);
+                 return;
+diff --git src/fpsgame/game.h src/fpsgame/game.h
+index 0a4c901..4e9fe3a 100644
+--- src/fpsgame/game.h
++++ src/fpsgame/game.h
+@@ -215,6 +215,7 @@ enum
+
+ // protocol extensions
+ static const char * const CAP_PROBE_CLIENT_DEMO_UPLOAD = "capability_probe_protocol_extension_p1x_client_demo_upload";
++static const char * const CAP_PROBE_ANTICHEAT          = "capability_probe_protocol_extension_p1x_anticheat";
+
+ // network messages codes, c2s, c2c, s2c
+
+@@ -245,8 +246,11 @@ enum
+     N_INITTOKENS, N_TAKETOKEN, N_EXPIRETOKENS, N_DROPTOKENS, N_DEPOSITTOKENS, N_STEALTOKENS,
+     N_SERVCMD,
+     N_DEMOPACKET,
+-    N_P1X_SETIP = 900, // only from proxy to server
++    N_P1X_SETIP = 900, // only from proxy to server (see addtrustedproxyip cmd)
+     N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED = 1000, N_P1X_RECORDDEMO, // guarded by CAP_PROBE_CLIENT_DEMO_UPLOAD
++#ifdef ANTICHEAT
++    N_P1X_ANTICHEAT_SUPPORTED = 2000, N_P1X_ANTICHEAT_BEGINSESSION, N_P1X_ANTICHEAT_MESSAGE, N_P1X_ANTICHEAT_VIOLATION, N_P1X_ANTICHEAT_ENDSESSION, // guarded by CAP_PROBE_ANTICHEAT
++#endif
+     NUMMSG
+ };
+
+@@ -279,6 +283,9 @@ static const int msgsizes[] =               // size inclusive message token, 0 f
+     N_DEMOPACKET, 0,
+     N_P1X_SETIP, 2,
+     N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED, 1, N_P1X_RECORDDEMO, 1,
++#ifdef ANTICHEAT
++    N_P1X_ANTICHEAT_SUPPORTED, 1, N_P1X_ANTICHEAT_BEGINSESSION, 1, N_P1X_ANTICHEAT_MESSAGE, 0, N_P1X_ANTICHEAT_VIOLATION, 0, N_P1X_ANTICHEAT_ENDSESSION, 1,
++#endif
+     -1
+ };
+
+@@ -886,6 +893,14 @@ namespace game
+     extern bool managedgamedemonextmatch;
+     extern string managedgamedemofname;
+     extern void sendclientdemo();
++
++#ifdef ANTICHEAT
++    // anticheat
++    extern bool anticheatready();
++    extern void triggeranticheatsession();
++    extern void receiveanticheatmessage(ucharbuf &p);
++    extern bool endanticheatsession();
++#endif
+ }
+
+ #include "fragmessages.h"
+@@ -1068,6 +1083,8 @@ namespace server
+         int authkickvictim;
+         char *authkickreason;
+         bool supportsclientdemoupload;
++        bool supportsanticheat;
++        int anticheatverified; // 0 = no anti-cheat, 1 = locally verified, 2 = verified by Epic's backend
+
+         clientinfo() : getdemo(NULL), getmap(NULL), clipboard(NULL), authchallenge(NULL), authkickreason(NULL) { reset(); }
+         ~clientinfo() { events.deletecontents(); cleanclipboard(); cleanauth(); }
+@@ -1178,6 +1195,8 @@ namespace server
+             cleanauth();
+             mapchange();
+             supportsclientdemoupload = false;
++            supportsanticheat = false;
++            anticheatverified = 0;
+         }
+
+         int geteventmillis(int servmillis, int clientmillis)
+@@ -1193,6 +1212,7 @@ namespace server
+     };
+     extern vector<clientinfo *> clients;
+
++    extern char *serverdesc;
+     extern const char *modename(int n, const char *unknown = "unknown");
+     extern int mastermode;
+     extern const char *mastermodename(int n, const char *unknown = "unknown");
+@@ -1243,6 +1263,19 @@ namespace server
+
+     // proxy support
+     extern void setip(clientinfo *sender, uint ip);
++
++#ifdef ANTICHEAT
++    // anticheat
++    extern int forceanticheatclient;
++    extern void probeforanticheatclient(packetbuf &p);
++    extern bool registeranticheatclient(clientinfo *c);
++    extern void receiveanticheatmessage(clientinfo *c, ucharbuf &p);
++    extern void handleviolation(clientinfo *ci, int code, const char *details);
++    extern bool unregisteranticheatclient(clientinfo *c);
++    extern void forcespectator(clientinfo *ci);
++    extern void unspectate(clientinfo *ci);
++    extern void notifyprivusers(int minpriv, char *msg);
++#endif
+ }
+
+ // additional colors
+diff --git src/fpsgame/server.cpp src/fpsgame/server.cpp
+index e37eb57..76d231f 100644
+--- src/fpsgame/server.cpp
++++ src/fpsgame/server.cpp
+@@ -1537,6 +1537,9 @@ namespace server
+         packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
+         int chan = welcomepacket(p, ci);
+         if(!ci->local) probeforclientdemoupload(p);
++#ifdef ANTICHEAT
++        if(!ci->local) probeforanticheatclient(p);
++#endif
+         sendpacket(ci->clientnum, chan, p.finalize());
+     }
+
+@@ -2338,9 +2341,30 @@ namespace server
+         }
+     }
+
+-    bool shouldspectate(clientinfo *ci)
++    bool shouldspectate(clientinfo *ci, clientinfo *requester = NULL, bool printreason = false)
++    {
++        if(ci->local) return false;
++        if(ci->warned && modifiedmapspectator && (mcrc || modifiedmapspectator > 1))
++        {
++            if(requester && printreason)
++            {
++                defformatstring(msg, "%s has modified map \"%s\"", colorname(ci), smapname);
++                sendf(requester->clientnum, 1, "ris", N_SERVMSG, msg);
++            }
++            return true;
++        }
++#ifdef ANTICHEAT
++        if(forceanticheatclient && !ci->anticheatverified)
+     {
+-        return !ci->local && ci->warned && modifiedmapspectator && (mcrc || modifiedmapspectator > 1);
++            if(requester && printreason)
++            {
++                defformatstring(msg, "%s is not running an anti-cheat client", colorname(ci));
++                sendf(requester->clientnum, 1, "ris", N_SERVMSG, msg);
++            }
++            return true;
++        }
++#endif
++        return false;
+     }
+
+     void unspectate(clientinfo *ci)
+@@ -2408,6 +2432,9 @@ namespace server
+             ci->state.timeplayed += lastmillis - ci->state.lasttimeplayed;
+             savescore(ci);
+             sendf(-1, 1, "ri2", N_CDIS, n);
++#ifdef ANTICHEAT
++            if(ci->supportsanticheat) unregisteranticheatclient(ci);
++#endif
+             if(managedgame && ci->state.state!=CS_SPECTATOR) pausegame(true);
+             clients.removeobj(ci);
+             aiman::removeai(ci);
+@@ -2723,6 +2750,9 @@ namespace server
+         if(restorescore(ci)) sendresume(ci);
+         sendinitclient(ci);
+         if(isdedicatedserver()) logoutf("join: %s (cn %d)", ci->name, ci->clientnum);
++#ifdef ANTICHEAT
++        if(forceanticheatclient && !ci->local) forcespectator(ci);
++#endif
+         if(!ci->local) loopv(autoauthdomains) sendf(ci->clientnum, 1, "ris", N_REQAUTH, autoauthdomains[i]);
+
+         aiman::addclient(ci);
+@@ -3537,7 +3567,33 @@ namespace server
+                 conoutf("client %d supports the client demo upload protocol extension!", ci->clientnum);
+                 ci->supportsclientdemoupload = true;
+                 break;
++#ifdef ANTICHEAT
++            case N_P1X_ANTICHEAT_SUPPORTED:
++                if(!ci || ci->local) return;
++                conoutf("client %d supports our anti-cheat protocol extension!", ci->clientnum);
++                ci->supportsanticheat = true;
++                sendf(sender, 1, "ris", N_SERVMSG, "\fs\f8[anti-cheat]\fr verifying your client ...");
++                registeranticheatclient(ci);
++                break;
+
++            case N_P1X_ANTICHEAT_MESSAGE:
++            {
++                int len = getuint(p);
++                ucharbuf q = p.subbuf(len);
++                if(!ci || ci->local) return;
++                receiveanticheatmessage(ci, q);
++                break;
++            }
++
++            case N_P1X_ANTICHEAT_VIOLATION:
++            {
++                string details;
++                int code = getint(p);
++                getstring(details, p);
++                if(!ci || ci->local) return;
++                handleviolation(ci, code, details);
++            }
++#endif
+             #define PARSEMESSAGES 1
+             #include "capture.h"
+             #include "ctf.h"
+diff --git src/p1xbraten/capability_probing.cpp src/p1xbraten/capability_probing.cpp
+index 232c554..286bdfa 100644
+--- src/p1xbraten/capability_probing.cpp
++++ src/p1xbraten/capability_probing.cpp
+@@ -5,6 +5,9 @@ namespace game {
+     void handlecapprobe(const char *msg)
+     {
+         if(!strcmp(msg, CAP_PROBE_CLIENT_DEMO_UPLOAD)) addmsg(N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED, "r");
++#ifdef ANTICHEAT
++        if(!strcmp(msg, CAP_PROBE_ANTICHEAT) && anticheatready()) addmsg(N_P1X_ANTICHEAT_SUPPORTED, "r");
++#endif
+     }
+
+ }
+diff --git src/shared/cube.h src/shared/cube.h
+index be7755c..c153591 100644
+--- src/shared/cube.h
++++ src/shared/cube.h
+@@ -37,7 +37,7 @@
+
+ #ifndef STANDALONE
+   #ifdef __APPLE__
+-    #include "SDL.h"
++    #include <SDL2/SDL.h>
+     #define GL_GLEXT_LEGACY
+     #define __glext_h_
+     #include <OpenGL/gl.h>
+diff --git src/shared/igame.h src/shared/igame.h
+index a14292c..f0f4aa6 100644
+--- src/shared/igame.h
++++ src/shared/igame.h
+@@ -101,6 +101,13 @@ namespace game
+     extern void serverinfoendcolumn(g3d_gui *g, int i);
+     extern bool serverinfoentry(g3d_gui *g, int i, const char *name, int port, const char *desc, const char *map, int ping, const vector<int> &attr, int np);
+     extern bool needminimap();
++
++#ifdef ANTICHEAT
++    // anti-cheat
++    extern void initializeanticheat();
++    extern void pollanticheatstatus();
++    extern void shutdownanticheat();
++#endif
+ }
+
+ namespace server
+@@ -133,5 +140,10 @@ namespace server
+     extern void authserverdisconnected(const char *keydomain);
+     extern bool ispaused();
+     extern int scaletime(int t);
+-}
+
++#ifdef ANTICHEAT
++    // anti-cheat
++    extern void initializeanticheat();
++    extern void shutdownanticheat();
++#endif
++}

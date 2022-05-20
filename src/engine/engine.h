@@ -4,6 +4,12 @@
 #include "cube.h"
 #include "world.h"
 
+#ifdef ANTICHEAT
+// anticheat
+extern int anticheatenabled; // toggled by -e CLI flag
+extern void anticheattick();
+#endif
+
 #ifndef STANDALONE
 
 #include "octa.h"

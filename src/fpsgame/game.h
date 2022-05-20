@@ -215,6 +215,7 @@ enum
 
 // protocol extensions
 static const char * const CAP_PROBE_CLIENT_DEMO_UPLOAD = "capability_probe_protocol_extension_p1x_client_demo_upload";
+static const char * const CAP_PROBE_ANTICHEAT          = "capability_probe_protocol_extension_p1x_anticheat";
 
 // network messages codes, c2s, c2c, s2c
 
@@ -245,8 +246,11 @@ enum
     N_INITTOKENS, N_TAKETOKEN, N_EXPIRETOKENS, N_DROPTOKENS, N_DEPOSITTOKENS, N_STEALTOKENS,
     N_SERVCMD,
     N_DEMOPACKET,
-    N_P1X_SETIP = 900, // only from proxy to server
+    N_P1X_SETIP = 900, // only from proxy to server (see addtrustedproxyip cmd)
     N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED = 1000, N_P1X_RECORDDEMO, // guarded by CAP_PROBE_CLIENT_DEMO_UPLOAD
+#ifdef ANTICHEAT
+    N_P1X_ANTICHEAT_SUPPORTED = 2000, N_P1X_ANTICHEAT_BEGINSESSION, N_P1X_ANTICHEAT_MESSAGE, N_P1X_ANTICHEAT_VIOLATION, N_P1X_ANTICHEAT_ENDSESSION, // guarded by CAP_PROBE_ANTICHEAT
+#endif
     NUMMSG
 };
 
@@ -279,6 +283,9 @@ static const int msgsizes[] =               // size inclusive message token, 0 f
     N_DEMOPACKET, 0,
     N_P1X_SETIP, 2,
     N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED, 1, N_P1X_RECORDDEMO, 1,
+#ifdef ANTICHEAT
+    N_P1X_ANTICHEAT_SUPPORTED, 1, N_P1X_ANTICHEAT_BEGINSESSION, 1, N_P1X_ANTICHEAT_MESSAGE, 0, N_P1X_ANTICHEAT_VIOLATION, 0, N_P1X_ANTICHEAT_ENDSESSION, 1,
+#endif
     -1
 };
 
@@ -886,6 +893,14 @@ namespace game
     extern bool managedgamedemonextmatch;
     extern string managedgamedemofname;
     extern void sendclientdemo();
+
+#ifdef ANTICHEAT
+    // anticheat
+    extern bool anticheatready();
+    extern void triggeranticheatsession();
+    extern void receiveanticheatmessage(ucharbuf &p);
+    extern bool endanticheatsession();
+#endif
 }
 
 #include "fragmessages.h"
@@ -1068,6 +1083,8 @@ namespace server
         int authkickvictim;
         char *authkickreason;
         bool supportsclientdemoupload;
+        bool supportsanticheat;
+        int anticheatverified; // 0 = no anti-cheat, 1 = locally verified, 2 = verified by Epic's backend
 
         clientinfo() : getdemo(NULL), getmap(NULL), clipboard(NULL), authchallenge(NULL), authkickreason(NULL) { reset(); }
         ~clientinfo() { events.deletecontents(); cleanclipboard(); cleanauth(); }
@@ -1178,6 +1195,8 @@ namespace server
             cleanauth();
             mapchange();
             supportsclientdemoupload = false;
+            supportsanticheat = false;
+            anticheatverified = 0;
         }
 
         int geteventmillis(int servmillis, int clientmillis)
@@ -1193,6 +1212,7 @@ namespace server
     };
     extern vector<clientinfo *> clients;
 
+    extern char *serverdesc;
     extern const char *modename(int n, const char *unknown = "unknown");
     extern int mastermode;
     extern const char *mastermodename(int n, const char *unknown = "unknown");
@@ -1243,6 +1263,19 @@ namespace server
 
     // proxy support
     extern void setip(clientinfo *sender, uint ip);
+
+#ifdef ANTICHEAT
+    // anticheat
+    extern int forceanticheatclient;
+    extern void probeforanticheatclient(packetbuf &p);
+    extern bool registeranticheatclient(clientinfo *c);
+    extern void receiveanticheatmessage(clientinfo *c, ucharbuf &p);
+    extern void handleviolation(clientinfo *ci, int code, const char *details);
+    extern bool unregisteranticheatclient(clientinfo *c);
+    extern void forcespectator(clientinfo *ci);
+    extern void unspectate(clientinfo *ci);
+    extern void notifyprivusers(int minpriv, char *msg);
+#endif
 }
 
 // additional colors

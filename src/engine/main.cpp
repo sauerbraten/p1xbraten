@@ -10,6 +10,9 @@ extern void cleargamma();
 
 void cleanup()
 {
+#ifdef ANTICHEAT
+    game::shutdownanticheat();
+#endif
     recorder::stop();
     cleanupserver();
     SDL_ShowCursor(SDL_TRUE);
@@ -1249,6 +1252,9 @@ int main(int argc, char **argv)
                 break;
             }
             case 'x': initscript = &argv[i][2]; break;
+#ifdef ANTICHEAT
+            case 'e': anticheatenabled = 1; break;
+#endif
             default: if(!serveroption(argv[i])) gameargs.add(argv[i]); break;
         }
         else gameargs.add(argv[i]);
@@ -1354,6 +1360,14 @@ int main(int argc, char **argv)
 
     migratep1xbraten();
 
+#ifdef ANTICHEAT
+    if(anticheatenabled)
+    {
+        logoutf("init: anti-cheat");
+        game::initializeanticheat();
+    }
+#endif
+
     logoutf("init: mainloop");
 
     if(execfile("once.cfg", false)) remove(findfile("once.cfg", "rb"));
@@ -1398,6 +1412,9 @@ int main(int argc, char **argv)
         checksleep(lastmillis);
 
         serverslice(false, 0);
+#ifdef ANTICHEAT
+        game::pollanticheatstatus();
+#endif
 
         // miscellaneous general game effects
         recomputecamera();

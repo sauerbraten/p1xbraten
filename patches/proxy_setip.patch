@@ -1,27 +1,3 @@
-depends on managed_games.patch
-
-diff --git src/Makefile src/Makefile
-index 52829d9..061fc09 100644
---- src/Makefile
-+++ src/Makefile
-@@ -143,6 +143,7 @@ CLIENT_OBJS= \
- 	p1xbraten/remote_commands.o \
- 	p1xbraten/capability_probing.o \
- 	p1xbraten/managed_games.o \
-+	p1xbraten/proxy_real_ip.o \
- 	p1xbraten/namecomplete.o
- 
- CLIENT_PCH= shared/cube.h.gch engine/engine.h.gch fpsgame/game.h.gch
-@@ -169,7 +170,8 @@ SERVER_OBJS= \
- 	fpsgame/entities-standalone.o \
- 	fpsgame/server-standalone.o \
- 	p1xbraten/remote_commands-standalone.o \
--	p1xbraten/managed_games-standalone.o
-+	p1xbraten/managed_games-standalone.o \
-+	p1xbraten/proxy_real_ip.o
- 
- MASTER_OBJS= \
- 	shared/crypto-standalone.o \
 diff --git src/engine/server.cpp src/engine/server.cpp
 index 3017f57..4aa8d18 100644
 --- src/engine/server.cpp
@@ -149,28 +125,3 @@ index 8c20981..60ba746 100644
  extern void localconnect();
  extern const char *disconnectreason(int reason);
  extern void disconnect_client(int n, int reason);
-diff --git src/vcpp/sauerbraten.vcxproj src/vcpp/sauerbraten.vcxproj
-index 26d2dd2..b713960 100644
---- src/vcpp/sauerbraten.vcxproj
-+++ src/vcpp/sauerbraten.vcxproj
-@@ -1179,6 +1179,20 @@
-       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
-       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
-     </ClCompile>
-+    <ClCompile Include="..\p1xbraten\proxy_real_ip.cpp">
-+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">game.h</PrecompiledHeaderFile>
-+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">game.h</PrecompiledHeaderFile>
-+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
-+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
-+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">game.h</PrecompiledHeaderFile>
-+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">game.h</PrecompiledHeaderFile>
-+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
-+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
-+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">game.h</PrecompiledHeaderFile>
-+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">game.h</PrecompiledHeaderFile>
-+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
-+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)game.pch</PrecompiledHeaderOutputFile>
-+    </ClCompile>
-     <ClCompile Include="..\fpsgame\movable.cpp">
-       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">game.h</PrecompiledHeaderFile>
-       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">game.h</PrecompiledHeaderFile>

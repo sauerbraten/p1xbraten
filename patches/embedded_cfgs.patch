@@ -1,15 +1,3 @@
-Index: src/Makefile
-===================================================================
---- src/Makefile	(revision 6496)
-+++ src/Makefile	(working copy)
-@@ -123,6 +123,7 @@
- 	engine/worldio.o \
- 	fpsgame/ai.o \
- 	fpsgame/client.o \
-+	p1xbraten/embedded_cfgs.o \
- 	fpsgame/entities.o \
- 	fpsgame/fps.o \
- 	fpsgame/monster.o \
 Index: src/engine/main.cpp
 ===================================================================
 --- src/engine/main.cpp	(revision 6496)
@@ -156,28 +144,3 @@ Index: src/shared/stream.cpp
 
      void finishreading()
      {
-Index: src/vcpp/sauerbraten.vcxproj
-===================================================================
---- src/vcpp/sauerbraten.vcxproj	(revision 6496)
-+++ src/vcpp/sauerbraten.vcxproj	(working copy)
-@@ -1132,6 +1132,20 @@
-       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)2.obj</ObjectFileName>
-       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)2.obj</ObjectFileName>
-     </ClCompile>
-+    <ClCompile Include="..\p1xbraten\embedded_cfgs.cpp">
-+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">cube.h</PrecompiledHeaderFile>
-+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">cube.h</PrecompiledHeaderFile>
-+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)cube.pch</PrecompiledHeaderOutputFile>
-+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)cube.pch</PrecompiledHeaderOutputFile>
-+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">cube.h</PrecompiledHeaderFile>
-+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">cube.h</PrecompiledHeaderFile>
-+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">$(IntDir)cube.pch</PrecompiledHeaderOutputFile>
-+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)cube.pch</PrecompiledHeaderOutputFile>
-+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cube.h</PrecompiledHeaderFile>
-+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">cube.h</PrecompiledHeaderFile>
-+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)cube.pch</PrecompiledHeaderOutputFile>
-+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)cube.pch</PrecompiledHeaderOutputFile>
-+    </ClCompile>
-     <ClCompile Include="..\fpsgame\render.cpp">
-       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">game.h</PrecompiledHeaderFile>
-       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">game.h</PrecompiledHeaderFile>

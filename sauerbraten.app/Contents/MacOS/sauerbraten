@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# SAUER_OPTIONS contains any command line options you would like to start Sauerbraten with.
+SAUER_OPTIONS=""
+
+# SAUER_HOME is where Sauerbraten should store user files.
+SAUER_HOME="${HOME}/Library/Application Support/Sauerbraten"
+SAUER_APPDIR=$(dirname "$0")
+
+cd "${SAUER_APPDIR}"
+
+if [ -e "../Resources/data/defaults.cfg" ]; then
+    cd "../Resources" # we are an app package
+    SAUER_BIN="../MacOS"
+elif [ -e "../../../data/defaults.cfg" ]; then
+    cd "../../.." # we are being run in place
+    SAUER_BIN="./sauerbraten.app/Contents/MacOS"
+else
+    SAUER_BIN="."
+fi
+
+exec ${SAUER_BIN}/start_protected_game -e ${SAUER_OPTIONS} -q"${SAUER_HOME}" -glog.txt $@

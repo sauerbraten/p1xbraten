@@ -108,19 +108,6 @@ Index: src/fpsgame/movable.cpp
          loopv(movables)
          {
              movable *m = movables[i];
-Index: src/rpggame/rpg.cpp
-===================================================================
---- src/rpggame/rpg.cpp	(revision 6518)
-+++ src/rpggame/rpg.cpp	(working copy)
-@@ -14,7 +14,7 @@
-     void updateworld()
-     {
-         if(!maptime) { maptime = lastmillis; return; }
--        if(!curtime) return;
-+        if(!curtime || ispaused()) return;
-         physicsframe();
-         updateobjects();
-         player1->updateplayer();
 Index: src/shared/iengine.h
 ===================================================================
 --- src/shared/iengine.h	(revision 6518)

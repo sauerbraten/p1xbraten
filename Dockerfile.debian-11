@@ -1,0 +1,12 @@
+FROM debian:11-slim
+
+RUN apt-get update && apt-get install --assume-yes \
+    clang golang make xxd \
+    libsdl2-image-dev libsdl2-mixer-dev zlib1g-dev
+
+COPY Makefile secrets.env encrypt_credentials.go /
+
+COPY Dockertrigger /
+RUN bash -c "make linux"
+
+CMD []

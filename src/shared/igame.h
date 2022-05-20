@@ -101,6 +101,13 @@ namespace game
     extern void serverinfoendcolumn(g3d_gui *g, int i);
     extern bool serverinfoentry(g3d_gui *g, int i, const char *name, int port, const char *desc, const char *map, int ping, const vector<int> &attr, int np);
     extern bool needminimap();
+
+#ifdef ANTICHEAT
+    // anti-cheat
+    extern void initializeanticheat();
+    extern void pollanticheatstatus();
+    extern void shutdownanticheat();
+#endif
 } 
  
 namespace server
@@ -133,5 +140,10 @@ namespace server
     extern void authserverdisconnected(const char *keydomain);
     extern bool ispaused();
     extern int scaletime(int t);
-}
 
+#ifdef ANTICHEAT
+    // anti-cheat
+    extern void initializeanticheat();
+    extern void shutdownanticheat();
+#endif
+}

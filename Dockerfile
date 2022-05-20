@@ -19,7 +19,8 @@ RUN apk add --upgrade libstdc++
 
 COPY --from=builder /src/sauer_server /server
 
-COPY ./Docker.server-init.cfg /server-init.cfg
+# make sure you have a config!
+COPY ./server-init.cfg /server-init.cfg
 
 # remove the next line when you don't use p1xbraten sources or `/checkmaps` will fail
 RUN wget -O - https://static.p1x.pw/slim_ogzs.tar.gz | tar -xzof -

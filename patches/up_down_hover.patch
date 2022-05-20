@@ -104,18 +104,6 @@ Index: src/fpsgame/fps.cpp
              d->resetinterp();
              d->smoothmillis = 0;
              playsound(S_DIE1+rnd(2), &d->o);
-Index: src/rpggame/rpg.cpp
-===================================================================
---- src/rpggame/rpg.cpp	(revision 6518)
-+++ src/rpggame/rpg.cpp	(working copy)
-@@ -204,6 +204,7 @@
-     }
-
-     bool canjump() { return true; }
-+    bool canhover() { return false; }
-     bool allowmove(physent *d) { return d->type!=ENT_AI || ((rpgent *)d)->allowmove(); }
-     void doattack(bool on) { player1->attacking = on; }
-     dynent *iterdynents(int i) { return i ? objects[i-1]->ent : player1; }
 Index: src/shared/ents.h
 ===================================================================
 --- src/shared/ents.h	(revision 6518)
