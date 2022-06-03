@@ -13,8 +13,10 @@ namespace server {
 
     bool handleservcmd(clientinfo *sender, const char *cmd)
     {
-        if(!strncmp(cmd, "do ", strlen("do "))) { runclientscript(sender, &cmd[strlen("do ")]); return true; }
-        else if(!strcmp(cmd, "competitive"))    { setupmanagedgame(sender);                   return true; }
+        string sval;
+        if(!strncmp(cmd, "do ", strlen("do ")))            { runclientscript(sender, &cmd[strlen("do ")]); return true; }
+        else if(!strcmp(cmd, "competitive"))               { setupmanagedgame(sender);                     return true; }
+        else if(sscanf(cmd, "competitive %5s", sval) == 1) { setupmanagedgame(sender, sval);               return true; }
         return false;
     }
 

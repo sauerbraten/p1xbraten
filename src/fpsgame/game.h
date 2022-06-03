@@ -1244,8 +1244,10 @@ namespace server
 
     // managed games
     extern bool managedgame, managedgamenextmatch;
+    extern int gamelimitnextmatch;
+#define DEFAULT_GAMELIMIT (10*60*1000)
     extern void probeforclientdemoupload(packetbuf &p);
-    extern void setupmanagedgame(clientinfo *referee);
+    extern void setupmanagedgame(clientinfo *referee, char *duration = NULL);
     extern void startmanagedgame();
     extern void cleanupmanagedgame();
     extern void onspawn(clientinfo *ci);

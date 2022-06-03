@@ -5,9 +5,9 @@ namespace game {
 
     bool managedgamedemonextmatch = false;
     string managedgamedemofname;
-    
+
     void sendclientdemo()
-    {       
+    {
         if(!managedgamedemofname[0]) { conoutf(CON_ERROR, "client demo requested, but demo file name unknown!"); return; };
         conoutf("sending demo %s to server...", managedgamedemofname);
         stream *demo = NULL;
@@ -34,15 +34,30 @@ namespace server {
         sendstring(CAP_PROBE_CLIENT_DEMO_UPLOAD, p);
     }
 
+    int parseduration(char *s) // MM[:SS] -> ms
+    {
+        int mins = strtoul(s, &s, 10), secs = 0;
+        if(*s == ':') secs = strtoul(s+1, &s, 10);
+        return max((mins*60 + secs)*1000, 0);
+    }
+
     bool managedgame = false;
     bool managedgamenextmatch = false;
+    int gamelimitnextmatch = DEFAULT_GAMELIMIT;
 
-    void setupmanagedgame(clientinfo *referee)
+    void setupmanagedgame(clientinfo *referee, char *duration)
     {
-        if(!referee || (!referee->local && !referee->privilege)) return;
+        if(!referee || (!referee->privilege && !referee->local)) return;
+
         if(mastermode < MM_LOCKED) { mastermode = MM_LOCKED; sendf(-1, 1, "rii", N_MASTERMODE, mastermode); }
-        
-        sendf(-1, 1, "ris", N_SERVMSG, "next match will be a managed game");
+
+        int maplimit = 0;
+        if(duration) maplimit = parseduration(duration);
+        if(maplimit) gamelimitnextmatch = maplimit;
+
+        string msg = "next match will be a managed game";
+        if(maplimit) concformatstring(msg, " (%d:%02d)", (maplimit/1000)/60, (maplimit/1000)%60);
+        sendf(-1, 1, "ris", N_SERVMSG, msg);
 
         loopv(clients)
         {
@@ -59,6 +74,7 @@ namespace server {
     {
         managedgame = false;
         managedgamenextmatch = false;
+        gamelimitnextmatch = DEFAULT_GAMELIMIT;
     }
 
     static vector<clientinfo *> notyetspawned;
@@ -67,6 +83,8 @@ namespace server {
     {
         managedgame = true;
         managedgamenextmatch = false;
+        gamelimitnextmatch = DEFAULT_GAMELIMIT;
+
         notyetspawned.shrink(0);
         loopv(clients)
         {
@@ -104,7 +122,7 @@ namespace server {
         filtertext(basename, basename, false);
         len = strlen(basename);
         if(len < 4 || strcasecmp(&basename[len-4], ".dmo")) concatstring(basename, ".dmo");
-        
+
         const char* fname = getdemofile(basename, true);
         return fname ? fname : basename;
     }
@@ -216,7 +234,7 @@ namespace server {
             {
                 if(!ci->connected) return true;
                 if(ci->state.state==CS_SPECTATOR && ci->privilege < (restrictpausegame ? PRIV_ADMIN : PRIV_MASTER) && !ci->local) return true;
-            } 
+            }
             pausegame(false, ci);
             return true;
         }

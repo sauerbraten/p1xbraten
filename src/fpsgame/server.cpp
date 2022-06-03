@@ -1756,7 +1756,7 @@ namespace server
 
         gamemode = mode;
         gamemillis = 0;
-        gamelimit = 10*60000;
+        gamelimit = gamelimitnextmatch;
         interm = 0;
         nextexceeded = 0;
         copystring(smapname, s);
@@ -3561,7 +3561,7 @@ namespace server
                 getstring(text, p);
                 handleservcmd(ci, text);
                 break;
-            
+
             case N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED:
                 if(!ci || ci->local) return;
                 conoutf("client %d supports the client demo upload protocol extension!", ci->clientnum);

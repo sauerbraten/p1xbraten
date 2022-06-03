@@ -66,12 +66,12 @@ namespace game
         if(!radarteammates) return;
         float scale = calcradarscale();
         int alive = 0, dead = 0;
-        loopv(players)
+        loopv(players) 
         {
             fpsent *o = players[i];
             if(o != d && o->state == CS_ALIVE && isteam(o->team, d->team))
             {
-                if(!alive++)
+                if(!alive++) 
                 {
                     settexture(isteam(d->team, player1->team) ? "packages/hud/blip_blue_alive.png" : "packages/hud/blip_red_alive.png");
                     gle::defvertex(2);
@@ -82,12 +82,12 @@ namespace game
             }
         }
         if(alive) gle::end();
-        loopv(players)
+        loopv(players) 
         {
             fpsent *o = players[i];
             if(o != d && o->state == CS_DEAD && isteam(o->team, d->team))
             {
-                if(!dead++)
+                if(!dead++) 
                 {
                     settexture(isteam(d->team, player1->team) ? "packages/hud/blip_blue_dead.png" : "packages/hud/blip_red_dead.png");
                     gle::defvertex(2);
@@ -99,7 +99,7 @@ namespace game
         }
         if(dead) gle::end();
     }
-
+        
     #include "capture.h"
     #include "ctf.h"
     #include "collect.h"
@@ -474,7 +474,7 @@ namespace game
     {
         authkey *a = findauthkey(desc);
         int vn = parseplayer(victim);
-        if(a && vn>=0 && vn!=player1->clientnum)
+        if(a && vn>=0 && vn!=player1->clientnum) 
         {
             a->lastauth = lastmillis;
             addmsg(N_AUTHKICK, "rssis", a->desc, a->name, vn, reason);
@@ -505,7 +505,7 @@ namespace game
     bool isignored(int cn) { return ignores.find(cn) >= 0; }
 
     ICOMMAND(ignore, "s", (char *arg), ignore(parseplayer(arg)));
-    ICOMMAND(unignore, "s", (char *arg), unignore(parseplayer(arg)));
+    ICOMMAND(unignore, "s", (char *arg), unignore(parseplayer(arg))); 
     ICOMMAND(isignored, "s", (char *arg), intret(isignored(parseplayer(arg)) ? 1 : 0));
 
     MOD(VARFP, zenmode, 0, 0, 1, {
@@ -548,7 +548,7 @@ namespace game
         }
         string hash = "";
         if(!arg[1] && isdigit(arg[0])) val = parseint(arg);
-        else
+        else 
         {
             if(cn != player1->clientnum) return;
             server::hashpassword(player1->clientnum, sessionid, arg, hash);
@@ -618,7 +618,7 @@ namespace game
     }
     ICOMMAND(mode, "i", (int *val), setmode(*val));
     ICOMMAND(getmode, "", (), intret(gamemode));
-    ICOMMAND(timeremaining, "i", (int *formatted),
+    ICOMMAND(timeremaining, "i", (int *formatted), 
     {
         int val = max(maplimit - lastmillis + 999, 0)/1000;
         if(*formatted)
@@ -815,7 +815,7 @@ namespace game
                 int val = *id->storage.i;
                 string str;
                 if(val < 0)
-                    formatstring(str, "%d", val);
+                    formatstring(str, "%d", val); 
                 else if(id->flags&IDF_HEX && id->maxval==0xFFFFFF)
                     formatstring(str, "0x%.6X (%d, %d, %d)", val, (val>>16)&0xFF, (val>>8)&0xFF, val&0xFF);
                 else
@@ -861,10 +861,10 @@ namespace game
     }
     ICOMMAND(pausegame, "i", (int *val), pausegame(*val > 0));
     ICOMMAND(paused, "iN$", (int *val, int *numargs, ident *id),
-    {
-        if(*numargs > 0) pausegame(clampvar(id, *val, 0, 1) > 0);
+    { 
+        if(*numargs > 0) pausegame(clampvar(id, *val, 0, 1) > 0); 
         else if(*numargs < 0) intret(gamepaused ? 1 : 0);
-        else printvar(id, gamepaused ? 1 : 0);
+        else printvar(id, gamepaused ? 1 : 0); 
     });
 
     bool ispaused() { return gamepaused; }
@@ -1392,7 +1392,7 @@ namespace game
                     gamepaused = val;
                     player1->attacking = false;
                 }
-                if(a) conoutf("%s %s the game", colorname(a), val ? "paused" : "resumed");
+                if(a) conoutf("%s %s the game", colorname(a), val ? "paused" : "resumed"); 
                 else conoutf("game is %s", val ? "paused" : "resumed");
                 break;
             }
@@ -1408,7 +1408,7 @@ namespace game
                 else conoutf("gamespeed is %d", val);
                 break;
             }
-
+                
             case N_CLIENT:
             {
                 int cn = getint(p), len = getuint(p);
