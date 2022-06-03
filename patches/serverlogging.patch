@@ -28,8 +28,8 @@ Index: src/engine/server.cpp
      size_t len = strlen(buf), carry = 0;
 +    if(isdedicatedserver() && logtime)
 +    {
-+        if(!walltime || walltime > INT_MAX/2) { walltime = time(NULL); walltime -= totalmillis/1000; if(!walltime) walltime++; }
-+        time_t walloffset = walltime + totalmillis/1000;
++        if(!walltime) { walltime = time(NULL); walltime -= totalsecs; if(!walltime) walltime++; }
++        time_t walloffset = walltime + totalsecs;
 +        struct tm *localvals = localtime(&walloffset);
 +        static string ts;
 +        if(localvals)
@@ -143,7 +143,7 @@ Index: src/shared/iengine.h
  extern int totalmillis;                 // total elapsed time
  extern uint totalsecs;
  extern int gamespeed, paused;
-+extern time_t walltime;                 // wall time at engine startup (add totalmillis/1000 for current wall time)
++extern time_t walltime;      // wall time at engine startup (add totalmillis/1000 for current wall time)
 
  enum
  {

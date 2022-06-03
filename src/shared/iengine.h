@@ -7,7 +7,7 @@ extern int totalmillis;      // total elapsed wall clock duration since engine s
 extern int curframetime;     // scaled duration since last frame
 extern uint totalsecs;
 extern int gamespeed, paused;
-extern time_t walltime;                 // wall time at engine startup (add totalmillis/1000 for current wall time)
+extern time_t walltime;      // wall time at engine startup (add totalmillis/1000 for current wall time)
 
 enum
 {
