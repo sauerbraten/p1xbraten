@@ -4,11 +4,11 @@ cd $(dirname $0) # change into script directory in case it's called from somewhe
 
 # SAUER_OPTIONS contains any command line options you would like to start Sauerbraten with.
 #SAUER_OPTIONS="-f"
-SAUER_OPTIONS=""
+SAUER_OPTIONS="-q${HOME}/.sauerbraten"
 
 if [ "${XDG_SESSION_TYPE}" = wayland ]
 then
   export SDL_VIDEODRIVER=wayland
 fi
 
-exec "./bin_unix/start_protected_game" -e ${SAUER_OPTIONS} "-q${HOME}/.sauerbraten" "$@"
+exec "./bin_unix/start_protected_game" -e ${SAUER_OPTIONS} "$@"

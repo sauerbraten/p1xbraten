@@ -2,13 +2,11 @@
 
 This repository contains the source for my client mod, as well as the patches applied to the vanilla Sauerbraten source to get there.
 
-<p>
-<figure>
-  <blockquote>mouse input feels smooth af with your client now @pix</blockquote>
-  —Acuerta, <cite><a href='https://discord.com/channels/186571398422986754/388590104387649537/798528659400032286'>12 Jan 2021</a></cite>
-</figure>
-</p>
-
+- [Installation](#installation)
+  - [Windows](#windows)
+  - [macOS](#macos)
+  - [Linux](#linux)
+- [Menu](#menu)
 - [Patches](#patches)
   - [upstreamed to SVN](#upstreamed-to-svn)
   - [moviehud.patch](#moviehudpatch)
@@ -35,6 +33,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [crosshairreloadfade.patch](#crosshairreloadfadepatch)
   - [better_console.patch](#better_consolepatch)
   - [nextfollowteam.patch](#nextfollowteampatch)
+  - [anticheat.patch](#anticheatpatch)
 - [Server Patches](#server-patches)
   - [authservers.patch](#authserverspatch)
   - [serverlogging.patch](#serverloggingpatch)
@@ -42,17 +41,48 @@ This repository contains the source for my client mod, as well as the patches ap
   - [managed_games.patch](#managed_gamespatch)
   - [autoauthdomains.patch](#autoauthdomainspatch)
   - [proxy_setip.patch](#proxy_setippatch)
-- [Installation](#installation)
-  - [Windows](#windows)
-  - [macOS](#macos)
-  - [Linux](#linux)
-- [Menu](#menu)
+  - [anticheat.patch](#anticheatpatch-1)
 - [Project Structure](#project-structure)
 - [Building your own binary](#building-your-own-binary)
   - [Build dependencies](#build-dependencies)
   - [Building](#building)
   - [Using fresh upstream sources](#using-fresh-upstream-sources)
   - [Debugging](#debugging)
+
+
+## Installation
+
+The latest release is always at https://github.com/sauerbraten/p1xbraten/releases/latest.
+
+### Windows
+
+Download and run p1xbraten_setup_\<version\>.exe from the link above. p1xbraten will be installed alongside your existing Sauerbraten installation.
+
+### macOS
+
+1. Download macos.zip from the link above, open your Downloads folder in Finder and double-click the zip file to extract it.
+2. Navigate into sauerbraten.app
+3. Open a second Finder window
+4. Go to Applications, right click Sauerbraten.app, select "Show Package Contents"
+5. Make a copy of `Contents/MacOS/` (in case you want to go back to the vanilla client in the future)
+6. Drag the `Contents` folder from the zip file into the Finder window, merging it with the existing folder and replacing any existing files.
+7. Open a Terminal and type `chmod +x ` (note the space at the end), then drag the `p1xbraten_x86_64_client` file into the Terminal window
+8. When it says `chmod +x [...]/Contents/MacOS/p1xbraten_x86_64_client`, press Enter to execute
+9. type `chmod +x ` again, then drag the `start_protected_game` file into the Terminal window
+10. When it says `chmod +x [...]/Contents/MacOS/start_protected_game`, press Enter to execute
+
+If this seems like a lot of work that's because it is. I blame Apple.
+
+### Linux
+
+Download and extract linux.zip from the link above and put its contents into your Sauerbraten directory, then `chmod +x bin_unix/p1xbraten_x86_64_client bin_unix/start_protected_game`. Use p1xbraten.sh/anticheat.sh to launch.
+
+
+## Menu
+
+For easy configuration of the new features, an updated version of the `menus.cfg` file is automatically installed when you start p1xbraten for the first time. The new file brings UI options for added features and also includes various cleanups of the vanilla GUI.
+
+If you do not want to use the p1xbraten menus, run `/usep1xbratenmenus 0`.
 
 
 ## Patches
@@ -251,7 +281,7 @@ You can also adjust the trail colors in the options menu.
 ### [crosshairreloadfade.patch](./patches/crosshairreloadfade.patch)
 
 - adds `crosshairreloadfade` variable: set to 0 to disable the "crosshair-goes-dark-while-weapon-reloads" effect
-  
+
 ### [better_console.patch](./patches/better_console.patch)
 
 - adds name completion to chat console (press <kbd>Tab</kbd>)
@@ -282,6 +312,13 @@ specbind "MOUSE1" [nextfollowteam]
 specbind "MOUSE2" [nextfollowteam -1]
 ```
 
+### [anticheat.patch](./patches/anticheat.patch)
+
+Integrates Epic's Online Services SDK and Anti-Cheat framework to provide protected game sessions on p1xbraten anticheat servers.
+
+- adds the `-e` command line flag to enable anticheat support (anticheat launchers set this for you)
+- adds the `anticheatenabled` read-only variable (only available when using the anticheat launcher, and should never be 0)
+
 ## Server Patches
 
 These are the patches that make p1x.pw different from other servers.
@@ -308,8 +345,9 @@ Improves logging when running a dedicated server:
 
 ### [managed_games.patch](./patches/managed_games.patch)
 
-- adds the `#competitive` remote command, that will (for the next match only):
+- adds the `#competitive [MM[:SS]]` remote command, that will (for the next match only):
   - enable server demo recording and request client demo recording from p1xbraten users
+  - optionally, set the time to MM:SS
   - wait for all players to have loaded the map before starting
   - respawn all players on game start
   - auto-pause the game when a player disconnects or goes to spec
@@ -326,51 +364,24 @@ Improves logging when running a dedicated server:
 ### [proxy_setip.patch](./patches/proxy_setip.patch)
 
 - adds the `addtrustedproxyip` command to declare a packet source IP as belonging to a trusted proxy
-  
+
 This patch adds support for the [SauerDuels proxy](https://github.com/sauerduels/sauer-proxy) which can be used to obfuscate the IP of tournament servers. The `setip` protocol extension allows the proxy to forward the client's real IP, replacing the proxy's IP.
 
+### [anticheat.patch](./patches/anticheat.patch)
 
-## Installation
-
-The latest builds are always at https://github.com/sauerbraten/p1xbraten/releases/latest.
-
-### Windows
-
-Download p1xbraten_\<version\>_setup.exe from the link above and execute it. p1xbraten will be installed alongside your existing Sauerbraten installation.
-
-### macOS
-
-1. Open Finder
-2. Press Shift + Command + G (⇧⌘G)
-3. Go to `/Applications/sauerbraten.app/Contents/MacOS/`
-4. Make a copy of sauerbraten_universal (in case you want to go back to the vanilla client in the future)
-5. Download sauerbraten_universal from the link above and drag it into the Finder window, replacing the old file
-6. Open a Terminal and type `chmod +x ` (note the space at the end), then drag the sauerbraten_universal file into the Terminal window
-7. When it says `chmod +x /Applications/sauerbraten.app/Contents/MacOS/sauerbraten_universal`, press Enter to execute
-
-### Linux
-
-Download linux_64_client from the link above and put it into bin_unix/ inside of your Sauerbraten directory (*after* backing up the original file), then `chmod +x bin_unix/linux_64_client`.
-
-
-## Menu
-
-For easy configuration of the new features, an updated version of the `menus.cfg` file is automatically installed when you start p1xbraten for the first time. The new file brings UI options for added features and also includes various cleanups of the vanilla GUI.
-
-If you do not want to use the p1xbraten menus, run `/usep1xbratenmenus 0`.
-
+- adds the `-e` command line flag to enable anticheat support
+- adds the `forceanticheatclient` toggle: if enabled, players are forced-to-spec on connect, and have to be using a p1xbraten anticheat client in order to play
 
 ## Project Structure
 
 - `patches/` has all the patch files that turn vanilla Sauerbraten into p1xbraten
-- `src/` has the vanilla source tree with all patches already applied
-- `Makefile` has `make` commands to work with the patches and an SVN checkout of vanilla
+- `src/` has the p1xbraten source tree
+- `Makefile` has commands to work with the patches and an SVN checkout of vanilla
 - `data/` contains p1xbraten specific cubescript files: each files exist as plain text .cfg file as well as gzipped, xxd'ed file for embedding during compilation
-- `bin/`, `bin64/` and `bin_unix/` are empty and only exist for CI builds
-- `sauerbraten.app/` contains SDL2 for macOS builds
-- `p1xbraten.bat`, `server.sh`, and `start.sh` are custom p1xbraten launch scripts (`start.sh` and `server.sh` use `~/.p1xbraten` as user directory instead of `~/.sauerbraten`)
-- `p1xbraten.vcxproj` is a file so Appveyor can build 32- and 64-bit Windows binaries in a single run
-
+- `bin_unix/`, `bin64/`, and `sauerbraten.app/` contain OS-specific runtime dependencies
+- `p1xbraten.bat` and `p1xbraten.sh` are launch scripts for Windows/Linux
+- `anticheat.bat`/`anticheat.sh` launch p1xbraten with anti-cheat support enabled
+- `server.sh`, `start.sh` and `start_anticheat.sh` are my custom launch scripts (to facilitate launching the binary in this repo, but using content from ~/sauerbraten-code)
 
 ## Building your own binary
 
@@ -383,22 +394,22 @@ If you do not want to use the p1xbraten menus, run `/usep1xbratenmenus 0`.
 - development headers of libcurl (when checkupdate.patch is included and you're building targets other than linux64)
 
 ### Building
-  
-On Linux and macOS, just run `make install` **inside the src/ directory** (given you installed the usual Sauerbraten dependencies). On Windows, open [src/vcpp/sauerbraten.vcxproj](./src/vcpp/sauerbraten.vcxproj) with Visual Studio and build in there.
+
+On Linux or macOS, just run `make install` (given you installed the usual Sauerbraten dependencies). Building on Windows is not supported.
 
 This will put the resulting binary into the usual place inside this repo. To use it, you have to copy it over to the same place in your actual Sauerbraten installation. On Linux, the [start.sh](./start.sh) script will launch the new binary from inside this repository, using the Sauerbraten files in $SAUER_DIR and `~/.p1xbraten` as user data directory.
 
 ### Using fresh upstream sources
 
-On Linux and macOS, you can build my client using fresh vanilla sources. Set $SAUER_DIR to the path of your Sauerbraten directory, then use `make` and `make install` **in the repository root**:
+You can build my client using fresh vanilla sources. Set $SAUER_DIR to the path of your Sauerbraten directory, then use `make from-patches` and `make install`:
 
 ```
 export SAUER_DIR=~/sauerbraten-code
-make
+make from-patches
 make install
 ```
 
-`make` will copy the src/ directory from $SAUER_DIR, apply all patches and run `make` inside src/; `make install` will run `make install` inside src/.
+A fresh source tree will be copied from the Sauerbraten directory, then all my patches are applied on top of that before buildling and installing a new binary.
 
 ### Debugging
 
