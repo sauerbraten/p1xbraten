@@ -8,7 +8,7 @@ index 3017f57..4aa8d18 100644
      void *info;
 +    ENetAddress real; // set by proxy via setip remote command
  };
- 
+
  vector<client *> clients;
 @@ -187,7 +188,18 @@ int getservermtu() { return serverhost ? serverhost->mtu : -1; }
  void *getclientinfo(int i) { return !clients.inrange(i) || clients[i]->type==ST_EMPTY ? NULL : clients[i]->info; }
@@ -27,7 +27,7 @@ index 3017f57..4aa8d18 100644
 +    return enet_address_get_host_ip(&clients[n]->real, clients[n]->hostname, strlen("xxx.xxx.xxx.xxx"));
 +}
 +const char *getclienthostname(int n) { return clients.inrange(n) && clients[n]->type==ST_TCPIP ? clients[n]->hostname : NULL; }
- 
+
  void sendpacket(int n, int chan, ENetPacket *packet, int exclude)
  {
 diff --git src/fpsgame/game.h src/fpsgame/game.h
@@ -38,9 +38,9 @@ index 392b59c..a0af230 100644
      N_INITTOKENS, N_TAKETOKEN, N_EXPIRETOKENS, N_DROPTOKENS, N_DEPOSITTOKENS, N_STEALTOKENS,
      N_SERVCMD,
      N_DEMOPACKET,
-+    N_P1X_SETIP = 900, // only from proxy to server
-     N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED = 1000, N_P1X_RECORDDEMO, // guarded by CAP_PROBE_CLIENT_DEMO_UPLOAD
-     NUMMSG
++    N_P1X_SETIP = 900, // only from proxy to server (see addtrustedproxyip cmd)
+     // N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED = 1000, N_P1X_RECORDDEMO, // legacy
+     N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED = 1002, N_P1X_RECORDDEMO, // guarded by CAP_PROBE_CLIENT_DEMO_UPLOAD
  };
 @@ -276,6 +277,7 @@ static const int msgsizes[] =               // size inclusive message token, 0 f
      N_INITTOKENS, 0, N_TAKETOKEN, 2, N_EXPIRETOKENS, 0, N_DROPTOKENS, 0, N_DEPOSITTOKENS, 2, N_STEALTOKENS, 0,
@@ -58,25 +58,25 @@ index 392b59c..a0af230 100644
 +    // proxy support
 +    extern void setip(clientinfo *sender, uint ip);
  }
- 
+
  // additional colors
 diff --git src/fpsgame/server.cpp src/fpsgame/server.cpp
 index 4272bd7..8b407e5 100644
 --- src/fpsgame/server.cpp
 +++ src/fpsgame/server.cpp
 @@ -1301,7 +1301,7 @@ namespace server
- 
+
          uchar operator[](int msg) const { return msg >= 0 && msg < NUMMSG ? msgmask[msg] : 0; }
      } msgfilter(-1, N_CONNECT, N_SERVINFO, N_INITCLIENT, N_WELCOME, N_MAPCHANGE, N_SERVMSG, N_DAMAGE, N_HITPUSH, N_SHOTFX, N_EXPLODEFX, N_DIED, N_SPAWNSTATE, N_FORCEDEATH, N_TEAMINFO, N_ITEMACC, N_ITEMSPAWN, N_TIMEUP, N_CDIS, N_CURRENTMASTER, N_PONG, N_RESUME, N_BASESCORE, N_BASEINFO, N_BASEREGEN, N_ANNOUNCE, N_SENDDEMOLIST, N_SENDDEMO, N_DEMOPLAYBACK, N_SENDMAP, N_DROPFLAG, N_SCOREFLAG, N_RETURNFLAG, N_RESETFLAG, N_INVISFLAG, N_CLIENT, N_AUTHCHAL, N_INITAI, N_EXPIRETOKENS, N_DROPTOKENS, N_STEALTOKENS, N_DEMOPACKET, N_P1X_RECORDDEMO, -2, N_REMIP, N_NEWMAP, N_GETMAP, N_SENDMAP, N_CLIPBOARD, -3, N_EDITENT, N_EDITF, N_EDITT, N_EDITM, N_FLIP, N_COPY, N_PASTE, N_ROTATE, N_REPLACE, N_DELCUBE, N_EDITVAR, N_EDITVSLOT, N_UNDO, N_REDO, -4, N_POS, NUMMSG),
 -      connectfilter(-1, N_CONNECT, -2, N_AUTHANS, -3, N_PING, NUMMSG);
 +      connectfilter(-1, N_CONNECT, -2, N_AUTHANS, -3, N_PING, N_P1X_SETIP, NUMMSG);
- 
+
      int checktype(int type, clientinfo *ci)
      {
 @@ -2785,6 +2785,10 @@ namespace server
                      getint(p);
                      break;
- 
+
 +                case N_P1X_SETIP:
 +                    setip(ci, getint(p));
 +                    break;
@@ -84,6 +84,18 @@ index 4272bd7..8b407e5 100644
                  default:
                      disconnect_client(sender, DISC_MSGERR);
                      return;
+diff --git src/p1xbraten/clientdemo.cpp src/p1xbraten/clientdemo.cpp
+index 4272bd7..8b407e5 100644
+--- src/p1xbraten/clientdemo.cpp
++++ src/p1xbraten/clientdemo.cpp
+@@ -53,6 +53,7 @@ namespace game {
+         switch (type) {
+             case N_SENDDEMOLIST:
+             case N_AUTHTRY: case N_AUTHCHAL: case N_AUTHANS: case N_REQAUTH:
++            case N_P1X_SETIP:
+             case N_P1X_RECORDDEMO:
+                 return;
+         }
 diff --git src/p1xbraten/proxy_real_ip.cpp src/p1xbraten/proxy_real_ip.cpp
 new file mode 100644
 index 0000000..bd130e3

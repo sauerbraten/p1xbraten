@@ -1,23 +1,3 @@
-Subject: [PATCH] add anticheat.patch, clean up Makefile, use Zig to
- cross-compile
-
----
- src/anticheat/anticheat.cpp          | 637 +++++++++++++++++++++++++++
- src/engine/engine.h                  |   6 +
- src/engine/main.cpp                  |  17 +
- src/engine/movie.cpp                 |   4 +
- src/engine/server.cpp                |  17 +
- src/engine/sound.cpp                 |   4 +
- src/engine/texture.cpp               |   5 +-
- src/fpsgame/client.cpp               |  19 +
- src/fpsgame/game.h                   |  35 +-
- src/fpsgame/server.cpp               |  60 ++-
- src/p1xbraten/capability_probing.cpp |   3 +
- src/shared/cube.h                    |   2 +-
- src/shared/igame.h                   |  14 +-
- 13 files changed, 817 insertions(+), 6 deletions(-)
- create mode 100644 src/anticheat/anticheat.cpp
-
 diff --git src/anticheat/anticheat.cpp src/anticheat/anticheat.cpp
 new file mode 100644
 index 0000000..2fe07ee
@@ -846,10 +826,10 @@ index c5ae27e..6b87170 100644
          if(remote) stopfollowing();
          ignores.setsize(0);
          connected = remote = false;
-@@ -2076,7 +2079,23 @@ namespace game
-                 managedgamedemonextmatch = val!=0;
+@@ -2091,7 +2094,23 @@ namespace game
+                 }
+                 else enddemorecord(true);
                  break;
-             }
 +#ifdef ANTICHEAT
 +            case N_P1X_ANTICHEAT_BEGINSESSION:
 +                triggeranticheatsession();
@@ -877,18 +857,15 @@ index 0a4c901..4e9fe3a 100644
 @@ -215,6 +215,7 @@ enum
 
  // protocol extensions
- static const char * const CAP_PROBE_CLIENT_DEMO_UPLOAD = "capability_probe_protocol_extension_p1x_client_demo_upload";
+ static const char * const CAP_PROBE_CLIENT_DEMO_UPLOAD = "capability_probe_protocol_extension_p1x_client_demo_upload_v2";
 +static const char * const CAP_PROBE_ANTICHEAT          = "capability_probe_protocol_extension_p1x_anticheat";
 
  // network messages codes, c2s, c2c, s2c
 
-@@ -245,8 +246,11 @@ enum
-     N_INITTOKENS, N_TAKETOKEN, N_EXPIRETOKENS, N_DROPTOKENS, N_DEPOSITTOKENS, N_STEALTOKENS,
-     N_SERVCMD,
-     N_DEMOPACKET,
--    N_P1X_SETIP = 900, // only from proxy to server
-+    N_P1X_SETIP = 900, // only from proxy to server (see addtrustedproxyip cmd)
-     N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED = 1000, N_P1X_RECORDDEMO, // guarded by CAP_PROBE_CLIENT_DEMO_UPLOAD
+@@ -248,6 +248,9 @@ enum
+     N_P1X_SETIP = 900, // only from proxy to server (see addtrustedproxyip cmd)
+    // N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED = 1000, N_P1X_RECORDDEMO, // legacy
+    N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED = 1002, N_P1X_RECORDDEMO, // guarded by CAP_PROBE_CLIENT_DEMO_UPLOAD
 +#ifdef ANTICHEAT
 +    N_P1X_ANTICHEAT_SUPPORTED = 2000, N_P1X_ANTICHEAT_BEGINSESSION, N_P1X_ANTICHEAT_MESSAGE, N_P1X_ANTICHEAT_VIOLATION, N_P1X_ANTICHEAT_ENDSESSION, // guarded by CAP_PROBE_ANTICHEAT
 +#endif
@@ -906,9 +883,9 @@ index 0a4c901..4e9fe3a 100644
  };
 
 @@ -886,6 +893,14 @@ namespace game
-     extern bool managedgamedemonextmatch;
-     extern string managedgamedemofname;
-     extern void sendclientdemo();
+     // managed games
+     extern void handlecapprobe(const char *msg);
+     extern void sendclientdemo(stream *demo);
 +
 +#ifdef ANTICHEAT
 +    // anticheat
@@ -1081,6 +1058,20 @@ index 232c554..286bdfa 100644
      }
 
  }
+diff --git src/p1xbraten/clientdemo.cpp src/p1xbraten/clientdemo.cpp
+index 4272bd7..8b407e5 100644
+--- src/p1xbraten/clientdemo.cpp
++++ src/p1xbraten/clientdemo.cpp
+@@ -55,6 +55,9 @@ namespace game {
+             case N_AUTHTRY: case N_AUTHCHAL: case N_AUTHANS: case N_REQAUTH:
+             case N_P1X_SETIP:
+             case N_P1X_RECORDDEMO:
++#ifdef ANTICHEAT
++            case N_P1X_ANTICHEAT_BEGINSESSION: case N_P1X_ANTICHEAT_MESSAGE: case N_P1X_ANTICHEAT_ENDSESSION:
++#endif
+                 return;
+         }
+         int stamp[3] = { totalmillis-demostartmillis, chan, len };
 diff --git src/shared/cube.h src/shared/cube.h
 index be7755c..c153591 100644
 --- src/shared/cube.h

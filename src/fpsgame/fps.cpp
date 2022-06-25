@@ -725,7 +725,7 @@ namespace game
         disablezoom();
         lasthit = 0;
 
-        if(remote && (demonextmatch || managedgamedemonextmatch)) setupdemorecord();
+        if(remote && demonextmatch) setupdemorecord();
         execident("mapstart");
     }
 

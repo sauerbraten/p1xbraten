@@ -30,7 +30,7 @@ index f6f7555..59b8c54 100644
 +        }
 +    }
  };
- 
+
  extern captureclientmode capturemode;
 diff --git src/fpsgame/client.cpp src/fpsgame/client.cpp
 index 522d32a..b0cc1c8 100644
@@ -45,7 +45,7 @@ index 522d32a..b0cc1c8 100644
      void printname()
      {
 @@ -568,6 +569,7 @@ namespace game
- 
+
      void changemapserv(const char *name, int mode)        // forced map change from the server
      {
 +        if(demorecord) enddemorecord();
@@ -63,14 +63,14 @@ index 522d32a..b0cc1c8 100644
 @@ -980,7 +983,7 @@ namespace game
      VARP(teamcolorchat, 0, 1, 1);
      const char *chatcolorname(fpsent *d) { return teamcolorchat ? teamcolorname(d, NULL) : colorname(d); }
- 
+
 -    void toserver(char *text) { conoutf(CON_CHAT, "%s:\f0 %s", chatcolorname(player1), text); addmsg(N_TEXT, "rcs", player1, text); }
 +    void toserver(char *text) { conoutf(CON_CHAT, "%s:\f0 %s", chatcolorname(player1), text); addmsg(N_TEXT, "rcs", player1, text); if(demorecord) recordmsg(N_TEXT, "rcs", player1, text); }
      COMMANDN(say, toserver, "C");
- 
+
      void sayteam(char *text) { conoutf(CON_TEAMCHAT, "\fs\f8[team]\fr %s: \f8%s", chatcolorname(player1), text); addmsg(N_SAYTEAM, "rcs", player1, text); }
 @@ -994,6 +997,7 @@ namespace game
- 
+
      static void sendposition(fpsent *d, packetbuf &q)
      {
 +        int offset = q.length();
@@ -83,7 +83,7 @@ index 522d32a..b0cc1c8 100644
          }
 +        if(demorecord && (d==player1 || d->ai)) recordpacket(0, q.buf+offset, q.length());
      }
- 
+
      void sendposition(fpsent *d, bool reliable)
 @@ -1115,9 +1120,21 @@ namespace game
      void c2sinfo(bool force) // send update to the server
@@ -110,13 +110,13 @@ index 522d32a..b0cc1c8 100644
      }
 @@ -1826,7 +1843,9 @@ namespace game
              }
- 
+
              case N_PONG:
 +                if(demopacket) { getint(p); break; }
                  addmsg(N_CLIENTPING, "i", player1->ping = (player1->ping*5+totalmillis-getint(p))/6);
 +                if(demorecord) recordmsg(N_CLIENTPING, "i", player1->ping);
                  break;
- 
+
              case N_CLIENTPING:
 @@ -2101,6 +2120,7 @@ namespace game
      void parsepacketclient(int chan, packetbuf &p)   // processes any updates from the server
@@ -132,7 +132,7 @@ index a3d4ea8..1e6b8b0 100644
 +++ src/fpsgame/ctf.h
 @@ -447,6 +447,9 @@ struct ctfclientmode : clientmode
      }
- 
+
      void initclient(clientinfo *ci, packetbuf &p, bool connecting)
 +#else
 +    void initdemoclient(packetbuf &p)
@@ -159,7 +159,7 @@ index a3d4ea8..1e6b8b0 100644
 @@ -480,6 +489,7 @@ struct ctfclientmode : clientmode
          }
      }
- 
+
 +#ifdef SERVMODE
      void parseflags(ucharbuf &p, bool commit)
      {
@@ -191,11 +191,11 @@ index 7dc7de0..f5328cb 100644
 @@ -688,6 +688,7 @@ namespace game
          disablezoom();
          lasthit = 0;
- 
+
 +        if(remote && demonextmatch) setupdemorecord();
          execident("mapstart");
      }
- 
+
 @@ -743,12 +744,16 @@ namespace game
          if(!d || d==player1)
          {
@@ -223,11 +223,11 @@ index b59407a..64a92ad 100644
          virtual bool aipursue(fpsent *d, ai::aistate &b) { return false; }
 +        virtual void initdemoclient(packetbuf &p) {}
      };
- 
+
      extern clientmode *cmode;
 @@ -752,8 +753,10 @@ namespace game
      const char *mastermodeicon(int n, const char *unknown);
- 
+
      // client
 -    extern bool connected, remote, demoplayback;
 +    extern bool connected, remote, demoplayback, gamepaused;
@@ -235,7 +235,7 @@ index b59407a..64a92ad 100644
 +    extern int mastermode, gamespeed;
 +    extern hashset<teaminfo> teaminfos;
      extern vector<uchar> messages;
- 
+
      extern int parseplayer(const char *arg);
 @@ -860,6 +863,14 @@ namespace game
      extern int chooserandomplayermodel(int seed);
@@ -246,11 +246,11 @@ index b59407a..64a92ad 100644
 +    extern bool demonextmatch;
 +    extern stream *demorecord;
 +    extern void setupdemorecord();
-+    extern void recordpacket(int chan, void *data, int len);
++    extern void recordpacket(int chan, uchar *data, int len);
 +    extern bool recordmsg(int type, const char *fmt = NULL, ...);
 +    extern void enddemorecord();
  }
- 
+
  #include "fragmessages.h"
 diff --git src/fpsgame/scoreboard.cpp src/fpsgame/scoreboard.cpp
 index 1833375..6433a9b 100644
@@ -259,10 +259,10 @@ index 1833375..6433a9b 100644
 @@ -22,7 +22,7 @@ namespace game
      MOD(VARP, showdamage, 0, 0, 2);
      MOD(VARP, showdamagereceived, 0, 0, 1);
- 
+
 -    static hashset<teaminfo> teaminfos;
 +    hashset<teaminfo> teaminfos;
- 
+
      void clearteaminfo()
      {
 diff --git src/fpsgame/weapon.cpp src/fpsgame/weapon.cpp
@@ -286,14 +286,14 @@ index f495ed6..4810e0d 100644
 +                int(from.x*DMF), int(from.y*DMF), int(from.z*DMF),
 +                int(to.x*DMF), int(to.y*DMF), int(to.z*DMF));
          }
- 
+
  		d->gunwait = guns[d->gunselect].attackdelay;
 diff --git src/p1xbraten/clientdemo.cpp src/p1xbraten/clientdemo.cpp
 new file mode 100644
 index 0000000..839b0a9
 --- /dev/null
 +++ src/p1xbraten/clientdemo.cpp
-@@ -0,0 +1,300 @@
+@@ -0,0 +1,317 @@
 +#include "game.h"
 +
 +// client-side demo recording works mostly the same as server-side:
@@ -321,15 +321,36 @@ index 0000000..839b0a9
 +    {
 +        if(!demorecord) return;
 +        DELETEP(demorecord);
++        conoutf("stopped client demo recording");
 +        if(!demo) return;
 +        DELETEP(demo);
-+        conoutf("stopped client demo recording");
 +    }
 +
-+    void recordpacket(int chan, void *data, int len)
++
++    void recordpacket(int chan, uchar *data, int len)
 +    {
-+        if(!demorecord) return;
-+        int stamp[3] = { totalmillis-demostartmillis, chan, len };
++        if(!demorecord || !len) return;
++        // peek message type
++        int type = (schar)data[0];
++        if(type==-128 && len > 3)
++        {
++            type = data[1];
++            type |= ((schar)data[2])<<8;
++        }
++        else if(type==-127 && len > 5)
++        {
++            type = data[1];
++            type |= ((schar)data[2])<<8;
++            type |= ((schar)data[3])<<16;
++            type |= ((schar)data[4])<<24;
++        }
++        // skip certain packets
++        switch (type) {
++            case N_SENDDEMOLIST:
++            case N_AUTHTRY: case N_AUTHCHAL: case N_AUTHANS: case N_REQAUTH:
++                return;
++        }
++        int stamp[3] = { lastmillis-demostartmillis, chan, len };
 +        lilswap(stamp, 3);
 +        demorecord->write(stamp, sizeof(stamp));
 +        demorecord->write(data, len);
@@ -390,7 +411,7 @@ index 0000000..839b0a9
 +        putint(p, gamemode);
 +        putint(p, 0); // notgotitems = false
 +        putint(p, N_TIMEUP);
-+        putint(p, lastmillis < maplimit && !intermission ? max((maplimit - totalmillis)/1000, 1) : 0);
++        putint(p, intermission ? 0 : max((maplimit - lastmillis)/1000, 1));
 +        putint(p, N_ITEMLIST);
 +        loopv(entities::ents) if(entities::ents[i]->spawned())
 +        {
@@ -458,7 +479,7 @@ index 0000000..839b0a9
 +
 +    void setupdemorecord()
 +    {
-+        if(!m_mp(gamemode) || m_edit || m_collect || demo || demorecord) return;
++        if(!m_mp(gamemode) || m_collect || demoplayback || demorecord) return; // todo: collect init packet
 +
 +        string tname;
 +        tname[0] = '\0';
@@ -490,7 +511,7 @@ index 0000000..839b0a9
 +        lilswap(&hdr.version, 2);
 +        demorecord->write(&hdr, sizeof(demoheader));
 +
-+        demostartmillis = totalmillis;
++        demostartmillis = lastmillis;
 +
 +        packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
 +        welcomepacket(p);
@@ -501,17 +522,13 @@ index 0000000..839b0a9
 +    {
 +        switch (val)
 +        {
-+            case 0: case 1: // (un)schedule for next match
-+            {
-+                demonextmatch = val==1;
-+                conoutf("client demo recording is %s for next match", demonextmatch ? "enabled" : "disabled");
++            case 0: // stop recording
++                enddemorecord();
 +                break;
-+            }
++            // case 1: // unused, legacy
 +            case 2: // start immediately
-+            {
 +                setupdemorecord();
 +                break;
-+            }
 +        }
 +    }
 +    ICOMMAND(recordclientdemo, "i", (int *val), recordclientdemo(*val));

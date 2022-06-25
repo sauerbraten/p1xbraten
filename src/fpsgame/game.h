@@ -214,7 +214,7 @@ enum
 };
 
 // protocol extensions
-static const char * const CAP_PROBE_CLIENT_DEMO_UPLOAD = "capability_probe_protocol_extension_p1x_client_demo_upload";
+static const char * const CAP_PROBE_CLIENT_DEMO_UPLOAD = "capability_probe_protocol_extension_p1x_client_demo_upload_v2";
 static const char * const CAP_PROBE_ANTICHEAT          = "capability_probe_protocol_extension_p1x_anticheat";
 
 // network messages codes, c2s, c2c, s2c
@@ -247,7 +247,8 @@ enum
     N_SERVCMD,
     N_DEMOPACKET,
     N_P1X_SETIP = 900, // only from proxy to server (see addtrustedproxyip cmd)
-    N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED = 1000, N_P1X_RECORDDEMO, // guarded by CAP_PROBE_CLIENT_DEMO_UPLOAD
+    // N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED = 1000, N_P1X_RECORDDEMO, // legacy
+    N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED = 1002, N_P1X_RECORDDEMO, // guarded by CAP_PROBE_CLIENT_DEMO_UPLOAD
 #ifdef ANTICHEAT
     N_P1X_ANTICHEAT_SUPPORTED = 2000, N_P1X_ANTICHEAT_BEGINSESSION, N_P1X_ANTICHEAT_MESSAGE, N_P1X_ANTICHEAT_VIOLATION, N_P1X_ANTICHEAT_ENDSESSION, // guarded by CAP_PROBE_ANTICHEAT
 #endif
@@ -884,15 +885,13 @@ namespace game
     extern bool demonextmatch;
     extern stream *demorecord;
     extern void setupdemorecord();
-    extern void recordpacket(int chan, void *data, int len);
+    extern void recordpacket(int chan, uchar *data, int len);
     extern bool recordmsg(int type, const char *fmt = NULL, ...);
-    extern void enddemorecord();
+    extern void enddemorecord(bool send = false);
 
     // managed games
     extern void handlecapprobe(const char *msg);
-    extern bool managedgamedemonextmatch;
-    extern string managedgamedemofname;
-    extern void sendclientdemo();
+    extern void sendclientdemo(stream *demo);
 
 #ifdef ANTICHEAT
     // anticheat

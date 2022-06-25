@@ -21,20 +21,46 @@ namespace game {
     stream *demo = NULL, *demorecord = NULL;
     int demostartmillis = 0;
 
-    void enddemorecord()
+    void enddemorecord(bool send)
     {
         if(!demorecord) return;
         DELETEP(demorecord);
-        if(!demo) return;
-        DELETEP(demo);
         conoutf("stopped client demo recording");
-        if(intermission && managedgamedemofname[0]) sendclientdemo();
+        if(!demo) return;
+        if(send) sendclientdemo(demo);
+        DELETEP(demo);
     }
 
-    void recordpacket(int chan, void *data, int len)
+
+    void recordpacket(int chan, uchar *data, int len)
     {
-        if(!demorecord) return;
-        int stamp[3] = { totalmillis-demostartmillis, chan, len };
+        if(!demorecord || !len) return;
+        // peek message type
+        int type = (schar)data[0];
+        if(type==-128 && len > 3)
+        {
+            type = data[1];
+            type |= ((schar)data[2])<<8;
+        }
+        else if(type==-127 && len > 5)
+        {
+            type = data[1];
+            type |= ((schar)data[2])<<8;
+            type |= ((schar)data[3])<<16;
+            type |= ((schar)data[4])<<24;
+        }
+        // skip certain packets
+        switch (type) {
+            case N_SENDDEMOLIST:
+            case N_AUTHTRY: case N_AUTHCHAL: case N_AUTHANS: case N_REQAUTH:
+            case N_P1X_SETIP:
+            case N_P1X_RECORDDEMO:
+#ifdef ANTICHEAT
+            case N_P1X_ANTICHEAT_BEGINSESSION: case N_P1X_ANTICHEAT_MESSAGE: case N_P1X_ANTICHEAT_ENDSESSION:
+#endif
+                return;
+        }
+        int stamp[3] = { lastmillis-demostartmillis, chan, len };
         lilswap(stamp, 3);
         demorecord->write(stamp, sizeof(stamp));
         demorecord->write(data, len);
@@ -95,7 +121,7 @@ namespace game {
         putint(p, gamemode);
         putint(p, 0); // notgotitems = false
         putint(p, N_TIMEUP);
-        putint(p, lastmillis < maplimit && !intermission ? max((maplimit - totalmillis)/1000, 1) : 0);
+        putint(p, intermission ? 0 : max((maplimit - lastmillis)/1000, 1));
         putint(p, N_ITEMLIST);
         loopv(entities::ents) if(entities::ents[i]->spawned())
         {
@@ -165,7 +191,7 @@ namespace game {
 
     void setupdemorecord()
     {
-        if(!m_mp(gamemode) || m_edit || m_collect || demo || demorecord) return;
+        if(!m_mp(gamemode) || m_collect || demoplayback || demorecord) return; // todo: collect init packet
 
         string tname;
         tname[0] = '\0';
@@ -177,7 +203,6 @@ namespace game {
         filtertext(fname, fname, false);
         len = strlen(fname);
         if(len < 4 || strcasecmp(&fname[len-4], ".dmo")) concatstring(fname, ".dmo");
-        if(managedgamedemonextmatch) copystring(managedgamedemofname, fname);
 
         if(const char *buf = server::getdemofile(fname, true)) demo = openrawfile(buf, "w+b");
         if(!demo) demo = openrawfile(fname, "w+b");
@@ -189,7 +214,6 @@ namespace game {
         conoutf("recording client demo");
 
         demonextmatch = false;
-        managedgamedemonextmatch = false;
         demorecord = f;
 
         demoheader hdr;
@@ -199,7 +223,7 @@ namespace game {
         lilswap(&hdr.version, 2);
         demorecord->write(&hdr, sizeof(demoheader));
 
-        demostartmillis = totalmillis;
+        demostartmillis = lastmillis;
 
         packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
         welcomepacket(p);
@@ -211,17 +235,13 @@ namespace game {
     {
         switch (val)
         {
-            case 0: case 1: // (un)schedule for next match
-            {
-                demonextmatch = val==1;
-                conoutf("client demo recording is %s for next match", demonextmatch ? "enabled" : "disabled");
+            case 0: // stop recording
+                enddemorecord();
                 break;
-            }
+            // case 1: // unused, legacy
             case 2: // start immediately
-            {
                 setupdemorecord();
                 break;
-            }
         }
     }
     ICOMMAND(recordclientdemo, "i", (int *val), recordclientdemo(*val));

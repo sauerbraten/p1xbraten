@@ -2071,14 +2071,13 @@ namespace game
                 break;
 
             case N_P1X_RECORDDEMO:
-            {
-                int val = getint(p);
-                if(val) conoutf("server requested client demo recording for the next match");
-                else if(managedgamedemonextmatch) conoutf("server canceled client demo recording for the next match");
-                else if(managedgamedemofname[0]) enddemorecord();
-                managedgamedemonextmatch = val!=0;
+                if(!getint(p)) enddemorecord(true);
+                else if(!demorecord)
+                {
+                    conoutf("server triggered client demo recording");
+                    setupdemorecord();
+                }
                 break;
-            }
 #ifdef ANTICHEAT
             case N_P1X_ANTICHEAT_BEGINSESSION:
                 triggeranticheatsession();

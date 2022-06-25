@@ -2,7 +2,7 @@ diff --git src/fpsgame/client.cpp src/fpsgame/client.cpp
 index b0cc1c8..1e3163e 100644
 --- src/fpsgame/client.cpp
 +++ src/fpsgame/client.cpp
-@@ -2043,8 +2043,19 @@ namespace game
+@@ -2060,8 +2060,18 @@ namespace game
 
              case N_SERVCMD:
                  getstring(text, p);
@@ -10,31 +10,17 @@ index b0cc1c8..1e3163e 100644
                  break;
 
 +            case N_P1X_RECORDDEMO:
-+            {
-+                int val = getint(p);
-+                if(val) conoutf("server requested client demo recording for the next match");
-+                else if(managedgamedemonextmatch) conoutf("server canceled client demo recording for the next match");
-+                else if(managedgamedemofname[0]) enddemorecord();
-+                managedgamedemonextmatch = val!=0;
++                if(!getint(p)) enddemorecord(true);
++                else if(!demorecord)
++                {
++                    conoutf("server triggered client demo recording");
++                    setupdemorecord();
++                }
 +                break;
-+            }
 +
              default:
                  neterr("type", cn < 0);
                  return;
-diff --git src/fpsgame/fps.cpp src/fpsgame/fps.cpp
-index 24d623f..1f6919b 100644
---- src/fpsgame/fps.cpp
-+++ src/fpsgame/fps.cpp
-@@ -688,7 +688,7 @@ namespace game
-         disablezoom();
-         lasthit = 0;
-
--        if(remote && demonextmatch) setupdemorecord();
-+        if(remote && (demonextmatch || managedgamedemonextmatch)) setupdemorecord();
-         execident("mapstart");
-     }
-
 diff --git src/fpsgame/game.h src/fpsgame/game.h
 index 02277f9..b37ef32 100644
 --- src/fpsgame/game.h
@@ -44,16 +30,17 @@ index 02277f9..b37ef32 100644
  };
 
 +// protocol extensions
-+static const char * const CAP_PROBE_CLIENT_DEMO_UPLOAD = "capability_probe_protocol_extension_p1x_client_demo_upload";
++static const char * const CAP_PROBE_CLIENT_DEMO_UPLOAD = "capability_probe_protocol_extension_p1x_client_demo_upload_v2";
 +
  // network messages codes, c2s, c2c, s2c
 
  enum
-@@ -242,6 +245,7 @@ enum
+@@ -242,6 +245,8 @@ enum
      N_INITTOKENS, N_TAKETOKEN, N_EXPIRETOKENS, N_DROPTOKENS, N_DEPOSITTOKENS, N_STEALTOKENS,
      N_SERVCMD,
      N_DEMOPACKET,
-+    N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED = 1000, N_P1X_RECORDDEMO, // guarded by CAP_PROBE_CLIENT_DEMO_UPLOAD
++    // N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED = 1000, N_P1X_RECORDDEMO, // legacy
++    N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED = 1002, N_P1X_RECORDDEMO, // guarded by CAP_PROBE_CLIENT_DEMO_UPLOAD
      NUMMSG
  };
 
@@ -65,16 +52,15 @@ index 02277f9..b37ef32 100644
      -1
  };
 
-@@ -871,6 +876,12 @@ namespace game
+@@ -871,6 +876,10 @@ namespace game
      extern void recordpacket(int chan, void *data, int len);
      extern bool recordmsg(int type, const char *fmt = NULL, ...);
-     extern void enddemorecord();
+-    extern void enddemorecord();
++    extern void enddemorecord(bool send = false);
 +
 +    // managed games
 +    extern void handlecapprobe(const char *msg);
-+    extern bool managedgamedemonextmatch;
-+    extern string managedgamedemofname;
-+    extern void sendclientdemo();
++    extern void sendclientdemo(stream *demo);
  }
 
  #include "fragmessages.h"
@@ -373,58 +359,47 @@ diff --git src/p1xbraten/clientdemo.cpp src/p1xbraten/clientdemo.cpp
 index 839b0a9..48e29ec 100644
 --- src/p1xbraten/clientdemo.cpp
 +++ src/p1xbraten/clientdemo.cpp
-@@ -28,6 +28,7 @@ namespace game {
-         if(!demo) return;
-         DELETEP(demo);
+@@ -22,11 +22,12 @@ namespace game {
+     int demostartmillis = 0;
+
+-    void enddemorecord()
++    void enddemorecord(bool send)
+     {
+         if(!demorecord) return;
+         DELETEP(demorecord);
          conoutf("stopped client demo recording");
-+        if(intermission && managedgamedemofname[0]) sendclientdemo();
+         if(!demo) return;
++        if(send) sendclientdemo(demo);
+         DELETEP(demo);
      }
 
-     void recordpacket(int chan, void *data, int len)
-@@ -174,6 +175,7 @@ namespace game {
-         filtertext(fname, fname, false);
-         len = strlen(fname);
-         if(len < 4 || strcasecmp(&fname[len-4], ".dmo")) concatstring(fname, ".dmo");
-+        if(managedgamedemonextmatch) copystring(managedgamedemofname, fname);
-
-         if(const char *buf = server::getdemofile(fname, true)) demo = openrawfile(buf, "w+b");
-         if(!demo) demo = openrawfile(fname, "w+b");
-@@ -185,6 +187,7 @@ namespace game {
-         conoutf("recording client demo");
-
-         demonextmatch = false;
-+        managedgamedemonextmatch = false;
-         demorecord = f;
-
-         demoheader hdr;
+@@ -52,6 +52,7 @@ namespace game {
+         switch (type) {
+             case N_SENDDEMOLIST:
+             case N_AUTHTRY: case N_AUTHCHAL: case N_AUTHANS: case N_REQAUTH:
++            case N_P1X_RECORDDEMO:
+                 return;
+         }
+         int stamp[3] = { totalmillis-demostartmillis, chan, len };
 diff --git src/p1xbraten/managed_games.cpp src/p1xbraten/managed_games.cpp
 new file mode 100644
 index 0000000..1c1b1d7
 --- /dev/null
 +++ src/p1xbraten/managed_games.cpp
-@@ -0,0 +1,267 @@
+@@ -0,0 +1,262 @@
 +#include "game.h"
 +
 +#ifndef STANDALONE
 +namespace game {
 +
-+    bool managedgamedemonextmatch = false;
-+    string managedgamedemofname;
-+
-+    void sendclientdemo()
++    void sendclientdemo(stream *demo)
 +    {
-+        if(!managedgamedemofname[0]) { conoutf(CON_ERROR, "client demo requested, but demo file name unknown!"); return; };
-+        conoutf("sending demo %s to server...", managedgamedemofname);
-+        stream *demo = NULL;
-+        if(const char *buf = server::getdemofile(managedgamedemofname, true)) demo = openrawfile(buf, "rb");
-+        if(!demo) demo = openrawfile(managedgamedemofname, "rb");
-+        managedgamedemofname[0] = '\0';
-+        if(!demo) { conoutf("failed to open demo file"); return; }
++        conoutf("sending demo to server...");
++        if(!demo) return;
 +        stream::offset len = demo->size();
 +        if(len > 16*1024*1024) conoutf(CON_ERROR, "demo is too large"); // todo: is 16 MB enough?
 +        else if(len <= 0) conoutf(CON_ERROR, "could not read demo");
 +        else sendfile(-1, 3, demo);
-+        DELETEP(demo);
 +        conoutf("client demo sent");
 +    }
 +}
@@ -468,7 +443,6 @@ index 0000000..1c1b1d7
 +        {
 +            clientinfo *ci = clients[i];
 +            if(ci->state.state==CS_SPECTATOR) continue;
-+            if(ci->supportsclientdemoupload) sendf(ci->clientnum, 1, "rii", N_P1X_RECORDDEMO, 1);
 +        }
 +
 +        managedgamenextmatch = true;
@@ -604,7 +578,12 @@ index 0000000..1c1b1d7
 +    void onspawn(clientinfo *ci)
 +    {
 +        if(!notyetspawned.length()) return;
-+        loopv(notyetspawned) if(notyetspawned[i]==ci) notyetspawned.remove(i);
++        loopv(notyetspawned) if(notyetspawned[i]==ci)
++        {
++            notyetspawned.remove(i);
++            if(ci->supportsclientdemoupload) sendf(ci->clientnum, 1, "rii", N_P1X_RECORDDEMO, 2);
++            break;
++        }
 +        if(!notyetspawned.length())
 +        {
 +            sendf(-1, 1, "ris", N_SERVMSG, "all players ready, game starts in 3");

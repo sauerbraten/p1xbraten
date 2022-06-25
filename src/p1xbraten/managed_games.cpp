@@ -3,23 +3,14 @@
 #ifndef STANDALONE
 namespace game {
 
-    bool managedgamedemonextmatch = false;
-    string managedgamedemofname;
-
-    void sendclientdemo()
+    void sendclientdemo(stream *demo)
     {
-        if(!managedgamedemofname[0]) { conoutf(CON_ERROR, "client demo requested, but demo file name unknown!"); return; };
-        conoutf("sending demo %s to server...", managedgamedemofname);
-        stream *demo = NULL;
-        if(const char *buf = server::getdemofile(managedgamedemofname, true)) demo = openrawfile(buf, "rb");
-        if(!demo) demo = openrawfile(managedgamedemofname, "rb");
-        managedgamedemofname[0] = '\0';
-        if(!demo) { conoutf("failed to open demo file"); return; }
+        conoutf("sending demo to server...");
+        if(!demo) return;
         stream::offset len = demo->size();
         if(len > 16*1024*1024) conoutf(CON_ERROR, "demo is too large"); // todo: is 16 MB enough?
         else if(len <= 0) conoutf(CON_ERROR, "could not read demo");
         else sendfile(-1, 3, demo);
-        DELETEP(demo);
         conoutf("client demo sent");
     }
 }
@@ -63,7 +54,6 @@ namespace server {
         {
             clientinfo *ci = clients[i];
             if(ci->state.state==CS_SPECTATOR) continue;
-            if(ci->supportsclientdemoupload) sendf(ci->clientnum, 1, "rii", N_P1X_RECORDDEMO, 1);
         }
 
         managedgamenextmatch = true;
@@ -199,7 +189,12 @@ namespace server {
     void onspawn(clientinfo *ci)
     {
         if(!notyetspawned.length()) return;
-        loopv(notyetspawned) if(notyetspawned[i]==ci) notyetspawned.remove(i);
+        loopv(notyetspawned) if(notyetspawned[i]==ci)
+        {
+            notyetspawned.remove(i);
+            if(ci->supportsclientdemoupload) sendf(ci->clientnum, 1, "rii", N_P1X_RECORDDEMO, 2);
+            break;
+        }
         if(!notyetspawned.length())
         {
             sendf(-1, 1, "ris", N_SERVMSG, "all players ready, game starts in 3");
