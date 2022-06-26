@@ -21,8 +21,17 @@ function pack() {
         target=$1
     fi
 
+    # set version in source
+    cp src/p1xbraten/version.cpp src/p1xbraten/version.cpp.orig
+    local version=$(git describe)
+    sed -i "s/<git-dev>/$version/" src/p1xbraten/version.cpp
+
     # make binaries
     make $target
+
+    # restore git-dev version
+    rm src/p1xbraten/version.cpp
+    mv src/p1xbraten/version.cpp.orig src/p1xbraten/version.cpp
 
     # create hash catalogue
     local binDir="bin_unix"
@@ -49,7 +58,6 @@ function pack() {
         windows)
             rm -f dist/p1xbraten_setup*
             cp src/windows/p1xbraten.nsi src/windows/p1xbraten.nsi.orig
-            local version=$(git describe)
             sed -i "s/<git-dev>/$version/" src/windows/p1xbraten.nsi
             makensis src/windows/p1xbraten.nsi
             mv p1xbraten_setup_* dist/
@@ -64,8 +72,8 @@ function pack() {
             ;& # fallthrough
         *) # macos & linux
             mkdir -p dist
-            rm -rf "dist/$platform.zip"
-            zip -r "dist/$platform.zip" "${files[@]}"
+            rm -rf "dist/$platform-$version.zip"
+            zip -r "dist/$platform-$version.zip" "${files[@]}"
             ;;
     esac
 }
