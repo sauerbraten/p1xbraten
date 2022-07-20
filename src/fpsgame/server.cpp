@@ -3097,10 +3097,10 @@ namespace server
             case N_TEXT:
             {
                 QUEUE_AI;
-                QUEUE_MSG;
                 getstring(text, p);
                 filtertext(text, text, true, true);
                 if(text[0]=='#' && handleservcmd(cq, &text[1])) break;
+                QUEUE_INT(N_TEXT);
                 QUEUE_STR(text);
                 if(isdedicatedserver() && cq) logoutf("%s (cn %d): %s", colorname(cq), cq->clientnum, text);
                 break;

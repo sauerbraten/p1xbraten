@@ -287,11 +287,15 @@ index 7d25726..4f4d1a4 100644
                  break;
              }
 
-@@ -3052,6 +3059,7 @@ namespace server
-                 QUEUE_MSG;
+@@ -3049,9 +3056,10 @@ namespace server
+             case N_TEXT:
+             {
+                 QUEUE_AI;
+-                QUEUE_MSG;
                  getstring(text, p);
                  filtertext(text, text, true, true);
 +                if(text[0]=='#' && handleservcmd(cq, &text[1])) break;
++                QUEUE_INT(N_TEXT);
                  QUEUE_STR(text);
                  if(isdedicatedserver() && cq) logoutf("%s (cn %d): %s", colorname(cq), cq->clientnum, text);
                  break;
