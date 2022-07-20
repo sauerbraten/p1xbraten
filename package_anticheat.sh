@@ -72,8 +72,8 @@ function pack() {
             ;& # fallthrough
         *) # macos & linux
             mkdir -p dist
-            rm -rf "dist/$platform-$version.zip"
-            zip -r "dist/$platform-$version.zip" "${files[@]}"
+            rm -rf dist/$platform-*.zip
+            zip -r dist/$platform-$version.zip "${files[@]}"
             ;;
     esac
 }
