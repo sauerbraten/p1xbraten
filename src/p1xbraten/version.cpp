@@ -11,7 +11,7 @@ void lockversion()
 
 void migratep1xbraten()
 {
-    const char *version = "<git-dev>"; // replaced in CI build
+    const char *version = "6.0.0-1-g045b1b9"; // replaced in CI build
     if(naturalsort(p1xbratenversion, version) == -1)
     {
         // we're newer, run migrations

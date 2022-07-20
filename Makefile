@@ -17,6 +17,7 @@ key:
 	xxd -i src/anticheat/key src/anticheat/key.h
 
 linux macos windows: export ANTICHEAT=1
+# linux macos windows: export DEBUG=1
 linux macos windows: | clean key
 	source secrets.env && go run encrypt_credentials.go < src/anticheat/key && \
 	cd src && \

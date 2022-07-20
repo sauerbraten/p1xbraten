@@ -25,7 +25,7 @@ endif
 CFLAGS= --target=$(TARGET)
 CXXFLAGS= --target=$(TARGET) -fomit-frame-pointer -ffast-math
 ifdef DEBUG
-	override CXXFLAGS+= -DDEBUG=$$DEBUG
+	override CXXFLAGS+= -O0 -g -DDEBUG=$$DEBUG
 else
 	override CXXFLAGS+= -O3
 endif
@@ -67,7 +67,7 @@ endif
 
 ifneq (,$(findstring macos,$(TARGET)))
 	INCLUDES+= -Imacos/sdk_11.3/usr/include
-	LIBS= -Lmacos/sdk_11.3/usr/lib -lz -Lenet -lenet
+	LIBS= -Lmacos/sdk_11.3/usr/lib -lz -Lmacos/lib -lenet
 	ifdef ANTICHEAT
 		LIBS+= -L../sauerbraten.app/Contents/Libraries -lEOSSDK-Mac-Shipping
 	endif
@@ -196,7 +196,7 @@ $(SERVER_OBJS): CXXFLAGS += $(INCLUDES) -DSTANDALONE
 
 OUTBIN=p1xbraten_x86_64
 
-ifeq (,$(findstring windows,$(TARGET)))
+ifneq (,$(findstring linux,$(TARGET)))
 client:	libenet
 endif
 client: $(CLIENT_OBJS)

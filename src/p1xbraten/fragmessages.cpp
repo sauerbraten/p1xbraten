@@ -4,7 +4,7 @@ namespace game {
     vector<fragmessage> fragmessages; // oldest first, newest at the end
 
     MOD(VARP, hudfragmessages, 0, 1, 2);
-    MOD(VARFP, maxhudfragmessages, 1, 3, 10, { fragmessages.growbuf(maxhudfragmessages); fragmessages.shrink(maxhudfragmessages); });
+    MOD(VARFP, maxhudfragmessages, 1, 3, 10, { fragmessages.growbuf(maxhudfragmessages); fragmessages.shrink(min(fragmessages.length(), maxhudfragmessages)); });
     MOD(FVARP, hudfragmessageduration, 0, 2.0f, 10.0f); // in seconds
     MOD(VARP, hudfragmessagefade, 0, 1, 1);
     MOD(FVARP, hudfragmessagex, 0, 0.5f, 1.0f);

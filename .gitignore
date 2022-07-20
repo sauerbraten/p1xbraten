@@ -1,10 +1,12 @@
 .vscode
 .DS_Store
 
-src/**/**.a
+src/**/*.a
+!src/macos/lib/libenet.a
 src/**/*.gch
 src/**/*.o
 src/**/*.orig
+src/**/*.tmp
 src/sauer_client
 src/sauer_server
 src/Makefile.bak
