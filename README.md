@@ -34,6 +34,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [better_console.patch](#better_consolepatch)
   - [nextfollowteam.patch](#nextfollowteampatch)
   - [anticheat.patch](#anticheatpatch)
+  - [listzipfiles.patch](#listzipfilespatch)
 - [Server Patches](#server-patches)
   - [authservers.patch](#authserverspatch)
   - [serverlogging.patch](#serverloggingpatch)
@@ -267,10 +268,10 @@ For an overview of who uses p1xbraten, you can run `/showgui p1xbratenusage`.
 
 ### [clientdemo.patch](./patches/clientdemo.patch)
 
-- adds the `recordclientdemo <0|1|2>` command: 1 schedules, 0 cancels demo recording for the next match; 2 starts recording a demo immediately
+- adds the `recordclientdemo <0|2>` command: 0 is the same as `stopclientdemo`; 2 starts recording a demo immediately
 - adds the `stopclientdemo` command: stops an ongoing demo recording
 
-Client-side demos record the game as you experience it, and work independently of server-side demo recording. They also work locally, without being connected to any server. Your own position, movement and view is recorded at 250 frames per second.
+Client-side demos record the game as you experience it, and work independently of server-side demo recording. They also work locally, without being connected to any server. Your own position, movement and view is recorded at 125 frames per second.
 
 ### [colored_weapon_trails.patch](./patches/colored_weapon_trails.patch)
 
@@ -319,6 +320,13 @@ Integrates Epic's Online Services SDK and Anti-Cheat framework to provide protec
 
 - adds the `-e` command line flag to enable anticheat support (anticheat launchers set this for you)
 - adds the `anticheatenabled` read-only variable (only available when using the anticheat launcher, and should never be 0)
+
+### [listzipfiles.patch](./patches/listzipfiles.patch)
+
+- fixes Windows builds treating slashes in file paths inside ZIP files correctly
+- makes ZIP files behave the same as other content locations when using `loopfiles`
+
+Previously, `loopfiles f "packages/models" "" [echo $f]` would print `foo` if "packages/models/foo/bar.jpg" existed in a real directory, but not if such a file existed in a mounted ZIP file.
 
 ## Server Patches
 

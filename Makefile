@@ -77,6 +77,7 @@ apply-patches:
 	$(PATCH) < patches/demo_info_message.patch
 	$(PATCH) < patches/extinfo_mod_id.patch
 	$(PATCH) < patches/anticheat.patch
+	$(PATCH) < patches/listzipfiles.patch
 	cd src && make depend
 
 gzip-cfgs:
