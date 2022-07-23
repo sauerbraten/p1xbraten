@@ -3,7 +3,7 @@ new file mode 100644
 index 0000000..2fe07ee
 --- /dev/null
 +++ src/anticheat/anticheat.cpp
-@@ -0,0 +1,620 @@
+@@ -0,0 +1,624 @@
 +#ifdef ANTICHEAT
 +/*
 +Integrates Epic's Online Services (EOS) SDK in order to provide protected anti-cheat sessions.
@@ -368,8 +368,12 @@ index 0000000..2fe07ee
 +    void shutdownanticheat()
 +    {
 +        if(!anticheatinitialized) return;
-+        // un-register c2s callback
-+        if(acc && anticheatmessagetoservercallback!=EOS_INVALID_NOTIFICATIONID) EOS_AntiCheatClient_RemoveNotifyMessageToServer(acc, anticheatmessagetoservercallback);
++        // un-register callbacks
++        if(acc)
++        {
++            if(anticheatintegrityviolationcallback!=EOS_INVALID_NOTIFICATIONID) EOS_AntiCheatClient_RemoveNotifyClientIntegrityViolated(acc, anticheatintegrityviolationcallback);
++            if(anticheatmessagetoservercallback!=EOS_INVALID_NOTIFICATIONID) EOS_AntiCheatClient_RemoveNotifyMessageToServer(acc, anticheatmessagetoservercallback);
++        }
 +        eosuserid = NULL;
 +        if(eossdkinitialized) shutdownsdk();
 +    }

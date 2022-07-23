@@ -362,8 +362,12 @@ namespace game {
     void shutdownanticheat()
     {
         if(!anticheatinitialized) return;
-        // un-register c2s callback
-        if(acc && anticheatmessagetoservercallback!=EOS_INVALID_NOTIFICATIONID) EOS_AntiCheatClient_RemoveNotifyMessageToServer(acc, anticheatmessagetoservercallback);
+        // un-register callbacks
+        if(acc)
+        {
+            if(anticheatintegrityviolationcallback!=EOS_INVALID_NOTIFICATIONID) EOS_AntiCheatClient_RemoveNotifyClientIntegrityViolated(acc, anticheatintegrityviolationcallback);
+            if(anticheatmessagetoservercallback!=EOS_INVALID_NOTIFICATIONID) EOS_AntiCheatClient_RemoveNotifyMessageToServer(acc, anticheatmessagetoservercallback);
+        }
         eosuserid = NULL;
         if(eossdkinitialized) shutdownsdk();
     }
