@@ -1,7 +1,5 @@
 #include "cube.h"
 
-#define ZIPPATHDIV '/'
-
 enum
 {
     ZIP_LOCAL_FILE_SIGNATURE = 0x04034B50,
@@ -233,7 +231,7 @@ static void mountzip(ziparchive &arch, vector<zipfile> &files, const char *mount
         if(foundogz)
         {
             const char *ogzdir = foundogz;
-            while(--ogzdir >= f.name && *ogzdir != ZIPPATHDIV);
+            while(--ogzdir >= f.name && *ogzdir != PATHDIV);
             if(ogzdir < f.name || checkprefix(files, f.name, ogzdir + 1 - f.name))
             {
                 if(ogzdir >= f.name)
@@ -563,15 +561,11 @@ int listzipfiles(const char *dir, const char *ext, vector<char *> &files)
         enumerate(arch->files, zipfile, f,
         {
             if(strncmp(f.name, dir, dirsize)) continue;
-            const char *name = f.name + dirsize;
-            if(name[0] == ZIPPATHDIV) name++;
-            const char *enddir = strchr(name, ZIPPATHDIV);
-            if(!ext)
-            {
-                if(enddir) files.add(newstring(name, enddir-name));
-                else files.add(newstring(name));
-            }
-            else if(enddir) continue;
+            char *name = newstring(f.name + dirsize);
+            if(name[0] == PATHDIV) name++;
+            char *enddir = strchr(name, PATHDIV);
+            if(enddir) *enddir = '\0';
+            if(!ext) files.add(name);
             else
             {
                 size_t namelen = strlen(name);
