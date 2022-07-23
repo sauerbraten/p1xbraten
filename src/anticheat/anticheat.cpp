@@ -244,6 +244,13 @@ namespace game {
         p.empty();
     }
 
+    void onintegrityviolation(const EOS_AntiCheatClient_OnClientIntegrityViolatedCallbackInfo* data)
+    {
+        // conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr violation detected: %s (%d)", data->ViolationMessage, (int) data->ViolationType);
+        // violation detected, but we won't tell the client that yet
+        addmsg(N_P1X_ANTICHEAT_VIOLATION, "ris",  (int) data->ViolationType, data->ViolationMessage);
+    }
+
     bool anticheatinitialized = false;
     EOS_HAntiCheatClient acc = NULL;
     bool anticheatsessionactive = false;
@@ -320,6 +327,7 @@ namespace game {
     }
 
     EOS_NotificationId anticheatmessagetoservercallback;
+    EOS_NotificationId anticheatintegrityviolationcallback;
 
     void initializeanticheat()
     {
@@ -337,43 +345,18 @@ namespace game {
             return;
         }
 
+        // register callback for detected integrity violations
+        static EOS_AntiCheatClient_AddNotifyClientIntegrityViolatedOptions violationcallbackopts;
+        violationcallbackopts.ApiVersion = EOS_ANTICHEATCLIENT_ADDNOTIFYPEERAUTHSTATUSCHANGED_API_LATEST;
+        anticheatintegrityviolationcallback = EOS_AntiCheatClient_AddNotifyClientIntegrityViolated(acc, &violationcallbackopts, NULL, onintegrityviolation);
+        if(anticheatintegrityviolationcallback==EOS_INVALID_NOTIFICATIONID)
+        {
+            conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr init: failed to register integrity violation callback");
+            return;
+        }
+
         anticheatinitialized = true;
         conoutf("\fs\f8[anti-cheat]\fr initialized");
-    }
-
-    int lastanticheatstatuspoll = -1;
-    static const int ANTICHEATSTATUSPOLLDELAY = 5000; // 5 seconds
-    void pollanticheatstatus()
-    {
-        if(!eossdkinitialized || platform==NULL) return;
-
-        if(lastanticheatstatuspoll < 0) lastanticheatstatuspoll = lastmillis;
-        if(!acc || lastmillis-lastanticheatstatuspoll < ANTICHEATSTATUSPOLLDELAY) return;
-
-        lastanticheatstatuspoll = lastmillis;
-
-        static EOS_AntiCheatClient_PollStatusOptions pollopts;
-        pollopts.ApiVersion = EOS_ANTICHEATCLIENT_POLLSTATUS_API_LATEST;
-        pollopts.OutMessageLength = MAXSTRLEN;
-
-        EOS_EAntiCheatClientViolationType violation;
-        string details;
-
-        switch (EOS_EResult e = EOS_AntiCheatClient_PollStatus(acc, &pollopts, &violation, details))
-        {
-            case EOS_EResult::EOS_NotFound: /* no violation */ break;
-            case EOS_EResult::EOS_Success:
-                // conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr violation detected: %s (%d)", details, (int) violation);
-                // violation detected, but we won't tell the client that
-                addmsg(N_P1X_ANTICHEAT_VIOLATION, "ris", (int) violation, details);
-                break;
-            case EOS_EResult::EOS_LimitExceeded:
-                conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr polling status: out string too short");
-                break;
-            default:
-                conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr EOS_AntiCheatClient_PollStatus() failed with result code %d", (int) e);
-                break;
-        }
     }
 
     void shutdownanticheat()
@@ -457,7 +440,7 @@ namespace server {
         if(!ci) return;
 
         int oldanticheatverified = ci->anticheatverified;
-        ci->anticheatverified = (int) data->ClientAuthStatus; // 0, 1, or 2
+        ci->anticheatverified = (int) data->ClientAuthStatus; // 0, 1, or 2; see authstatusname()
 
         if(oldanticheatverified > ci->anticheatverified)
         {

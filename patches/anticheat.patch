@@ -3,7 +3,7 @@ new file mode 100644
 index 0000000..2fe07ee
 --- /dev/null
 +++ src/anticheat/anticheat.cpp
-@@ -0,0 +1,637 @@
+@@ -0,0 +1,620 @@
 +#ifdef ANTICHEAT
 +/*
 +Integrates Epic's Online Services (EOS) SDK in order to provide protected anti-cheat sessions.
@@ -250,6 +250,13 @@ index 0000000..2fe07ee
 +        p.empty();
 +    }
 +
++    void onintegrityviolation(const EOS_AntiCheatClient_OnClientIntegrityViolatedCallbackInfo* data)
++    {
++        // conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr violation detected: %s (%d)", data->ViolationMessage, (int) data->ViolationType);
++        // violation detected, but we won't tell the client that yet
++        addmsg(N_P1X_ANTICHEAT_VIOLATION, "ris",  (int) data->ViolationType, data->ViolationMessage);
++    }
++
 +    bool anticheatinitialized = false;
 +    EOS_HAntiCheatClient acc = NULL;
 +    bool anticheatsessionactive = false;
@@ -326,6 +333,7 @@ index 0000000..2fe07ee
 +    }
 +
 +    EOS_NotificationId anticheatmessagetoservercallback;
++    EOS_NotificationId anticheatintegrityviolationcallback;
 +
 +    void initializeanticheat()
 +    {
@@ -343,43 +351,18 @@ index 0000000..2fe07ee
 +            return;
 +        }
 +
++        // register callback for detected integrity violations
++        static EOS_AntiCheatClient_AddNotifyClientIntegrityViolatedOptions violationcallbackopts;
++        violationcallbackopts.ApiVersion = EOS_ANTICHEATCLIENT_ADDNOTIFYPEERAUTHSTATUSCHANGED_API_LATEST;
++        anticheatintegrityviolationcallback = EOS_AntiCheatClient_AddNotifyClientIntegrityViolated(acc, &violationcallbackopts, NULL, onintegrityviolation);
++        if(anticheatintegrityviolationcallback==EOS_INVALID_NOTIFICATIONID)
++        {
++            conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr init: failed to register integrity violation callback");
++            return;
++        }
++
 +        anticheatinitialized = true;
 +        conoutf("\fs\f8[anti-cheat]\fr initialized");
-+    }
-+
-+    int lastanticheatstatuspoll = -1;
-+    static const int ANTICHEATSTATUSPOLLDELAY = 5000; // 5 seconds
-+    void pollanticheatstatus()
-+    {
-+        if(!eossdkinitialized || platform==NULL) return;
-+
-+        if(lastanticheatstatuspoll < 0) lastanticheatstatuspoll = lastmillis;
-+        if(!acc || lastmillis-lastanticheatstatuspoll < ANTICHEATSTATUSPOLLDELAY) return;
-+
-+        lastanticheatstatuspoll = lastmillis;
-+
-+        static EOS_AntiCheatClient_PollStatusOptions pollopts;
-+        pollopts.ApiVersion = EOS_ANTICHEATCLIENT_POLLSTATUS_API_LATEST;
-+        pollopts.OutMessageLength = MAXSTRLEN;
-+
-+        EOS_EAntiCheatClientViolationType violation;
-+        string details;
-+
-+        switch (EOS_EResult e = EOS_AntiCheatClient_PollStatus(acc, &pollopts, &violation, details))
-+        {
-+            case EOS_EResult::EOS_NotFound: /* no violation */ break;
-+            case EOS_EResult::EOS_Success:
-+                // conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr violation detected: %s (%d)", details, (int) violation);
-+                // violation detected, but we won't tell the client that
-+                addmsg(N_P1X_ANTICHEAT_VIOLATION, "ris", (int) violation, details);
-+                break;
-+            case EOS_EResult::EOS_LimitExceeded:
-+                conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr polling status: out string too short");
-+                break;
-+            default:
-+                conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr EOS_AntiCheatClient_PollStatus() failed with result code %d", (int) e);
-+                break;
-+        }
 +    }
 +
 +    void shutdownanticheat()
@@ -463,7 +446,7 @@ index 0000000..2fe07ee
 +        if(!ci) return;
 +
 +        int oldanticheatverified = ci->anticheatverified;
-+        ci->anticheatverified = (int) data->ClientAuthStatus; // 0, 1, or 2
++        ci->anticheatverified = (int) data->ClientAuthStatus; // 0, 1, or 2; see authstatusname()
 +
 +        if(oldanticheatverified > ci->anticheatverified)
 +        {
@@ -697,16 +680,6 @@ index 53ef550..57654d4 100644
      logoutf("init: mainloop");
 
      if(execfile("once.cfg", false)) remove(findfile("once.cfg", "rb"));
-@@ -1398,6 +1412,9 @@ int main(int argc, char **argv)
-         checksleep(lastmillis);
-
-         serverslice(false, 0);
-+#ifdef ANTICHEAT
-+        game::pollanticheatstatus();
-+#endif
-
-         // miscellaneous general game effects
-         recomputecamera();
 diff --git src/engine/movie.cpp src/engine/movie.cpp
 index 25cb491..70c0e2f 100644
 --- src/engine/movie.cpp
@@ -1089,7 +1062,7 @@ diff --git src/shared/igame.h src/shared/igame.h
 index a14292c..f0f4aa6 100644
 --- src/shared/igame.h
 +++ src/shared/igame.h
-@@ -101,6 +101,13 @@ namespace game
+@@ -101,6 +101,12 @@ namespace game
      extern void serverinfoendcolumn(g3d_gui *g, int i);
      extern bool serverinfoentry(g3d_gui *g, int i, const char *name, int port, const char *desc, const char *map, int ping, const vector<int> &attr, int np);
      extern bool needminimap();
@@ -1097,7 +1070,6 @@ index a14292c..f0f4aa6 100644
 +#ifdef ANTICHEAT
 +    // anti-cheat
 +    extern void initializeanticheat();
-+    extern void pollanticheatstatus();
 +    extern void shutdownanticheat();
 +#endif
  }

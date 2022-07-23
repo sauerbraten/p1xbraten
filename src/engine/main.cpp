@@ -1412,9 +1412,6 @@ int main(int argc, char **argv)
         checksleep(lastmillis);
 
         serverslice(false, 0);
-#ifdef ANTICHEAT
-        game::pollanticheatstatus();
-#endif
 
         // miscellaneous general game effects
         recomputecamera();

@@ -105,7 +105,6 @@ namespace game
 #ifdef ANTICHEAT
     // anti-cheat
     extern void initializeanticheat();
-    extern void pollanticheatstatus();
     extern void shutdownanticheat();
 #endif
 } 
