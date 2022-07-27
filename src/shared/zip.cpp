@@ -561,12 +561,15 @@ int listzipfiles(const char *dir, const char *ext, vector<char *> &files)
         enumerate(arch->files, zipfile, f,
         {
             if(strncmp(f.name, dir, dirsize)) continue;
-            char *name = newstring(f.name + dirsize);
+            const char *name = f.name + dirsize;
             if(name[0] == PATHDIV) name++;
-            char *enddir = strchr(name, PATHDIV);
-            if(enddir) *enddir = '\0';
-            if(!ext) files.add(name);
-            else
+            const char *div = strchr(name, PATHDIV);
+            if(!ext)
+            {
+                if(!div) files.add(newstring(name));
+                else if(files.empty() || !matchstring(files.last(), strlen(files.last()), name, div - name)) files.add(newstring(name, div - name));
+            }
+            else if(!div)
             {
                 size_t namelen = strlen(name);
                 if(namelen > extsize)
