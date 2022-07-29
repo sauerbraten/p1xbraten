@@ -106,6 +106,12 @@ bool setfont(const char *name)
     return true;
 }
 
+void setfont_(const char *name)
+{
+    if(!setfont(name)) conoutf(CON_ERROR, "no such font: %s", name);
+}
+COMMANDN(setfont, setfont_, "s");
+
 static vector<font *> fontstack;
 
 void pushfont()

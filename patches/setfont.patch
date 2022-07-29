@@ -1,0 +1,17 @@
+diff --git src/engine/rendertext.cpp src/engine/rendertext.cpp
+index 51fcdda..271e593 100644
+--- src/engine/rendertext.cpp
++++ src/engine/rendertext.cpp
+@@ -106,6 +106,12 @@ bool setfont(const char *name)
+     return true;
+ }
+ 
++void setfont_(const char *name)
++{
++    if(!setfont(name)) conoutf(CON_ERROR, "no such font: %s", name);
++}
++COMMANDN(setfont, setfont_, "s");
++
+ static vector<font *> fontstack;
+ 
+ void pushfont()

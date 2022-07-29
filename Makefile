@@ -77,6 +77,7 @@ apply-patches:
 	$(PATCH) < patches/demo_info_message.patch
 	$(PATCH) < patches/extinfo_mod_id.patch
 	$(PATCH) < patches/anticheat.patch
+	$(PATCH) < patches/setfont.patch
 	cd src && make depend
 
 gzip-cfgs:
@@ -94,6 +95,7 @@ embed-cfgs: gzip-cfgs
 	sed -i "s/embeddedfile<0> gamehudcfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/gamehud.cfg.gz)> gamehudcfg/" src/p1xbraten/embedded_cfgs.cpp
 	sed -i "s/0,\/\/keymapcrc/0x$(shell crc32 data/p1xbraten/keymap.cfg),/" src/p1xbraten/embedded_cfgs.cpp
 	sed -i "s/embeddedfile<0> keymapcfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/keymap.cfg.gz)> keymapcfg/" src/p1xbraten/embedded_cfgs.cpp
+	cd src && make depend
 
 ifndef SAUER_DIR
 ifneq (,$(wildcard ~/sauerbraten-code))

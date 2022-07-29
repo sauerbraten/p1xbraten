@@ -34,6 +34,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [better_console.patch](#better_consolepatch)
   - [nextfollowteam.patch](#nextfollowteampatch)
   - [anticheat.patch](#anticheatpatch)
+  - [setfont.patch](#setfontpatch)
 - [Server Patches](#server-patches)
   - [authservers.patch](#authserverspatch)
   - [serverlogging.patch](#serverloggingpatch)
@@ -319,6 +320,10 @@ Integrates Epic's Online Services SDK and Anti-Cheat framework to provide protec
 
 - adds the `-e` command line flag to enable anticheat support (anticheat launchers set this for you)
 - adds the `anticheatenabled` read-only variable (only available when using the anticheat launcher, and should never be 0)
+
+### [setfont.patch](./patches/setfont.patch)
+
+- adds the `setfont <name>` command to set the UI font after registering the font using `font <name> ...` (`setfont "default"` to reset)
 
 
 ## Server Patches
