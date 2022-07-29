@@ -34,7 +34,6 @@ This repository contains the source for my client mod, as well as the patches ap
   - [better_console.patch](#better_consolepatch)
   - [nextfollowteam.patch](#nextfollowteampatch)
   - [anticheat.patch](#anticheatpatch)
-  - [listzipfiles.patch](#listzipfilespatch)
 - [Server Patches](#server-patches)
   - [authservers.patch](#authserverspatch)
   - [serverlogging.patch](#serverloggingpatch)
@@ -321,12 +320,6 @@ Integrates Epic's Online Services SDK and Anti-Cheat framework to provide protec
 - adds the `-e` command line flag to enable anticheat support (anticheat launchers set this for you)
 - adds the `anticheatenabled` read-only variable (only available when using the anticheat launcher, and should never be 0)
 
-### [listzipfiles.patch](./patches/listzipfiles.patch)
-
-- fixes Windows builds treating slashes in file paths inside ZIP files correctly
-- makes ZIP files behave the same as other content locations when using `loopfiles`
-
-Previously, `loopfiles f "packages/models" "" [echo $f]` would print `foo` if "packages/models/foo/bar.jpg" existed in a real directory, but not if such a file existed in a mounted ZIP file.
 
 ## Server Patches
 
