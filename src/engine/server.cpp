@@ -200,7 +200,7 @@ int setclientrealip(int n, uint ip)
 {
     if(!clients.inrange(n)) return -1;
     clients[n]->real.host = ip;
-    return enet_address_get_host_ip(&clients[n]->real, clients[n]->hostname, strlen("xxx.xxx.xxx.xxx"));
+    return enet_address_get_host_ip(&clients[n]->real, clients[n]->hostname, strlen("xxx.xxx.xxx.xxx")+1);
 }
 const char *getclienthostname(int n) { return clients.inrange(n) && clients[n]->type==ST_TCPIP ? clients[n]->hostname : NULL; }
 
