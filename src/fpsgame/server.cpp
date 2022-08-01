@@ -110,6 +110,34 @@ namespace server
         bannedips.add(b);
     }
 
+    ICOMMAND(ban, "si", (char *name, int *minutes),
+    {
+        uint ip;
+        if(inet_pton(AF_INET, name, &ip) < 0) return;
+        addban(ip, *minutes * 60*1000);
+    });
+    ICOMMAND(unban, "s", (char *name),
+    {
+        uint ip;
+        if(inet_pton(AF_INET, name, &ip) < 0) return;
+        loopv(bannedips) if(bannedips[i].ip==ip) { bannedips.remove(i); }
+    });
+    ICOMMAND(listbans, "", (),
+    {
+        if(!bannedips.length()) { stringret(newstring("no bans")); return; }
+        char *msg = newstring(1024);
+        loopv(bannedips)
+        {
+            string banline = "\n";
+            if(inet_ntop(AF_INET, &bannedips[i].ip, banline+1, strlen("xxx.xxx.xxx.xxx")+1) == NULL) continue;
+            conoutf("%s", banline);
+            int expsecs = (bannedips[i].expire - totalmillis) / 1000;
+            concformatstring(banline, " (%dh %dm %ds)", expsecs/(60*60), expsecs/60, expsecs%60);
+            concatstring(msg, banline, 1024);
+        };
+        stringret(msg);
+    });
+
     vector<clientinfo *> connects, clients, bots;
 
     void kickclients(uint ip, clientinfo *actor = NULL, int priv = PRIV_NONE)
@@ -1249,6 +1277,7 @@ namespace server
                     logoutf("%s (cn %d) kicked %s (cn %d)", kicker, ci->clientnum, colorname(vinfo), victim);
                 }
                 uint ip = getclientip(victim);
+                logoutf("getclientip returned %u for %s (cn %d)", ip, colorname(vinfo), victim);
                 addban(ip, 4*60*60000);
                 kickclients(ip, ci, priv);
             }

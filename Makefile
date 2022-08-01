@@ -78,6 +78,7 @@ apply-patches:
 	$(PATCH) < patches/extinfo_mod_id.patch
 	$(PATCH) < patches/anticheat.patch
 	$(PATCH) < patches/setfont.patch
+	$(PATCH) < patches/ban_management.patch
 	cd src && make depend
 
 gzip-cfgs:
