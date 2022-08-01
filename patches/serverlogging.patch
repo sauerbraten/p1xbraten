@@ -100,6 +100,26 @@ Index: src/fpsgame/server.cpp
          packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
          putint(p, N_SERVMSG);
          sendstring(msg, p);
+@@ -1525,9 +1525,17 @@ namespace server
+                     else formatstring(kicker, "%s as '\fs\f5%s\fr'", colorname(ci), authname);
+                 }
+                 else copystring(kicker, colorname(ci));
+-                if(reason && reason[0]) sendservmsgf("%s kicked %s because: %s", kicker, colorname(vinfo), reason);
+-                else sendservmsgf("%s kicked %s", kicker, colorname(vinfo));
++                if(reason && reason[0])
++                {
++                    sendservmsgf("%s kicked %s because: %s", kicker, colorname(vinfo), reason);
++                    logoutf("%s (cn %d) kicked %s (cn %d) because: %s", kicker, ci->clientnum, colorname(vinfo), victim, reason);
++                }
++                else
++                {
++                    sendservmsgf("%s kicked %s", kicker, colorname(vinfo));
++                    logoutf("%s (cn %d) kicked %s (cn %d)", kicker, ci->clientnum, colorname(vinfo), victim);
++                }
+                 uint ip = getclientip(victim);
+                 addban(ip, 4*60*60000);
+                 kickclients(ip, ci, priv);
+             }
 @@ -2089,6 +2101,8 @@
          }
 
