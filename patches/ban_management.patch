@@ -49,11 +49,3 @@ index 4faba44..c05121e 100644
      vector<clientinfo *> connects, clients, bots;
 
      void kickclients(uint ip, clientinfo *actor = NULL, int priv = PRIV_NONE)
-@@ -1241,6 +1270,7 @@ namespace server
-                 if(reason && reason[0]) sendservmsgf("%s kicked %s because: %s", kicker, colorname(vinfo), reason);
-                 else sendservmsgf("%s kicked %s", kicker, colorname(vinfo));
-                 uint ip = getclientip(victim);
-+                logoutf("getclientip returned %u for %s (cn %d)", ip, colorname(vinfo), victim);
-                 addban(ip, 4*60*60000);
-                 kickclients(ip, ci, priv);
-             }

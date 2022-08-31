@@ -10,6 +10,14 @@ index 3017f57..4aa8d18 100644
  };
 
  vector<client *> clients;
+@@ -147,6 +147,7 @@ client &addclient(int type)
+         case ST_TCPIP: nonlocalclients++; break;
+         case ST_LOCAL: localclients++; break;
+     }
++    c->real = ENetAddress{0, 0};
+     return *c;
+ }
+
 @@ -187,7 +188,18 @@ int getservermtu() { return serverhost ? serverhost->mtu : -1; }
  void *getclientinfo(int i) { return !clients.inrange(i) || clients[i]->type==ST_EMPTY ? NULL : clients[i]->info; }
  ENetPeer *getclientpeer(int i) { return clients.inrange(i) && clients[i]->type==ST_TCPIP ? clients[i]->peer : NULL; }

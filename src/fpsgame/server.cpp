@@ -1277,7 +1277,6 @@ namespace server
                     logoutf("%s (cn %d) kicked %s (cn %d)", kicker, ci->clientnum, colorname(vinfo), victim);
                 }
                 uint ip = getclientip(victim);
-                logoutf("getclientip returned %u for %s (cn %d)", ip, colorname(vinfo), victim);
                 addban(ip, 4*60*60000);
                 kickclients(ip, ci, priv);
             }
