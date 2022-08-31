@@ -43,6 +43,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [autoauthdomains.patch](#autoauthdomainspatch)
   - [proxy_setip.patch](#proxy_setippatch)
   - [anticheat.patch](#anticheatpatch-1)
+  - [serverbotbalanceearly.patch](#serverbotbalanceearlypatch)
 - [Project Structure](#project-structure)
 - [Building your own binary](#building-your-own-binary)
   - [Build dependencies](#build-dependencies)
@@ -378,6 +379,13 @@ This patch adds support for the [SauerDuels proxy](https://github.com/sauerduels
 
 - adds the `-e` command line flag to enable anticheat support
 - adds the `forceanticheatclient` toggle: if enabled, players are forced-to-spec on connect, and have to be using a p1xbraten anticheat client in order to play
+
+### [serverbotbalanceearly.patch](./patches/serverbotbalanceearly.patch)
+
+- adds the `serverbotbalanceearly` variable: if 1 (and `serverbotbalance` is also enabled), the server will equalize the player count of all teams by adding/reassigning/removing bots
+
+This is a more aggressive form of auto-balance than vanilla's `serverbotbalance`, which only reassigns bots, and never adds or removes bots on its own. It's intended for public play and disables manually adding/removing bots.
+
 
 ## Project Structure
 

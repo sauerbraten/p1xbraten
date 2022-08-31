@@ -79,6 +79,7 @@ apply-patches:
 	$(PATCH) < patches/anticheat.patch
 	$(PATCH) < patches/setfont.patch
 	$(PATCH) < patches/ban_management.patch
+	$(PATCH) < patches/serverbotbalanceearly.patch
 	cd src && make depend
 
 gzip-cfgs:

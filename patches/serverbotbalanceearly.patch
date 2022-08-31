@@ -1,0 +1,116 @@
+diff --git src/fpsgame/aiman.h src/fpsgame/aiman.h
+index a36118c..897aefd 100644
+--- src/fpsgame/aiman.h
++++ src/fpsgame/aiman.h
+@@ -4,14 +4,15 @@ namespace aiman
+     bool dorefresh = false, botbalance = true;
+     VARN(serverbotlimit, botlimit, 0, 8, MAXBOTS);
+     VAR(serverbotbalance, 0, 1, 1);
++    MOD(VARF, serverbotbalanceearly, 0, 0, 1, { dorefresh = true; });
+
+-    void calcteams(vector<teamscore> &teams)
++    void calcteams(vector<teamscore> &teams, bool includebots)
+     {
+         static const char * const defaults[2] = { "good", "evil" };
+         loopv(clients)
+         {
+             clientinfo *ci = clients[i];
+-            if(ci->state.state==CS_SPECTATOR || !ci->team[0]) continue;
++            if(ci->state.state==CS_SPECTATOR || !ci->team[0] || (!includebots && ci->state.aitype!=AI_NONE)) continue;
+             teamscore *t = NULL;
+             loopvj(teams) if(!strcmp(teams[j].team, ci->team)) { t = &teams[j]; break; }
+             if(t) t->score++;
+@@ -24,12 +25,32 @@ namespace aiman
+         }
+     }
+
++    clientinfo *addai(int skill, int limit);
++    void deleteai(clientinfo *ci);
++
+     void balanceteams()
+     {
+         vector<teamscore> teams;
+-        calcteams(teams);
++        calcteams(teams, false); // don't count bots yet
+         vector<clientinfo *> reassign;
+         loopv(bots) if(bots[i]) reassign.add(bots[i]);
++        if(serverbotbalanceearly)
++        {
++            int botsneeded = 0;
++            loopi(teams.length()-1) botsneeded += teams[0].score - teams[i+1].score;
++            if(botsneeded > reassign.length())
++            {
++                loopi(teams.length()-1) loopj(teams[i].score - teams[i+1].score)
++                {
++                    clientinfo *bot = addai(-1, -1);
++                    if(bot) reassign.add(bot);
++                }
++            }
++            else loopi(reassign.length() - botsneeded) deleteai(reassign.pop());
++        }
++        // add bots to team 'score' now
++        loopv(reassign) loopvj(teams) if(!strcmp(reassign[i]->team, teams[j].team)) { teams[j].score++; break; }
++        teams.sort(teamscore::compare);
+         while(reassign.length() && teams.length() && teams[0].score > teams.last().score + 1)
+         {
+             teamscore &t = teams.last();
+@@ -59,7 +80,7 @@ namespace aiman
+     const char *chooseteam()
+     {
+         vector<teamscore> teams;
+-        calcteams(teams);
++        calcteams(teams, true);
+         return teams.length() ? teams.last().team : "";
+     }
+
+@@ -80,7 +101,7 @@ namespace aiman
+         return least;
+ 	}
+
+-	bool addai(int skill, int limit)
++	clientinfo *addai(int skill, int limit)
+ 	{
+ 		int numai = 0, cn = -1, maxai = limit >= 0 ? min(limit, MAXBOTS) : MAXBOTS;
+ 		loopv(bots)
+@@ -89,7 +110,7 @@ namespace aiman
+             if(!ci || ci->ownernum < 0) { if(cn < 0) cn = i; continue; }
+ 			numai++;
+ 		}
+-		if(numai >= maxai) return false;
++		if(numai >= maxai) return NULL;
+         if(bots.inrange(cn))
+         {
+             clientinfo *ci = bots[cn];
+@@ -101,7 +122,7 @@ namespace aiman
+                 if(owner) owner->bots.add(ci);
+                 ci->aireinit = 2;
+                 dorefresh = true;
+-                return true;
++                return owner ? ci : NULL;
+             }
+         }
+         else { cn = bots.length(); bots.add(NULL); }
+@@ -123,7 +144,7 @@ namespace aiman
+ 		ci->aireinit = 2;
+ 		ci->connected = true;
+         dorefresh = true;
+-		return true;
++		return owner ? ci : NULL;
+ 	}
+
+ 	void deleteai(clientinfo *ci)
+@@ -229,12 +250,14 @@ namespace aiman
+ 	void reqadd(clientinfo *ci, int skill)
+ 	{
+         if(!ci->local && !ci->privilege) return;
++        if(serverbotbalanceearly) { sendf(ci->clientnum, 1, "ris", N_SERVMSG, "bots are managed by the server (serverbotbalanceearly = 1)"); return; }
+         if(!addai(skill, !ci->local && ci->privilege < PRIV_ADMIN ? botlimit : -1)) sendf(ci->clientnum, 1, "ris", N_SERVMSG, "failed to create or assign bot");
+ 	}
+
+ 	void reqdel(clientinfo *ci)
+ 	{
+         if(!ci->local && !ci->privilege) return;
++        if(serverbotbalanceearly) { sendf(ci->clientnum, 1, "ris", N_SERVMSG, "bots are managed by the server (serverbotbalanceearly = 1)"); return; }
+         if(!deleteai()) sendf(ci->clientnum, 1, "ris", N_SERVMSG, "failed to remove any bots");
+ 	}
+
