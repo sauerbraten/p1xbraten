@@ -16,32 +16,33 @@ This repository contains the source for my client mod, as well as the patches ap
   - [hudscore.patch](#hudscorepatch)
   - [serverbrowser.patch](#serverbrowserpatch)
   - [listteams.patch](#listteamspatch)
-  - [tex_commands.patch](#tex_commandspatch)
-  - [decouple_framedrawing.patch](#decouple_framedrawingpatch)
+  - [tex\_commands.patch](#tex_commandspatch)
+  - [decouple\_framedrawing.patch](#decouple_framedrawingpatch)
   - [crosshaircolor.patch](#crosshaircolorpatch)
   - [zenmode.patch](#zenmodepatch)
   - [gamehud.patch](#gamehudpatch)
-  - [chat_highlight_words.patch](#chat_highlight_wordspatch)
+  - [chat\_highlight\_words.patch](#chat_highlight_wordspatch)
   - [modversion.patch](#modversionpatch)
   - [minimizedframes.patch](#minimizedframespatch)
   - [hasflag.patch](#hasflagpatch)
   - [playerspeed.patch](#playerspeedpatch)
-  - [up_down_hover.patch](#up_down_hoverpatch)
-  - [paused_spec_movement.patch](#paused_spec_movementpatch)
+  - [up\_down\_hover.patch](#up_down_hoverpatch)
+  - [paused\_spec\_movement.patch](#paused_spec_movementpatch)
   - [clientdemo.patch](#clientdemopatch)
-  - [colored_weapon_trails.patch](#colored_weapon_trailspatch)
+  - [colored\_weapon\_trails.patch](#colored_weapon_trailspatch)
   - [crosshairreloadfade.patch](#crosshairreloadfadepatch)
-  - [better_console.patch](#better_consolepatch)
+  - [better\_console.patch](#better_consolepatch)
   - [nextfollowteam.patch](#nextfollowteampatch)
   - [anticheat.patch](#anticheatpatch)
   - [setfont.patch](#setfontpatch)
+  - [filterservers.patch](#filterserverspatch)
 - [Server Patches](#server-patches)
   - [authservers.patch](#authserverspatch)
   - [serverlogging.patch](#serverloggingpatch)
-  - [server_ogzs.patch](#server_ogzspatch)
-  - [managed_games.patch](#managed_gamespatch)
+  - [server\_ogzs.patch](#server_ogzspatch)
+  - [managed\_games.patch](#managed_gamespatch)
   - [autoauthdomains.patch](#autoauthdomainspatch)
-  - [proxy_setip.patch](#proxy_setippatch)
+  - [proxy\_setip.patch](#proxy_setippatch)
   - [anticheat.patch](#anticheatpatch-1)
   - [serverbotbalanceearly.patch](#serverbotbalanceearlypatch)
 - [Project Structure](#project-structure)
@@ -301,7 +302,7 @@ Also, you can put the following into your autoexec.cfg for cleaner command promp
 bind "SLASH"     [inputcommand "" [$commandbuf] "/" "cx"]
 bind "BACKQUOTE" [inputcommand "" [$commandbuf] "/" "cx"]
 bind "CARET"     [inputcommand "" [$commandbuf] "/" "cx"] // BACKQUOTE on German keyboards
-bind "BACKSLASH" [inputcommand "" [servcmd $commandbuf] "#"] // works for #commands on zeromod & spaghetti, hopefully soon on remod
+bind "BACKSLASH" [inputcommand "" [servcmd $commandbuf] "#"] // works for #commands on zeromod, spaghetti, and remod
 bind "HASH"      [inputcommand "" [servcmd $commandbuf] "#"] // only works with German keyboard layout
 ```
 
@@ -325,6 +326,12 @@ Integrates Epic's Online Services SDK and Anti-Cheat framework to provide protec
 ### [setfont.patch](./patches/setfont.patch)
 
 - adds the `setfont <name>` command to set the UI font after registering the font using `font <name> ...` (`setfont "default"` to reset)
+
+### [filterservers.patch](./patches/filterservers.patch)
+
+- adds the `filterservers` string variable to only show servers in the serverbrowser whose mode, map or description matches (using case-insensitive substring matching)
+
+The p1xbraten menu gives you a simple search field on the serverbrowser using this variable.
 
 
 ## Server Patches

@@ -80,6 +80,7 @@ apply-patches:
 	$(PATCH) < patches/setfont.patch
 	$(PATCH) < patches/ban_management.patch
 	$(PATCH) < patches/serverbotbalanceearly.patch
+	$(PATCH) < patches/filterservers.patch
 	cd src && make depend
 
 gzip-cfgs:

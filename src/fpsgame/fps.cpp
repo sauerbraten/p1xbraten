@@ -1276,8 +1276,15 @@ namespace game
         return (n>=MM_START && size_t(n-MM_START)<sizeof(mastermodeicons)/sizeof(mastermodeicons[0])) ? mastermodeicons[n-MM_START] : unknown;
     }
 
+    SVAR(filterservers, "");
+
     bool serverinfoentry(g3d_gui *g, int i, const char *name, int port, const char *sdesc, const char *map, int ping, const vector<int> &attr, int np)
     {
+        if(*filterservers)
+            if(!cubecasefind(sdesc, filterservers) &&
+               !cubecasefind(map, filterservers) &&
+               (attr.length()<2 || !cubecasefind(server::modename(attr[1], ""), filterservers))) return false;
+
         #define leftjustified(elem)   justified(elem,true,false)
         #define rightjustified(elem)  justified(elem,true,true)
 
