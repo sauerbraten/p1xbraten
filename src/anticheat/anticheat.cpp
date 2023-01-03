@@ -259,6 +259,17 @@ namespace game {
 
     void startanticheatsession()
     {
+        char *useridstring = newstring(EOS_PRODUCTUSERID_MAX_LENGTH+1);
+        int32_t useridstringlen;
+        switch (EOS_EResult e = EOS_ProductUserId_ToString(eosuserid, useridstring, &useridstringlen))
+        {
+            case EOS_EResult::EOS_Success: /* OK */ break;
+            case EOS_EResult::EOS_InvalidParameters: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr serializing EOS product user ID: input data invalid");  return;
+            case EOS_EResult::EOS_InvalidUser: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr serializing EOS product user ID: user ID is invalid");        return;
+            case EOS_EResult::EOS_LimitExceeded: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr serializing EOS product user ID: output buffer too short"); return;
+            default: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr EOS_ProductUserId_ToString() failed with result code %d", (int) e);                     return;
+        }
+
         static EOS_AntiCheatClient_BeginSessionOptions sessionopts;
         sessionopts.ApiVersion = EOS_ANTICHEATSERVER_BEGINSESSION_API_LATEST;
         sessionopts.LocalUserId = eosuserid;
@@ -270,6 +281,8 @@ namespace game {
             case EOS_EResult::EOS_AntiCheat_InvalidMode: /* conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr starting session: function not supported in current anti-cheat mode"); */ return;
             default: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr EOS_AntiCheatClient_BeginSession() failed with result code %d", (int) e); return;
         }
+
+        addmsg(N_P1X_ANTICHEAT_BEGINSESSION, "rs", useridstring);
         anticheatsessionactive = true;
     }
 
@@ -481,24 +494,21 @@ namespace server {
         sendstring(CAP_PROBE_ANTICHEAT, p);
     }
 
-    bool registeranticheatclient(clientinfo *ci)
+    bool registeranticheatclient(clientinfo *ci, const char *useridstring)
     {
-        static string eosname;
-        formatstring(eosname, "%s (%d)", ci->name, ci->clientnum);
-        conoutf("\fs\f8[anti-cheat]\fr registering %s with Epic's backend", eosname);
+        conoutf("\fs\f8[anti-cheat]\fr registering %s (%d) with Epic's backend",  ci->name, ci->clientnum);
+        EOS_ProductUserId eosuserid = EOS_ProductUserId_FromString(useridstring);
 
         static EOS_AntiCheatServer_RegisterClientOptions registeropts;
         registeropts.ApiVersion = EOS_ANTICHEATSERVER_REGISTERCLIENT_API_LATEST;
         registeropts.ClientHandle = (EOS_AntiCheatCommon_ClientHandle) ci;
         registeropts.ClientType = EOS_EAntiCheatCommonClientType::EOS_ACCCT_ProtectedClient;
-        registeropts.AccountId = eosname;
+        registeropts.UserId = eosuserid;
         registeropts.IpAddress = getclienthostname(ci->clientnum);
 
         switch (EOS_EResult e = EOS_AntiCheatServer_RegisterClient(acs, &registeropts))
         {
-            case EOS_EResult::EOS_Success:
-                sendf(ci->clientnum, 1, "ri", N_P1X_ANTICHEAT_BEGINSESSION);
-                return true;
+            case EOS_EResult::EOS_Success: return true;
             case EOS_EResult::EOS_InvalidParameters: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr registering client: input data invalid"); return false;
             default: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr EOS_AntiCheatServer_RegisterClient() failed with result code %d", (int) e); return false;
         }

@@ -27,7 +27,7 @@ linux macos windows: | clean key
 debian: clean
 	dd if=/dev/random of=Dockertrigger count=64 && \
 	podman build \
-	--file Dockerfile.debian-11 \
+	--file Dockerfile.debian-11-build \
 	--security-opt label=disable \
 	--volume=$(PWD)/src:/src \
 	--volume=$(PWD)/bin_unix:/bin_unix \

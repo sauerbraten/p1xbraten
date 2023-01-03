@@ -215,7 +215,7 @@ enum
 
 // protocol extensions
 static const char * const CAP_PROBE_CLIENT_DEMO_UPLOAD = "capability_probe_protocol_extension_p1x_client_demo_upload_v2";
-static const char * const CAP_PROBE_ANTICHEAT          = "capability_probe_protocol_extension_p1x_anticheat";
+static const char * const CAP_PROBE_ANTICHEAT          = "capability_probe_protocol_extension_p1x_anticheat_v2";
 
 // network messages codes, c2s, c2c, s2c
 
@@ -285,7 +285,7 @@ static const int msgsizes[] =               // size inclusive message token, 0 f
     N_P1X_SETIP, 2,
     N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED, 1, N_P1X_RECORDDEMO, 1,
 #ifdef ANTICHEAT
-    N_P1X_ANTICHEAT_SUPPORTED, 1, N_P1X_ANTICHEAT_BEGINSESSION, 1, N_P1X_ANTICHEAT_MESSAGE, 0, N_P1X_ANTICHEAT_VIOLATION, 0, N_P1X_ANTICHEAT_ENDSESSION, 1,
+    N_P1X_ANTICHEAT_SUPPORTED, 1, N_P1X_ANTICHEAT_BEGINSESSION, 0, N_P1X_ANTICHEAT_MESSAGE, 0, N_P1X_ANTICHEAT_VIOLATION, 0, N_P1X_ANTICHEAT_ENDSESSION, 1,
 #endif
     -1
 };
@@ -1269,7 +1269,7 @@ namespace server
     // anticheat
     extern int forceanticheatclient;
     extern void probeforanticheatclient(packetbuf &p);
-    extern bool registeranticheatclient(clientinfo *c);
+    extern bool registeranticheatclient(clientinfo *ci, const char *useridstring);
     extern void receiveanticheatmessage(clientinfo *c, ucharbuf &p);
     extern void handleviolation(clientinfo *ci, int code, const char *details);
     extern bool unregisteranticheatclient(clientinfo *c);

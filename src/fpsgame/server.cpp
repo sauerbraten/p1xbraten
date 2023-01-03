@@ -3609,7 +3609,14 @@ namespace server
                 conoutf("client %d supports our anti-cheat protocol extension!", ci->clientnum);
                 ci->supportsanticheat = true;
                 sendf(sender, 1, "ris", N_SERVMSG, "\fs\f8[anti-cheat]\fr verifying your client ...");
-                registeranticheatclient(ci);
+                sendf(sender, 1, "ri", N_P1X_ANTICHEAT_BEGINSESSION);
+                break;
+
+            case N_P1X_ANTICHEAT_BEGINSESSION:
+                string useridstring;
+                getstring(useridstring, p, sizeof(useridstring));
+                if(!ci || ci->local) return;
+                registeranticheatclient(ci, useridstring);
                 break;
                      
             case N_P1X_ANTICHEAT_MESSAGE:

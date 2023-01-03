@@ -3,7 +3,7 @@ new file mode 100644
 index 0000000..2fe07ee
 --- /dev/null
 +++ src/anticheat/anticheat.cpp
-@@ -0,0 +1,624 @@
+@@ -0,0 +1,634 @@
 +#ifdef ANTICHEAT
 +/*
 +Integrates Epic's Online Services (EOS) SDK in order to provide protected anti-cheat sessions.
@@ -265,6 +265,17 @@ index 0000000..2fe07ee
 +
 +    void startanticheatsession()
 +    {
++        char *useridstring = newstring(EOS_PRODUCTUSERID_MAX_LENGTH+1);
++        int32_t useridstringlen;
++        switch (EOS_EResult e = EOS_ProductUserId_ToString(eosuserid, useridstring, &useridstringlen))
++        {
++            case EOS_EResult::EOS_Success: /* OK */ break;
++            case EOS_EResult::EOS_InvalidParameters: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr serializing EOS product user ID: input data invalid");  return;
++            case EOS_EResult::EOS_InvalidUser: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr serializing EOS product user ID: user ID is invalid");        return;
++            case EOS_EResult::EOS_LimitExceeded: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr serializing EOS product user ID: output buffer too short"); return;
++            default: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr EOS_ProductUserId_ToString() failed with result code %d", (int) e);                     return;
++        }
++
 +        static EOS_AntiCheatClient_BeginSessionOptions sessionopts;
 +        sessionopts.ApiVersion = EOS_ANTICHEATSERVER_BEGINSESSION_API_LATEST;
 +        sessionopts.LocalUserId = eosuserid;
@@ -276,6 +287,8 @@ index 0000000..2fe07ee
 +            case EOS_EResult::EOS_AntiCheat_InvalidMode: /* conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr starting session: function not supported in current anti-cheat mode"); */ return;
 +            default: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr EOS_AntiCheatClient_BeginSession() failed with result code %d", (int) e); return;
 +        }
++
++        addmsg(N_P1X_ANTICHEAT_BEGINSESSION, "rs", useridstring);
 +        anticheatsessionactive = true;
 +    }
 +
@@ -487,24 +500,21 @@ index 0000000..2fe07ee
 +        sendstring(CAP_PROBE_ANTICHEAT, p);
 +    }
 +
-+    bool registeranticheatclient(clientinfo *ci)
++    bool registeranticheatclient(clientinfo *ci, const char *useridstring)
 +    {
-+        static string eosname;
-+        formatstring(eosname, "%s (%d)", ci->name, ci->clientnum);
-+        conoutf("\fs\f8[anti-cheat]\fr registering %s with Epic's backend", eosname);
++        conoutf("\fs\f8[anti-cheat]\fr registering %s (%d) with Epic's backend",  ci->name, ci->clientnum);
++        EOS_ProductUserId eosuserid = EOS_ProductUserId_FromString(useridstring);
 +
 +        static EOS_AntiCheatServer_RegisterClientOptions registeropts;
 +        registeropts.ApiVersion = EOS_ANTICHEATSERVER_REGISTERCLIENT_API_LATEST;
 +        registeropts.ClientHandle = (EOS_AntiCheatCommon_ClientHandle) ci;
 +        registeropts.ClientType = EOS_EAntiCheatCommonClientType::EOS_ACCCT_ProtectedClient;
-+        registeropts.AccountId = eosname;
++        registeropts.UserId = eosuserid;
 +        registeropts.IpAddress = getclienthostname(ci->clientnum);
 +
 +        switch (EOS_EResult e = EOS_AntiCheatServer_RegisterClient(acs, &registeropts))
 +        {
-+            case EOS_EResult::EOS_Success:
-+                sendf(ci->clientnum, 1, "ri", N_P1X_ANTICHEAT_BEGINSESSION);
-+                return true;
++            case EOS_EResult::EOS_Success: return true;
 +            case EOS_EResult::EOS_InvalidParameters: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr registering client: input data invalid"); return false;
 +            default: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr EOS_AntiCheatServer_RegisterClient() failed with result code %d", (int) e); return false;
 +        }
@@ -835,7 +845,7 @@ index 0a4c901..4e9fe3a 100644
 
  // protocol extensions
  static const char * const CAP_PROBE_CLIENT_DEMO_UPLOAD = "capability_probe_protocol_extension_p1x_client_demo_upload_v2";
-+static const char * const CAP_PROBE_ANTICHEAT          = "capability_probe_protocol_extension_p1x_anticheat";
++static const char * const CAP_PROBE_ANTICHEAT          = "capability_probe_protocol_extension_p1x_anticheat_v2";
 
  // network messages codes, c2s, c2c, s2c
 
@@ -854,7 +864,7 @@ index 0a4c901..4e9fe3a 100644
      N_P1X_SETIP, 2,
      N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED, 1, N_P1X_RECORDDEMO, 1,
 +#ifdef ANTICHEAT
-+    N_P1X_ANTICHEAT_SUPPORTED, 1, N_P1X_ANTICHEAT_BEGINSESSION, 1, N_P1X_ANTICHEAT_MESSAGE, 0, N_P1X_ANTICHEAT_VIOLATION, 0, N_P1X_ANTICHEAT_ENDSESSION, 1,
++    N_P1X_ANTICHEAT_SUPPORTED, 1, N_P1X_ANTICHEAT_BEGINSESSION, 0, N_P1X_ANTICHEAT_MESSAGE, 0, N_P1X_ANTICHEAT_VIOLATION, 0, N_P1X_ANTICHEAT_ENDSESSION, 1,
 +#endif
      -1
  };
@@ -909,7 +919,7 @@ index 0a4c901..4e9fe3a 100644
 +    // anticheat
 +    extern int forceanticheatclient;
 +    extern void probeforanticheatclient(packetbuf &p);
-+    extern bool registeranticheatclient(clientinfo *c);
++    extern bool registeranticheatclient(clientinfo *ci, const char *useridstring);
 +    extern void receiveanticheatmessage(clientinfo *c, ucharbuf &p);
 +    extern void handleviolation(clientinfo *ci, int code, const char *details);
 +    extern bool unregisteranticheatclient(clientinfo *c);
@@ -987,7 +997,7 @@ index e37eb57..76d231f 100644
          if(!ci->local) loopv(autoauthdomains) sendf(ci->clientnum, 1, "ris", N_REQAUTH, autoauthdomains[i]);
 
          aiman::addclient(ci);
-@@ -3537,7 +3567,33 @@ namespace server
+@@ -3537,7 +3567,40 @@ namespace server
                  conoutf("client %d supports the client demo upload protocol extension!", ci->clientnum);
                  ci->supportsclientdemoupload = true;
                  break;
@@ -997,7 +1007,14 @@ index e37eb57..76d231f 100644
 +                conoutf("client %d supports our anti-cheat protocol extension!", ci->clientnum);
 +                ci->supportsanticheat = true;
 +                sendf(sender, 1, "ris", N_SERVMSG, "\fs\f8[anti-cheat]\fr verifying your client ...");
-+                registeranticheatclient(ci);
++                sendf(sender, 1, "ri", N_P1X_ANTICHEAT_BEGINSESSION);
++                break;
++
++            case N_P1X_ANTICHEAT_BEGINSESSION:
++                string useridstring;
++                getstring(useridstring, p, sizeof(useridstring));
++                if(!ci || ci->local) return;
++                registeranticheatclient(ci, useridstring);
 +                break;
 
 +            case N_P1X_ANTICHEAT_MESSAGE:
