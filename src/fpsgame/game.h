@@ -1226,6 +1226,11 @@ namespace server
     extern int msgsizelookup(int msg);
     extern bool serveroption(const char *arg);
     extern bool delayspawn(int type);
+    struct ban
+    {
+        int time, expire;
+        uint ip;
+    };
 
     // remote commands
     extern bool handleservcmd(clientinfo *ci, const char *cmd);
@@ -1277,6 +1282,12 @@ namespace server
     extern void unspectate(clientinfo *ci);
     extern void notifyprivusers(int minpriv, char *msg);
 #endif
+
+    // bans
+    extern void getip(clientinfo *sender, int cn);
+    extern void addban(clientinfo *sender, const char *ipstring, int minutes = 30);
+    extern void delban(clientinfo *sender, const char *ipstring);
+    extern void listbans(clientinfo *sender);
 }
 
 // additional colors

@@ -59,12 +59,6 @@ namespace server
         }
     };
 
-    struct ban
-    {
-        int time, expire;
-        uint ip;
-    };
-
     namespace aiman
     {
         extern void removeai(clientinfo *ci);
@@ -109,34 +103,6 @@ namespace server
         loopv(bannedips) if(bannedips[i].expire - b.expire > 0) { bannedips.insert(i, b); return; }
         bannedips.add(b);
     }
-
-    ICOMMAND(ban, "si", (char *name, int *minutes),
-    {
-        uint ip;
-        if(inet_pton(AF_INET, name, &ip) < 0) return;
-        addban(ip, *minutes * 60*1000);
-    });
-    ICOMMAND(unban, "s", (char *name),
-    {
-        uint ip;
-        if(inet_pton(AF_INET, name, &ip) < 0) return;
-        loopv(bannedips) if(bannedips[i].ip==ip) { bannedips.remove(i); }
-    });
-    ICOMMAND(listbans, "", (),
-    {
-        if(!bannedips.length()) { stringret(newstring("no bans")); return; }
-        char *msg = newstring(1024);
-        loopv(bannedips)
-        {
-            string banline = "\n";
-            if(inet_ntop(AF_INET, &bannedips[i].ip, banline+1, strlen("xxx.xxx.xxx.xxx")+1) == NULL) continue;
-            conoutf("%s", banline);
-            int expsecs = (bannedips[i].expire - totalmillis) / 1000;
-            concformatstring(banline, " (%dh %dm %ds)", expsecs/(60*60), expsecs/60, expsecs%60);
-            concatstring(msg, banline, 1024);
-        };
-        stringret(msg);
-    });
 
     vector<clientinfo *> connects, clients, bots;
 

@@ -146,6 +146,7 @@ CLIENT_OBJS= \
 	fpsgame/server.o \
 	fpsgame/waypoint.o \
 	fpsgame/weapon.o \
+	p1xbraten/bans.o \
 	p1xbraten/capability_probing.o \
 	p1xbraten/clientdemo.o \
 	p1xbraten/demo_info_message.o \
@@ -171,6 +172,7 @@ SERVER_OBJS= \
 	engine/worldio-standalone.o \
 	fpsgame/entities-standalone.o \
 	fpsgame/server-standalone.o \
+	p1xbraten/bans-standalone.o \
 	p1xbraten/demo_info_message-standalone.o \
 	p1xbraten/managed_games-standalone.o \
 	p1xbraten/proxy_real_ip.o \
@@ -488,6 +490,9 @@ fpsgame/waypoint.o: fpsgame/ai.h
 fpsgame/weapon.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
 fpsgame/weapon.o: shared/ents.h shared/command.h shared/glexts.h
 fpsgame/weapon.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
+p1xbraten/bans.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
+p1xbraten/bans.o: shared/ents.h shared/command.h shared/glexts.h
+p1xbraten/bans.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
 p1xbraten/capability_probing.o: fpsgame/game.h shared/cube.h shared/tools.h
 p1xbraten/capability_probing.o: shared/geom.h shared/ents.h shared/command.h
 p1xbraten/capability_probing.o: shared/glexts.h shared/glemu.h
@@ -570,6 +575,9 @@ fpsgame/server-standalone.o: shared/iengine.h shared/igame.h fpsgame/ai.h
 fpsgame/server-standalone.o: fpsgame/capture.h fpsgame/ctf.h
 fpsgame/server-standalone.o: fpsgame/collect.h fpsgame/extinfo.h
 fpsgame/server-standalone.o: fpsgame/aiman.h
+p1xbraten/bans-standalone.o: fpsgame/game.h shared/cube.h shared/tools.h
+p1xbraten/bans-standalone.o: shared/geom.h shared/ents.h shared/command.h
+p1xbraten/bans-standalone.o: shared/iengine.h shared/igame.h fpsgame/ai.h
 p1xbraten/demo_info_message-standalone.o: fpsgame/game.h shared/cube.h
 p1xbraten/demo_info_message-standalone.o: shared/tools.h shared/geom.h
 p1xbraten/demo_info_message-standalone.o: shared/ents.h shared/command.h

@@ -1,0 +1,163 @@
+diff --git src/engine/server.cpp src/engine/server.cpp
+index 4a1d436..0432f72 100644
+--- src/engine/server.cpp
++++ src/engine/server.cpp
+@@ -204,6 +204,7 @@ int setclientrealip(int n, uint ip)
+     return enet_address_get_host_ip(&clients[n]->real, clients[n]->hostname, strlen("xxx.xxx.xxx.xxx")+1);
+ }
+ const char *getclienthostname(int n) { return clients.inrange(n) && clients[n]->type==ST_TCPIP ? clients[n]->hostname : NULL; }
++ICOMMAND(getip, "i", (int *cn), result(getclienthostname(*cn)));
+
+ void sendpacket(int n, int chan, ENetPacket *packet, int exclude)
+ {
+diff --git src/fpsgame/game.h src/fpsgame/game.h
+index 2aab85b..4448c04 100644
+--- src/fpsgame/game.h
++++ src/fpsgame/game.h
+@@ -1226,6 +1226,11 @@ namespace server
+     extern int msgsizelookup(int msg);
+     extern bool serveroption(const char *arg);
+     extern bool delayspawn(int type);
++    struct ban
++    {
++        int time, expire;
++        uint ip;
++    };
+
+     // remote commands
+     extern bool handleservcmd(clientinfo *ci, const char *cmd);
+@@ -1277,6 +1282,12 @@ namespace server
+     extern void unspectate(clientinfo *ci);
+     extern void notifyprivusers(int minpriv, char *msg);
+ #endif
++
++    // bans
++    extern void getip(clientinfo *sender, int cn);
++    extern void addban(clientinfo *sender, const char *ipstring, int minutes = 30);
++    extern void delban(clientinfo *sender, const char *ipstring);
++    extern void listbans(clientinfo *sender);
+ }
+
+ // additional colors
+diff --git src/fpsgame/server.cpp src/fpsgame/server.cpp
+index 8d6bace..716334c 100644
+--- src/fpsgame/server.cpp
++++ src/fpsgame/server.cpp
+@@ -59,12 +59,6 @@ namespace server
+         }
+     };
+
+-    struct ban
+-    {
+-        int time, expire;
+-        uint ip;
+-    };
+-
+     namespace aiman
+     {
+         extern void removeai(clientinfo *ci);
+diff --git src/p1xbraten/bans.cpp src/p1xbraten/bans.cpp
+new file mode 100644
+index 0000000..c82c4d3
+--- /dev/null
++++ src/p1xbraten/bans.cpp
+@@ -0,0 +1,78 @@
++#include "game.h"
++
++namespace server {
++
++    void getip(clientinfo *sender, int cn)
++    {
++        if(sender->privilege<PRIV_ADMIN) return;
++        clientinfo *ci = (clientinfo *)getclientinfo(cn);
++        if(!ci) { sendf(sender->clientnum, 1, "ris", N_SERVMSG, "no such client"); return; }
++        const char *ip = getclienthostname(cn);
++        defformatstring(reply, "%s (%d) has IP %s", ci->name, ci->clientnum, ip);
++        sendf(sender->clientnum, 1, "ris", N_SERVMSG, reply);
++    }
++
++    extern vector<ban> bannedips;
++    extern void addban(uint ip, int expire);
++
++    bool addban(const char *ipstring, int expire)
++    {
++        uint ip;
++        if(!expire || inet_pton(AF_INET, ipstring, &ip) < 0) return false;
++        addban(ip, expire);
++        return true;
++    }
++
++    ICOMMAND(ban, "si", (char *ip, int *minutes), addban(ip, *minutes * 60*1000));
++
++    void addban(clientinfo *sender, const char *ipstring, int minutes)
++    {
++        if(sender->privilege<PRIV_ADMIN) return;
++        if (!addban(ipstring, minutes * 60*1000)) return;
++        defformatstring(confirmation, "banned %s for %dh %dm", ipstring, minutes/60, minutes%60);
++        sendf(sender->clientnum, 1, "ris", N_SERVMSG, confirmation);
++    }
++
++    void delban(const char *ipstring)
++    {
++        uint ip;
++        if(inet_pton(AF_INET, ipstring, &ip) < 0) return;
++        loopv(bannedips) if(bannedips[i].ip==ip) { bannedips.remove(i); }
++    }
++
++    ICOMMAND(unban, "s", (char *ip), delban(ip));
++
++    void delban(clientinfo *sender, const char *ipstring)
++    {
++        if(sender->privilege<PRIV_ADMIN) return;
++        delban(ipstring);
++        defformatstring(confirmation, "unbanned %s", ipstring);
++        sendf(sender->clientnum, 1, "ris", N_SERVMSG, confirmation);
++    }
++
++    char *listbans()
++    {
++        if(!bannedips.length()) { return "no bans"; }
++        vector<char> buf;
++        loopv(bannedips)
++        {
++            static char ip[INET_ADDRSTRLEN];
++            if(inet_ntop(AF_INET, &bannedips[i].ip, ip, INET_ADDRSTRLEN) == NULL) continue;
++            int expsecs = (bannedips[i].expire - totalmillis) / 1000;
++            defformatstring(line, "%s (%dh %dm %ds)", ip, expsecs/(60*60), (expsecs%(60*60))/60, (expsecs%(60*60))%60);
++            if(i) buf.put('\n');
++            buf.put(line, strlen(line));
++        };
++        buf.put('\0');
++        return newstring(buf.getbuf());
++    }
++
++    ICOMMAND(listbans, "", (), stringret(listbans()));
++
++    void listbans(clientinfo *sender)
++    {
++        if(sender->privilege<PRIV_ADMIN) return;
++        sendf(sender->clientnum, 1, "ris", N_SERVMSG, listbans());
++    }
++
++}
+diff --git src/p1xbraten/remote_commands.cpp src/p1xbraten/remote_commands.cpp
+index cafe106..cef1b76 100644
+--- src/p1xbraten/remote_commands.cpp
++++ src/p1xbraten/remote_commands.cpp
+@@ -13,10 +13,15 @@ namespace server {
+
+     bool handleservcmd(clientinfo *sender, const char *cmd)
+     {
+-        string sval;
++        string sval; int ival;
+         if(!strncmp(cmd, "do ", strlen("do ")))            { runclientscript(sender, &cmd[strlen("do ")]); return true; }
+         else if(!strcmp(cmd, "competitive"))               { setupmanagedgame(sender);                     return true; }
+         else if(sscanf(cmd, "competitive %5s", sval) == 1) { setupmanagedgame(sender, sval);               return true; }
++        else if(sscanf(cmd, "getip %d", &ival) == 1)          { getip(sender, ival);                      return true; }
++        else if(sscanf(cmd, "ban %15s %d", sval, &ival) == 2) { addban(sender, sval, ival);                return true; }
++        else if(sscanf(cmd, "ban %15s", sval) == 1)           { addban(sender, sval);                      return true; }
++        else if(sscanf(cmd, "unban %15s", sval) == 1)         { delban(sender, sval);                      return true; }
++        else if(!strcmp(cmd, "listbans"))                     { listbans(sender);                          return true; }
+         return false;
+     }
+

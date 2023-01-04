@@ -204,7 +204,7 @@ int setclientrealip(int n, uint ip)
     return enet_address_get_host_ip(&clients[n]->real, clients[n]->hostname, strlen("xxx.xxx.xxx.xxx")+1);
 }
 const char *getclienthostname(int n) { return clients.inrange(n) && clients[n]->type==ST_TCPIP ? clients[n]->hostname : NULL; }
-ICOMMAND(getip, "i", (int *cn), stringret(newstring(getclienthostname(*cn))));
+ICOMMAND(getip, "i", (int *cn), result(getclienthostname(*cn)));
 
 void sendpacket(int n, int chan, ENetPacket *packet, int exclude)
 {

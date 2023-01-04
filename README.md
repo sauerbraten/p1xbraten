@@ -45,6 +45,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [proxy\_setip.patch](#proxy_setippatch)
   - [anticheat.patch](#anticheatpatch-1)
   - [serverbotbalanceearly.patch](#serverbotbalanceearlypatch)
+  - [bans.patch](#banspatch)
 - [Project Structure](#project-structure)
 - [Building your own binary](#building-your-own-binary)
   - [Build dependencies](#build-dependencies)
@@ -392,6 +393,15 @@ This patch adds support for the [SauerDuels proxy](https://github.com/sauerduels
 - adds the `serverbotbalanceearly` variable: if 1 (and `serverbotbalance` is also enabled), the server will equalize the player count of all teams by adding/reassigning/removing bots
 
 This is a more aggressive form of auto-balance than vanilla's `serverbotbalance`, which only reassigns bots, and never adds or removes bots on its own. It's intended for public play and disables manually adding/removing bots.
+
+### [bans.patch](./patches/bans.patch)
+
+- adds the `getip <cn>` command to return a client's IP
+- adds the `ban <ip> <minutes>` command to ban an IP for the specified duration (or 30 minutes if not specified)
+- adds the `unban <ip>` command to remove any ban created earlier
+- adds the `listbans` command to list all currently active IP bans
+
+All of these commands are admin-only. You can use these from cubescript or as a remote command (e.g. `#listbans`).
 
 
 ## Project Structure
