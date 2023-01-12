@@ -82,6 +82,7 @@ apply-patches:
 	$(PATCH) < patches/serverbotbalanceearly.patch
 	$(PATCH) < patches/filterservers.patch
 	$(PATCH) < patches/bans.patch
+	$(PATCH) < patches/enet_mtu_1300.patch
 	cd src && make depend
 
 gzip-cfgs:

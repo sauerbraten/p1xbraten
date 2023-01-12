@@ -27,6 +27,7 @@ encrypt_credentials.go
 src/anticheat/*credentials*
 src/anticheat/key*
 dist
+fly.io
 
 Dockertrigger
 !/**/.gitkeep
