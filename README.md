@@ -143,7 +143,21 @@ a.k.a. Features
 
   All of the new damage-related commands (as well as `getaccuracy`) default to showing `hudplayer`'s stats across all weapons. However, they all take two optional integer arguments to query stats of a certain player and optionally for a specific weapon: `/<cmd> [cn] [weapon]` (use -1 as CN to query specific weapon stats about `hudplayer`).
 
-  To show comed-like statistics in the lower right corner, copy the contents of [`stats_gamehud.cfg`](./data/p1xbraten/stats_gamehud.cfg) into your `autoexec.cfg`.
+  To show comed-like statistics in the lower right corner, copy the following into your `autoexec.cfg`:
+  ```
+  gamehud = [
+    format "^f7SG: ^f1%1%% ^f7CG: ^f1%2%% ^f7RL: ^f1%3%% ^f7RI: ^f1%4%% ^f7GL: ^f1%5%% ^n^f7frags: ^f0%6 ^f7deaths: ^f3%7 ^f7acc: ^f2%8%% ^f7kpd: ^f5%9" (
+      round (getaccuracy -1 1) 0.1                    )(
+      round (getaccuracy -1 2) 0.1                    )(
+      round (getaccuracy -1 3) 0.1                    )(
+      round (getaccuracy -1 4) 0.1                    )(
+      round (getaccuracy -1 5) 0.1                    )(
+      getfrags                                        )(
+      getdeaths                                       )(
+      round (getaccuracy) 0.1                         )(
+      round (divf (getfrags) (max (getdeaths) 1)) 0.1	)
+  ]
+  ```
 
 ### [hudfragmessages.patch](./patches/hudfragmessages.patch)
 
@@ -193,7 +207,6 @@ You can easily configure the hud frag messages using the [improved menu](#menu) 
 ### [tex_commands.patch](./patches/tex_commands.patch)
 
 - adds `settex <id>` command to apply a texture by ID
-- adds `replacetex <old> <new> [insel?]` command to replace a texture with another by specifying their IDs
 
 ### [decouple_framedrawing.patch](./patches/decouple_framedrawing.patch)
 

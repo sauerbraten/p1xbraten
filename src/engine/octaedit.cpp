@@ -2549,8 +2549,6 @@ void mpreplacetex(int oldtex, int newtex, bool insel, selinfo &sel, bool local)
     allchanged();
 }
 
-ICOMMAND(replacetex, "iii", (int *oldtex, int *newtex, int *insel), { if(!noedit()) mpreplacetex(*oldtex, *newtex, *insel!=0, sel, true); });
-
 bool mpreplacetex(int oldtex, int newtex, bool insel, selinfo &sel, ucharbuf &buf)
 {
     if(!unpacktex(oldtex, buf, false)) return false;
@@ -2560,15 +2558,17 @@ bool mpreplacetex(int oldtex, int newtex, bool insel, selinfo &sel, ucharbuf &bu
     return true;
 }
 
-void replace(bool insel)
+void replace(bool insel, int oldtex, int newtex, const char *err)
 {
     if(noedit()) return;
-    if(reptex < 0) { conoutf(CON_ERROR, "can only replace after a texture edit"); return; }
-    mpreplacetex(reptex, lasttex, insel, sel, true);
+    if(!vslots.inrange(oldtex) || !vslots.inrange(newtex)) { conoutf(CON_ERROR, "%s", err); return; }
+    mpreplacetex(oldtex, newtex, insel, sel, true);
 }
 
-ICOMMAND(replace, "", (), replace(false));
-ICOMMAND(replacesel, "", (), replace(true));
+ICOMMAND(replace, "", (), replace(false, reptex, lasttex, "can only replace after a texture edit"));
+ICOMMAND(replacesel, "", (), replace(true, reptex, lasttex, "can only replace after a texture edit"));
+ICOMMAND(replacetex, "bb", (int *n, int *o), replace(false, *o, *n, "can only replace valid texture"));
+ICOMMAND(replacetexsel, "bb", (int *n, int *o), replace(true, *o, *n, "can only replace valid texture"));
 
 ////////// flip and rotate ///////////////
 uint dflip(uint face) { return face==F_EMPTY ? face : 0x88888888 - (((face&0xF0F0F0F0)>>4) | ((face&0x0F0F0F0F)<<4)); }

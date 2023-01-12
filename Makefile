@@ -35,8 +35,7 @@ debian: clean
 	--volume=$(PWD)/data:/data:ro \
 	.
 
-PATCH=patch --strip=0 --remove-empty-files --ignore-whitespace --no-backup-if-mismatch
-
+apply-patches: PATCH=patch --strip=0 --remove-empty-files --ignore-whitespace --no-backup-if-mismatch
 apply-patches:
 	$(PATCH) < patches/modconfig.patch
 	$(PATCH) < patches/modversion.patch
@@ -85,21 +84,18 @@ apply-patches:
 	$(PATCH) < patches/enet_mtu_1300.patch
 	cd src && make depend
 
-gzip-cfgs:
-	gzip --keep --force --best --no-name data/p1xbraten/menus.cfg && xxd -i - data/p1xbraten/menus.cfg.gz.xxd < data/p1xbraten/menus.cfg.gz
-	gzip --keep --force --best --no-name data/p1xbraten/master.cfg && xxd -i - data/p1xbraten/master.cfg.gz.xxd < data/p1xbraten/master.cfg.gz
-	gzip --keep --force --best --no-name data/p1xbraten/gamehud.cfg && xxd -i - data/p1xbraten/gamehud.cfg.gz.xxd < data/p1xbraten/gamehud.cfg.gz
-	gzip --keep --force --best --no-name data/p1xbraten/keymap.cfg && xxd -i - data/p1xbraten/keymap.cfg.gz.xxd < data/p1xbraten/keymap.cfg.gz
+gzip-cfgs embed-cfgs: DATA=data/p1xbraten
+gzip-cfgs: GZIP=gzip --keep --force --best --no-name
+gzip-cfgs: # to avoid C code surrounding the bytes, use: xxd -i - outfile < [infile]
+	for f in $(DATA)/*.cfg; do $(GZIP) $${f} && xxd -i - $${f}.gz.xxd < $${f}.gz; done
 
+embed-cfgs: INCLUDES=menus master keymap gamehud
+embed-cfgs: TARGET=src/p1xbraten/embedded_cfgs.cpp
 embed-cfgs: gzip-cfgs
-	sed -i "s/0,\/\/menuscrc/0x$(shell crc32 data/p1xbraten/menus.cfg),/" src/p1xbraten/embedded_cfgs.cpp
-	sed -i "s/embeddedfile<0> menuscfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/menus.cfg.gz)> menuscfg/" src/p1xbraten/embedded_cfgs.cpp
-	sed -i "s/0,\/\/mastercrc/0x$(shell crc32 data/p1xbraten/master.cfg),/" src/p1xbraten/embedded_cfgs.cpp
-	sed -i "s/embeddedfile<0> mastercfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/master.cfg.gz)> mastercfg/" src/p1xbraten/embedded_cfgs.cpp
-	sed -i "s/0,\/\/gamehudcrc/0x$(shell crc32 data/p1xbraten/gamehud.cfg),/" src/p1xbraten/embedded_cfgs.cpp
-	sed -i "s/embeddedfile<0> gamehudcfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/gamehud.cfg.gz)> gamehudcfg/" src/p1xbraten/embedded_cfgs.cpp
-	sed -i "s/0,\/\/keymapcrc/0x$(shell crc32 data/p1xbraten/keymap.cfg),/" src/p1xbraten/embedded_cfgs.cpp
-	sed -i "s/embeddedfile<0> keymapcfg/embeddedfile<$(shell stat --printf="%s" data/p1xbraten/keymap.cfg.gz)> keymapcfg/" src/p1xbraten/embedded_cfgs.cpp
+	for f in $(INCLUDES); do \
+		sed -i "s/0,\/\/$${f}_crc/0x$$(crc32 $(DATA)/$${f}.cfg),/" $(TARGET) && \
+		sed -i "s/embeddedfile<0> $${f}_cfg/embeddedfile<$$(stat --printf="%s" $(DATA)/$${f}.cfg.gz)> $${f}_cfg/" $(TARGET) \
+	; done
 	cd src && make depend
 
 ifndef SAUER_DIR

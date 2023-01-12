@@ -22,33 +22,33 @@ Index: src/p1xbraten/embedded_cfgs.cpp
 +#include "embedded_cfgs.h"
 +
 +namespace game {
-+    struct embeddedfile<0> menuscfg = {
++    struct embeddedfile<0> menus_cfg = {
 +        "data/p1xbraten/menus.cfg.gz",
-+        0,//menuscrc
++        0,//menus_crc
 +        {
 +            #include "../../data/p1xbraten/menus.cfg.gz.xxd"
 +        }
 +    };
 +
-+    struct embeddedfile<0> mastercfg = {
++    struct embeddedfile<0> master_cfg = {
 +        "data/p1xbraten/master.cfg.gz",
-+        0,//mastercrc
++        0,//master_crc
 +        {
 +            #include "../../data/p1xbraten/master.cfg.gz.xxd"
 +        }
 +    };
 +
-+    struct embeddedfile<0> gamehudcfg = {
++    struct embeddedfile<0> gamehud_cfg = {
 +        "data/p1xbraten/gamehud.cfg.gz",
-+        0,//gamehudcrc
++        0,//gamehud_crc
 +        {
 +            #include "../../data/p1xbraten/gamehud.cfg.gz.xxd"
 +        }
 +    };
 +
-+    struct embeddedfile<0> keymapcfg = {
++    struct embeddedfile<0> keymap_cfg = {
 +        "data/p1xbraten/keymap.cfg.gz",
-+        0,//keymapcrc
++        0,//keymap_crc
 +        {
 +            #include "../../data/p1xbraten/keymap.cfg.gz.xxd"
 +        }
@@ -75,23 +75,23 @@ Index: src/p1xbraten/embedded_cfgs.cpp
 +
 +    int writeembeddedcfgs()
 +    {
-+        int err = update(&menuscfg);
-+        if(err) { conoutf("\f6error updating %s (error code %d)!", menuscfg.name, err); return err; }
++        int err = update(&menus_cfg);
++        if(err) { conoutf("\f6error updating %s (error code %d)!", menus_cfg.name, err); return err; }
 +
-+        err = update(&mastercfg);
-+        if(err) { conoutf("\f6error updating %s(error code %d)!", mastercfg.name, err); return err; }
++        err = update(&master_cfg);
++        if(err) { conoutf("\f6error updating %s (error code %d)!", master_cfg.name, err); return err; }
 +
-+        err = update(&gamehudcfg);
-+        if(err) { conoutf("\f6error updating %s(error code %d)!", gamehudcfg.name, err); return err; }
++        err = update(&gamehud_cfg);
++        if(err) { conoutf("\f6error updating %s (error code %d)!", gamehud_cfg.name, err); return err; }
 +
-+        err = update(&keymapcfg);
-+        if(err) { conoutf("\f6error updating %s(error code %d)!", keymapcfg.name, err); return err; }
++        err = update(&keymap_cfg);
++        if(err) { conoutf("\f6error updating %s (error code %d)!", keymap_cfg.name, err); return err; }
 +
 +        return 0;
 +    }
 +
 +    MOD(VARFP, usep1xbratenmenus, 0, 1, 1, {
-+        if(usep1xbratenmenus) execfile(menuscfg.name);
++        if(usep1xbratenmenus) execfile(menus_cfg.name);
 +        else execfile("data/menus.cfg");
 +    });
 +}
