@@ -259,8 +259,8 @@ namespace game {
 
     void startanticheatsession()
     {
-        char *useridstring = newstring(EOS_PRODUCTUSERID_MAX_LENGTH+1);
-        int32_t useridstringlen;
+        static char useridstring[EOS_PRODUCTUSERID_MAX_LENGTH+1];
+        int32_t useridstringlen = sizeof(useridstring);
         switch (EOS_EResult e = EOS_ProductUserId_ToString(eosuserid, useridstring, &useridstringlen))
         {
             case EOS_EResult::EOS_Success: /* OK */ break;
