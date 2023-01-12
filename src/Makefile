@@ -25,7 +25,8 @@ endif
 CFLAGS= --target=$(TARGET)
 CXXFLAGS= --target=$(TARGET) -fomit-frame-pointer -ffast-math
 ifdef DEBUG
-	override CXXFLAGS+= -O0 -g -DDEBUG=$$DEBUG
+	override CFLAGS+= -g3
+	override CXXFLAGS+= -O0 -g3 -DDEBUG=$$DEBUG
 else
 	override CXXFLAGS+= -O3
 endif

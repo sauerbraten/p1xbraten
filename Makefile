@@ -2,6 +2,7 @@ SHELL := /bin/bash
 
 .PHONY: build install clean anticheat linux macos windows apply-patches gzip-cfgs embed-cfgs clean-sauer update-src from-patches changes-to-patch ensure-sauer-dir
 
+# build install: export DEBUG=1
 build:
 	cd src && make --jobs=8
 
