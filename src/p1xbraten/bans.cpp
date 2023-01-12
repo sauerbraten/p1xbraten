@@ -50,7 +50,7 @@ namespace server {
         sendf(sender->clientnum, 1, "ris", N_SERVMSG, confirmation);
     }
 
-    char *listbans()
+    const char *listbans()
     {
         if(!bannedips.length()) { return "no bans"; }
         vector<char> buf;
@@ -67,7 +67,7 @@ namespace server {
         return newstring(buf.getbuf());
     }
 
-    ICOMMAND(listbans, "", (), stringret(listbans()));
+    ICOMMAND(listbans, "", (), result(listbans()));
 
     void listbans(clientinfo *sender)
     {

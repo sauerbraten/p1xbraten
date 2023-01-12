@@ -114,7 +114,7 @@ index 0000000..c82c4d3
 +        sendf(sender->clientnum, 1, "ris", N_SERVMSG, confirmation);
 +    }
 +
-+    char *listbans()
++    const char *listbans()
 +    {
 +        if(!bannedips.length()) { return "no bans"; }
 +        vector<char> buf;
@@ -131,7 +131,7 @@ index 0000000..c82c4d3
 +        return newstring(buf.getbuf());
 +    }
 +
-+    ICOMMAND(listbans, "", (), stringret(listbans()));
++    ICOMMAND(listbans, "", (), result(listbans()));
 +
 +    void listbans(clientinfo *sender)
 +    {
