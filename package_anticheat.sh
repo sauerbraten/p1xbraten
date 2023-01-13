@@ -7,10 +7,10 @@ function createHashCatalogue() {
     local configFile=$2
     # clean up hash catalogue
     rm -rf "$binDir/EasyAntiCheat/Certificates"
-    pushd integritytool
+    pushd integritytool || exit
     echo ./anticheat_integritytool -productid "$productId" -target_game_dir "../$binDir" "$configFile"
     ./anticheat_integritytool -productid "$productId" -target_game_dir "../$binDir" "$configFile"
-    popd
+    popd || exit
 }
 
 function pack() {
@@ -27,7 +27,7 @@ function pack() {
     sed -i "s/<git-dev>/$version/" src/p1xbraten/version.cpp
 
     # make binaries
-    make $target
+    make "$target" || exit
 
     # restore git-dev version
     rm src/p1xbraten/version.cpp
@@ -72,8 +72,8 @@ function pack() {
             ;& # fallthrough
         *) # macos & linux
             mkdir -p dist
-            rm -rf dist/$platform-*.zip
-            zip -r dist/$platform-$version.zip "${files[@]}"
+            rm -rf dist/p1xbraten_"$platform"_*.zip
+            zip -r dist/p1xbraten_"$platform"_"$version".zip "${files[@]}"
             ;;
     esac
 }
