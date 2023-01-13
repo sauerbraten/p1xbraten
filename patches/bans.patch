@@ -56,6 +56,21 @@ index 8d6bace..716334c 100644
      namespace aiman
      {
          extern void removeai(clientinfo *ci);
+diff --git src/shared/cube.h src/shared/cube.h
+index c153591..b7b63a4 100644
+--- src/shared/cube.h
++++ src/shared/cube.h
+@@ -22,8 +22,9 @@
+   #ifdef _WIN32_WINNT
+   #undef _WIN32_WINNT
+   #endif
+-  #define _WIN32_WINNT 0x0500
++  #define _WIN32_WINNT _WIN32_WINNT_VISTA
+   #include "windows.h"
++  #include <ws2tcpip.h>
+   #ifndef _WINDOWS
+     #define _WINDOWS
+   #endif
 diff --git src/p1xbraten/bans.cpp src/p1xbraten/bans.cpp
 new file mode 100644
 index 0000000..c82c4d3
