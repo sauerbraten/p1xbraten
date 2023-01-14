@@ -282,14 +282,14 @@ index 0000000..839b0a9
 +// all packets coming from the server are recorded to a file.
 +//
 +// some messages going from us to the server need to be injected,
-+// because those actions aren't confirmed/acknowledged explicitly
-+// by the server:
++// because those actions aren't confirmed/acknowledged (and thus not
++// replayed to us) by the server:
 +//  - N_SWITCHNAME
 +//  - N_TEXT
 +//  - N_GUNSELECT
 +//  - N_SOUND
 +//  - N_CLIENTPING
-+//  - N_SHOTFX
++//  - N_SHOOT (-> N_SHOTFX)
 +//  - N_POS
 +//  - N_TELEPORT
 +//  - N_JUMPPAD
