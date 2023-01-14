@@ -52,15 +52,7 @@ index 522d32a..b0cc1c8 100644
          if(multiplayer(false) && !m_mp(mode))
          {
              conoutf(CON_ERROR, "mode %s (%d) not supported in multiplayer", server::modename(gamemode), gamemode);
-@@ -634,6 +636,7 @@ namespace game
-         {
-             server::forcemap(name, mode);
-             if(!isconnected()) localconnect();
-+            if(demonextmatch) setupdemorecord();
-         }
-         else if(player1->state!=CS_SPECTATOR || player1->privilege) addmsg(N_MAPVOTE, "rsi", name, mode);
-     }
-@@ -980,7 +983,7 @@ namespace game
+@@ -980,7 +982,7 @@ namespace game
      VARP(teamcolorchat, 0, 1, 1);
      const char *chatcolorname(fpsent *d) { return teamcolorchat ? teamcolorname(d, NULL) : colorname(d); }
 
@@ -81,11 +73,11 @@ index 522d32a..b0cc1c8 100644
                  q.put((falldir>>8)&0xFF);
              }
          }
-+        if(demorecord && (d==player1 || d->ai)) recordpacket(0, q.buf+offset, q.length());
++        if(demorecord && (d==player1 || d->ai)) recordpacket(0, q.buf+offset, q.length()-offset);
      }
 
      void sendposition(fpsent *d, bool reliable)
-@@ -1115,9 +1120,21 @@ namespace game
+@@ -1115,8 +1120,20 @@ namespace game
      void c2sinfo(bool force) // send update to the server
      {
          static int lastupdate = -1000;
@@ -93,7 +85,7 @@ index 522d32a..b0cc1c8 100644
 +        static int lastdemopos = -1000;
 +        if(totalmillis - lastupdate < 33 && !force)
 +        {
-+            if(demorecord && totalmillis - lastdemopos >= 8 && player1->state == CS_ALIVE) // 125pps player1 positions
++            if(demorecord && player1->state==CS_ALIVE && totalmillis-lastdemopos>=8) // 125pps player1 positions
 +            {
 +                static packetbuf q(100);
 +                sendposition(player1, q);
@@ -103,11 +95,10 @@ index 522d32a..b0cc1c8 100644
 +            return; // don't update faster than 30pps
 +        }
          lastupdate = totalmillis;
-         sendpositions();
 +        lastdemopos = totalmillis;
+         sendpositions();
          sendmessages();
          flushclient();
-     }
 @@ -1826,7 +1843,9 @@ namespace game
              }
 
@@ -188,15 +179,7 @@ diff --git src/fpsgame/fps.cpp src/fpsgame/fps.cpp
 index 7dc7de0..f5328cb 100644
 --- src/fpsgame/fps.cpp
 +++ src/fpsgame/fps.cpp
-@@ -688,6 +688,7 @@ namespace game
-         disablezoom();
-         lasthit = 0;
-
-+        if(remote && demonextmatch) setupdemorecord();
-         execident("mapstart");
-     }
-
-@@ -743,12 +744,16 @@ namespace game
+@@ -743,12 +743,16 @@ namespace game
          if(!d || d==player1)
          {
              addmsg(N_SOUND, "ci", d, n);
@@ -237,13 +220,12 @@ index b59407a..64a92ad 100644
      extern vector<uchar> messages;
 
      extern int parseplayer(const char *arg);
-@@ -860,6 +863,14 @@ namespace game
+@@ -860,6 +863,13 @@ namespace game
      extern int chooserandomplayermodel(int seed);
      extern void swayhudgun(int curtime);
      extern vec hudgunorigin(int gun, const vec &from, const vec &to, fpsent *d);
 +
 +    // clientdemo
-+    extern bool demonextmatch;
 +    extern stream *demorecord;
 +    extern void setupdemorecord();
 +    extern void recordpacket(int chan, uchar *data, int len);
@@ -293,7 +275,7 @@ new file mode 100644
 index 0000000..839b0a9
 --- /dev/null
 +++ src/p1xbraten/clientdemo.cpp
-@@ -0,0 +1,317 @@
+@@ -0,0 +1,315 @@
 +#include "game.h"
 +
 +// client-side demo recording works mostly the same as server-side:
@@ -313,7 +295,6 @@ index 0000000..839b0a9
 +//  - N_JUMPPAD
 +
 +namespace game {
-+    bool demonextmatch = false;
 +    stream *demo = NULL, *demorecord = NULL;
 +    int demostartmillis = 0;
 +
@@ -501,7 +482,6 @@ index 0000000..839b0a9
 +
 +        conoutf("recording client demo");
 +
-+        demonextmatch = false;
 +        demorecord = f;
 +
 +        demoheader hdr;

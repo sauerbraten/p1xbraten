@@ -17,7 +17,6 @@
 //  - N_JUMPPAD
 
 namespace game {
-    bool demonextmatch = false;
     stream *demo = NULL, *demorecord = NULL;
     int demostartmillis = 0;
 
@@ -213,7 +212,6 @@ namespace game {
 
         conoutf("recording client demo");
 
-        demonextmatch = false;
         demorecord = f;
 
         demoheader hdr;

@@ -882,7 +882,6 @@ namespace game
     extern vec hudgunorigin(int gun, const vec &from, const vec &to, fpsent *d);
 
     // clientdemo
-    extern bool demonextmatch;
     extern stream *demorecord;
     extern void setupdemorecord();
     extern void recordpacket(int chan, uchar *data, int len);
