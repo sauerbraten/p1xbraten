@@ -79,7 +79,6 @@ apply-patches:
 	$(PATCH) < patches/anticheat.patch
 	$(PATCH) < patches/setfont.patch
 	$(PATCH) < patches/serverbotbalanceearly.patch
-	$(PATCH) < patches/filterservers.patch
 	$(PATCH) < patches/bans.patch
 	$(PATCH) < patches/enet_mtu_1300.patch
 	cd src && make depend
@@ -89,10 +88,10 @@ gzip-cfgs: GZIP=gzip --keep --force --best --no-name
 gzip-cfgs: # to avoid C code surrounding the bytes, use: xxd -i - outfile < [infile]
 	for f in $(DATA)/*.cfg; do $(GZIP) $${f} && xxd -i - $${f}.gz.xxd < $${f}.gz; done
 
-embed-cfgs: INCLUDES=menus master keymap gamehud
+embed-cfgs: EMBEDS=menus master keymap gamehud
 embed-cfgs: TARGET=src/p1xbraten/embedded_cfgs.cpp
 embed-cfgs: gzip-cfgs
-	for f in $(INCLUDES); do \
+	for f in $(EMBEDS); do \
 		sed -i "s/0,\/\/$${f}_crc/0x$$(crc32 $(DATA)/$${f}.cfg),/" $(TARGET) && \
 		sed -i "s/embeddedfile<0> $${f}_cfg/embeddedfile<$$(stat --printf="%s" $(DATA)/$${f}.cfg.gz)> $${f}_cfg/" $(TARGET) \
 	; done

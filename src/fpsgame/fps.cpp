@@ -1233,15 +1233,12 @@ namespace game
         }
     }
 
-    #define justified(elem,handleclick,right) \
+    #define justified(elem,handlemouse,right) \
         { \
-            g->pushlist(); \
-            if((right)) g->spring(); \
-            g->pushlist(); /* get vertical list dir back, so mergehits works */ \
-            int up = (elem); \
-            if((handleclick) && up&G3D_UP) return true; \
-            g->poplist(); \
-            g->poplist(); \
+            /* pushlist to go horizontal, spring to push right, pushlist again to get vertical list dir back, so mergehits works */ \
+            if((right)) { g->pushlist(); g->spring(); g->pushlist(); } \
+            int mousehit = (elem); handlemouse; \
+            if((right)) { g->poplist(); g->poplist(); } \
         }
 
     bool serverinfostartcolumn(g3d_gui *g, int i)
@@ -1252,7 +1249,7 @@ namespace game
         if(size_t(i) >= sizeof(names)/sizeof(names[0])) return false;
         if(i) g->space(2);
         g->pushlist();
-        justified(g->text(names[i], COL_GRAY, NULL), false, right[i]);
+        justified(g->text(names[i], COL_GRAY, NULL), , right[i]);
         if(struts[i]) g->strut(struts[i]);
         g->mergehits(true);
         return true;
@@ -1275,7 +1272,9 @@ namespace game
         return (n>=MM_START && size_t(n-MM_START)<sizeof(mastermodeicons)/sizeof(mastermodeicons[0])) ? mastermodeicons[n-MM_START] : unknown;
     }
 
-    SVAR(filterservers, "");
+    MOD(SVAR, filterservers, "");
+    MOD(_SVAR, selectedservername, selectedservername, "", IDF_READONLY);
+    MOD(_VAR, selectedserverport, selectedserverport, 0, 0, 0xFFFF, IDF_READONLY);
 
     bool serverinfoentry(g3d_gui *g, int i, const char *name, int port, const char *sdesc, const char *map, int ping, const vector<int> &attr, int np)
     {
@@ -1284,8 +1283,10 @@ namespace game
                !cubecasefind(map, filterservers) &&
                (attr.length()<2 || !cubecasefind(server::modename(attr[1], ""), filterservers))) return false;
 
-        #define leftjustified(elem)   justified(elem,true,false)
-        #define rightjustified(elem)  justified(elem,true,true)
+        #define handlemouse if((mousehit)&G3D_UP) { setsvar("filterservers", ""); return true; } \
+            if((mousehit)&G3D_ROLLOVER) { setsvar("selectedservername", name); setvar("selectedserverport", port); }
+        #define leftjustified(elem)   justified(elem,handlemouse,false)
+        #define rightjustified(elem)  justified(elem,handlemouse,true)
 
         if(ping < 0 || attr.empty() || attr[0]!=PROTOCOL_VERSION)
         {

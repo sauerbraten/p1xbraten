@@ -17,19 +17,16 @@ Index: src/fpsgame/fps.cpp
 ===================================================================
 --- src/fpsgame/fps.cpp	(revision 6479)
 +++ src/fpsgame/fps.cpp	(working copy)
-@@ -1173,13 +1173,26 @@
+@@ -1173,13 +1173,23 @@
          }
      }
 
-+    #define justified(elem,handleclick,right) \
++    #define justified(elem,handlemouse,right) \
 +        { \
-+            g->pushlist(); \
-+            if((right)) g->spring(); \
-+            g->pushlist(); /* get vertical list dir back, so mergehits works */ \
-+            int up = (elem); \
-+            if((handleclick) && up&G3D_UP) return true; \
-+            g->poplist(); \
-+            g->poplist(); \
++            /* pushlist to go horizontal, spring to push right, pushlist again to get vertical list dir back, so mergehits works */ \
++            if((right)) { g->pushlist(); g->spring(); g->pushlist(); } \
++            int mousehit = (elem); handlemouse; \
++            if((right)) { g->poplist(); g->poplist(); } \
 +        }
 +
      bool serverinfostartcolumn(g3d_gui *g, int i)
@@ -43,19 +40,32 @@ Index: src/fpsgame/fps.cpp
 +        if(i) g->space(2);
          g->pushlist();
 -        g->text(names[i], COL_GRAY, !i ? " " : NULL);
-+        justified(g->text(names[i], COL_GRAY, NULL), false, right[i]);
++        justified(g->text(names[i], COL_GRAY, NULL), , right[i]);
          if(struts[i]) g->strut(struts[i]);
          g->mergehits(true);
          return true;
-@@ -1204,36 +1221,37 @@
+@@ -1205,38 +1215,50 @@
+         return (n>=MM_START && size_t(n-MM_START)<sizeof(mastermodeicons)/sizeof(mastermodeicons[0])) ? mastermodeicons[n-MM_START] : unknown;
+     }
 
++    MOD(SVAR, filterservers, "");
++    MOD(_SVAR, selectedservername, selectedservername, "", IDF_READONLY);
++    MOD(_VAR, selectedserverport, selectedserverport, 0, 0, 0xFFFF, IDF_READONLY);
++
      bool serverinfoentry(g3d_gui *g, int i, const char *name, int port, const char *sdesc, const char *map, int ping, const vector<int> &attr, int np)
      {
-+        #define leftjustified(elem)   justified(elem,true,false)
-+        #define rightjustified(elem)  justified(elem,true,true)
++        if(*filterservers)
++            if(!cubecasefind(sdesc, filterservers) &&
++               !cubecasefind(map, filterservers) &&
++               (attr.length()<2 || !cubecasefind(server::modename(attr[1], ""), filterservers))) return false;
 +
-         if(ping < 0 || attr.empty() || attr[0]!=PROTOCOL_VERSION)
-         {
++        #define handlemouse if((mousehit)&G3D_UP) { setsvar("filterservers", ""); return true; } \
++            if((mousehit)&G3D_ROLLOVER) { setsvar("selectedservername", name); setvar("selectedserverport", port); }
++        #define leftjustified(elem)   justified(elem,handlemouse,false)
++        #define rightjustified(elem)  justified(elem,handlemouse,true)
++
+        if(ping < 0 || attr.empty() || attr[0]!=PROTOCOL_VERSION)
+        {
              switch(i)
              {
                  case 0:
@@ -95,7 +105,7 @@ Index: src/fpsgame/fps.cpp
                      break;
              }
              return false;
-@@ -1243,52 +1261,55 @@
+@@ -1243,52 +1265,55 @@
          {
              case 0:
              {
