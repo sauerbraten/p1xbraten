@@ -931,11 +931,11 @@ FVAR(depthoffset, -1e4f, 0.01f, 1e4f);
 
 matrix4 nooffsetmatrix;
 
-void enablepolygonoffset(GLenum type)
+void enablepolygonoffset(GLenum type, float scale)
 {
     if(!depthoffset)
     {
-        glPolygonOffset(polygonoffsetfactor, polygonoffsetunits);
+        glPolygonOffset(polygonoffsetfactor * scale, polygonoffsetunits * scale);
         glEnable(type);
         return;
     }
@@ -943,7 +943,7 @@ void enablepolygonoffset(GLenum type)
     bool clipped = reflectz < 1e15f && reflectclip;
 
     nooffsetmatrix = projmatrix;
-    projmatrix.d.z += depthoffset * (clipped ? noclipmatrix.c.z : projmatrix.c.z);
+    projmatrix.d.z += depthoffset * scale * (clipped ? noclipmatrix.c.z : projmatrix.c.z);
     setcamprojmatrix(false, true);
 }
 
