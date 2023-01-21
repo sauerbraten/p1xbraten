@@ -2,9 +2,9 @@
 #include "embedded_cfgs.h"
 
 namespace game {
-    struct embeddedfile<17201> menus_cfg = {
+    struct embeddedfile<17204> menus_cfg = {
         "data/p1xbraten/menus.cfg.gz",
-        0xf16f8ebc,
+        0xde805340,
         {
             #include "../../data/p1xbraten/menus.cfg.gz.xxd"
         }
