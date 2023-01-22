@@ -4,7 +4,7 @@ cd $(dirname $0) # change into script directory in case it's called from somewhe
 
 # SAUER_OPTIONS contains any command line options you would like to start Sauerbraten with.
 #SAUER_OPTIONS="-f"
-SAUER_OPTIONS="-q${HOME}/.p1xbraten -k${HOME}/sauerbraten-code"
+SAUER_OPTIONS="-q${HOME}/.p1xbraten -k${HOME}/sauerbraten-2020"
 
 if [ "${XDG_SESSION_TYPE}" = wayland ]
 then
