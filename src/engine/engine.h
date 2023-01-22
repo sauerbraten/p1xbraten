@@ -6,7 +6,6 @@
 
 #ifdef ANTICHEAT
 // anticheat
-extern int anticheatenabled; // toggled by -e CLI flag
 extern void anticheattick();
 #endif
 

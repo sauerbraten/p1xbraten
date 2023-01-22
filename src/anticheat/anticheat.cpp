@@ -450,7 +450,6 @@ namespace server {
         return asname[status];
     }
 
-    // todo: this is pretty useless since we use a dummy echo backend as "identity" provider, maybe don't print any messages?
     void onclientauthstatuschanged(const EOS_AntiCheatCommon_OnClientAuthStatusChangedCallbackInfo *data)
     {
         clientinfo *ci = (clientinfo *) data->ClientHandle;
@@ -469,6 +468,8 @@ namespace server {
             );
             conoutf(CON_WARN, "%s", msg);
             notifyprivclients(PRIV_AUTH, msg);
+            loopv(clients) if(clients[i]->supportsanticheat && clients[i]->privilege >= PRIV_AUTH)
+                sendf(clients[i]->clientnum, 1, "ri3", N_P1X_ANTICHEAT_VERIFIED, ci->clientnum, 0);
         }
 
         if(oldanticheatverified < ci->anticheatverified)
@@ -481,6 +482,8 @@ namespace server {
             conoutf(CON_WARN, "%s", msg);
             if(ci->anticheatverified==2)
             {
+                loopv(clients) if(clients[i]->supportsanticheat)
+                    sendf(clients[i]->clientnum, 1, "ri3", N_P1X_ANTICHEAT_VERIFIED, ci->clientnum, 1);
                 defformatstring(msg, "\fs\f8[anti-cheat]\fr %s is using the p1xbraten anti-cheat client", colorname(ci));
                 sendf(-1, 1, "ris", N_SERVMSG, msg);
                 if(ci->state.state==CS_SPECTATOR && mastermode<MM_LOCKED) unspectate(ci);

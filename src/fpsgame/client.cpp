@@ -973,6 +973,7 @@ namespace game
     {
 #ifdef ANTICHEAT
         endanticheatsession();
+        player1->anticheatverified = false;
 #endif
         if(remote) stopfollowing();
         ignores.setsize(0);
@@ -2093,6 +2094,15 @@ namespace game
             case N_P1X_ANTICHEAT_ENDSESSION:
                 endanticheatsession();
                 break;
+
+            case N_P1X_ANTICHEAT_VERIFIED:
+            {
+                int vn = getint(p), val = getint(p);
+                fpsent *v = getclient(vn);
+                if(!v) return;
+                v->anticheatverified = val>0;
+                break;
+            }
 #endif
             default:
                 neterr("type", cn < 0);

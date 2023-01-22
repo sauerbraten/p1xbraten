@@ -22,6 +22,7 @@ namespace game
     MOD(VARP, showaccuracy, 0, 0, 1);
     MOD(VARP, showdamage, 0, 0, 2);
     MOD(VARP, showdamagereceived, 0, 0, 1);
+    MOD(VARP, showanticheatstatus, 0, 0, 1);
 
     hashset<teaminfo> teaminfos;
 
@@ -364,6 +365,17 @@ namespace game
                     g.poplist();
                 }
             }
+
+#ifdef ANTICHEAT
+            if(anticheatenabled && showanticheatstatus)
+            {
+                g.space(2);
+                g.pushlist();
+                rightjustified(g.text("anticheat", COL_GRAY))
+                loopscoregroup(o, rightjustified(g.textf("%s", fgcolor, NULL, o->anticheatverified ? "yes" : "no")));
+                g.poplist();
+            }
+#endif
 
             if(showclientnum || player1->privilege>=PRIV_MASTER)
             {

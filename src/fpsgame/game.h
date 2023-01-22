@@ -215,7 +215,7 @@ enum
 
 // protocol extensions
 static const char * const CAP_PROBE_CLIENT_DEMO_UPLOAD = "capability_probe_protocol_extension_p1x_client_demo_upload_v2";
-static const char * const CAP_PROBE_ANTICHEAT          = "capability_probe_protocol_extension_p1x_anticheat_v2";
+static const char * const CAP_PROBE_ANTICHEAT          = "capability_probe_protocol_extension_p1x_anticheat_v3";
 
 // network messages codes, c2s, c2c, s2c
 
@@ -250,7 +250,7 @@ enum
     // N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED = 1000, N_P1X_RECORDDEMO, // legacy
     N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED = 1002, N_P1X_RECORDDEMO, // guarded by CAP_PROBE_CLIENT_DEMO_UPLOAD
 #ifdef ANTICHEAT
-    N_P1X_ANTICHEAT_SUPPORTED = 2000, N_P1X_ANTICHEAT_BEGINSESSION, N_P1X_ANTICHEAT_MESSAGE, N_P1X_ANTICHEAT_VIOLATION, N_P1X_ANTICHEAT_ENDSESSION, // guarded by CAP_PROBE_ANTICHEAT
+    N_P1X_ANTICHEAT_SUPPORTED = 2000, N_P1X_ANTICHEAT_BEGINSESSION, N_P1X_ANTICHEAT_MESSAGE, N_P1X_ANTICHEAT_VIOLATION, N_P1X_ANTICHEAT_ENDSESSION, N_P1X_ANTICHEAT_VERIFIED, // guarded by CAP_PROBE_ANTICHEAT
 #endif
     NUMMSG
 };
@@ -285,7 +285,7 @@ static const int msgsizes[] =               // size inclusive message token, 0 f
     N_P1X_SETIP, 2,
     N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED, 1, N_P1X_RECORDDEMO, 1,
 #ifdef ANTICHEAT
-    N_P1X_ANTICHEAT_SUPPORTED, 1, N_P1X_ANTICHEAT_BEGINSESSION, 0, N_P1X_ANTICHEAT_MESSAGE, 0, N_P1X_ANTICHEAT_VIOLATION, 0, N_P1X_ANTICHEAT_ENDSESSION, 1,
+    N_P1X_ANTICHEAT_SUPPORTED, 1, N_P1X_ANTICHEAT_BEGINSESSION, 0, N_P1X_ANTICHEAT_MESSAGE, 0, N_P1X_ANTICHEAT_VIOLATION, 0, N_P1X_ANTICHEAT_ENDSESSION, 1, N_P1X_ANTICHEAT_VERIFIED, 3,
 #endif
     -1
 };
@@ -578,10 +578,11 @@ struct fpsent : dynent, fpsstate
     ai::aiinfo *ai;
     int ownernum, lastnode;
     semver p1xbratenversion;
+    bool anticheatverified;
 
     vec muzzle;
 
-    fpsent() : weight(100), clientnum(-1), privilege(PRIV_NONE), lastupdate(0), plag(0), ping(0), lifesequence(0), respawned(-1), suicided(-1), lastpain(0), attacksound(-1), attackchan(-1), idlesound(-1), idlechan(-1), frags(0), flags(0), deaths(0), totaldamage(0), totalshots(0), suicides(0), edit(NULL), smoothmillis(-1), playermodel(-1), ai(NULL), ownernum(-1), p1xbratenversion(0, 0, 0), muzzle(-1, -1, -1)
+    fpsent() : weight(100), clientnum(-1), privilege(PRIV_NONE), lastupdate(0), plag(0), ping(0), lifesequence(0), respawned(-1), suicided(-1), lastpain(0), attacksound(-1), attackchan(-1), idlesound(-1), idlechan(-1), frags(0), flags(0), deaths(0), totaldamage(0), totalshots(0), suicides(0), edit(NULL), smoothmillis(-1), playermodel(-1), ai(NULL), ownernum(-1), p1xbratenversion(0, 0, 0), anticheatverified(false), muzzle(-1, -1, -1)
     {
         name[0] = team[0] = info[0] = alphanumname[0] = 0;
         respawn();

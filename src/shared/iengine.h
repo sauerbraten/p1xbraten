@@ -589,3 +589,7 @@ extern void g3d_resetcursor();
 extern void g3d_limitscale(float scale);
 
 extern char *p1xbratenversion;
+
+#ifdef ANTICHEAT
+extern int anticheatenabled; // toggled by -e CLI flag
+#endif
