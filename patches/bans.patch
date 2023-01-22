@@ -28,7 +28,7 @@ index 2aab85b..4448c04 100644
      extern bool handleservcmd(clientinfo *ci, const char *cmd);
 @@ -1277,6 +1282,12 @@ namespace server
      extern void unspectate(clientinfo *ci);
-     extern void notifyprivusers(int minpriv, char *msg);
+     extern void notifyprivclients(int minpriv, char *msg);
  #endif
 +
 +    // bans

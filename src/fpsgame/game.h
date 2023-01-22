@@ -1279,7 +1279,7 @@ namespace server
     extern bool unregisteranticheatclient(clientinfo *c);
     extern void forcespectator(clientinfo *ci);
     extern void unspectate(clientinfo *ci);
-    extern void notifyprivusers(int minpriv, char *msg);
+    extern void notifyprivclients(int minpriv, char *msg);
 #endif
 
     // bans

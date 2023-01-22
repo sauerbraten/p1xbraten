@@ -440,7 +440,7 @@ index 0000000..2fe07ee
 +                );
 +            }
 +            conoutf(CON_WARN, "%s", msg);
-+            if(!forceanticheatclient) notifyprivusers(PRIV_AUTH, msg);
++            if(!forceanticheatclient) notifyprivclients(PRIV_AUTH, msg);
 +            else
 +            {
 +                sendf(-1, 1, "ris", N_SERVMSG, msg);
@@ -474,7 +474,7 @@ index 0000000..2fe07ee
 +                ci->anticheatverified, authstatusname(ci->anticheatverified)
 +            );
 +            conoutf(CON_WARN, "%s", msg);
-+            notifyprivusers(PRIV_AUTH, msg);
++            notifyprivclients(PRIV_AUTH, msg);
 +        }
 +
 +        if(oldanticheatverified < ci->anticheatverified)
@@ -540,7 +540,7 @@ index 0000000..2fe07ee
 +    {
 +        defformatstring(msg, "\fs\f3%s self-reported a violation: %s (code: %d)\fr", colorname(ci), details, code);
 +        conoutf(CON_WARN, "%s", msg);
-+        notifyprivusers(PRIV_AUTH, msg);
++        notifyprivclients(PRIV_AUTH, msg);
 +    }
 +
 +    bool unregisteranticheatclient(clientinfo *ci)
@@ -925,7 +925,7 @@ index 0a4c901..4e9fe3a 100644
 +    extern bool unregisteranticheatclient(clientinfo *c);
 +    extern void forcespectator(clientinfo *ci);
 +    extern void unspectate(clientinfo *ci);
-+    extern void notifyprivusers(int minpriv, char *msg);
++    extern void notifyprivclients(int minpriv, char *msg);
 +#endif
  }
 

@@ -434,7 +434,7 @@ namespace server {
                 );
             }
             conoutf(CON_WARN, "%s", msg);
-            if(!forceanticheatclient) notifyprivusers(PRIV_AUTH, msg);
+            if(!forceanticheatclient) notifyprivclients(PRIV_AUTH, msg);
             else
             {
                 sendf(-1, 1, "ris", N_SERVMSG, msg);
@@ -468,7 +468,7 @@ namespace server {
                 ci->anticheatverified, authstatusname(ci->anticheatverified)
             );
             conoutf(CON_WARN, "%s", msg);
-            notifyprivusers(PRIV_AUTH, msg);
+            notifyprivclients(PRIV_AUTH, msg);
         }
 
         if(oldanticheatverified < ci->anticheatverified)
@@ -534,7 +534,7 @@ namespace server {
     {
         defformatstring(msg, "\fs\f3%s self-reported a violation: %s (code: %d)\fr", colorname(ci), details, code);
         conoutf(CON_WARN, "%s", msg);
-        notifyprivusers(PRIV_AUTH, msg);
+        notifyprivclients(PRIV_AUTH, msg);
     }
 
     bool unregisteranticheatclient(clientinfo *ci)

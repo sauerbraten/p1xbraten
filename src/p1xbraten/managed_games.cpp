@@ -130,7 +130,7 @@ namespace server {
     }
 
 
-    void notifyprivusers(int minpriv, char *msg)
+    void notifyprivclients(int minpriv, char *msg)
     {
         loopv(clients)
         {
@@ -150,7 +150,7 @@ namespace server {
         savedemo(d, ci->name);
         static string msg;
         formatstring(msg, "received client-side demo from %s", colorname(ci));
-        notifyprivusers(PRIV_ADMIN, msg);
+        notifyprivclients(PRIV_ADMIN, msg);
     }
 
     struct messageevent : gameevent
