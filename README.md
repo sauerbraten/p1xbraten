@@ -194,6 +194,9 @@ You can easily configure the hud frag messages using the [improved menu](#menu) 
 - styles the serverbrowser to be consistent with the cleaned up scoreboard
 - divides 'players' column into 'players' and 'slots'
 - right-justifies ping, players, slots, and port columns
+- adds the `filterservers` string variable to only show servers in the serverbrowser whose mode, map or description matches (using case-insensitive substring matching)
+
+The p1xbraten menu gives you a simple search field on the serverbrowser using this variable.
 
 ### [listteams.patch](./patches/listteams.patch)
 
@@ -343,9 +346,6 @@ Integrates Epic's Online Services SDK and Anti-Cheat framework to provide protec
 
 ### [filterservers.patch](./patches/filterservers.patch)
 
-- adds the `filterservers` string variable to only show servers in the serverbrowser whose mode, map or description matches (using case-insensitive substring matching)
-
-The p1xbraten menu gives you a simple search field on the serverbrowser using this variable.
 
 
 ## Server Patches
