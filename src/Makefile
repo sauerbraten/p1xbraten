@@ -158,6 +158,7 @@ CLIENT_OBJS= \
 	p1xbraten/namecomplete.o \
 	p1xbraten/proxy_real_ip.o \
 	p1xbraten/remote_commands.o \
+	p1xbraten/serverbrowser.o \
 	p1xbraten/version.o \
 	p1xbraten/weaponstats.o
 ifdef ANTICHEAT
@@ -538,6 +539,13 @@ p1xbraten/remote_commands.o: fpsgame/game.h shared/cube.h shared/tools.h
 p1xbraten/remote_commands.o: shared/geom.h shared/ents.h shared/command.h
 p1xbraten/remote_commands.o: shared/glexts.h shared/glemu.h shared/iengine.h
 p1xbraten/remote_commands.o: shared/igame.h fpsgame/ai.h
+p1xbraten/serverbrowser.o: fpsgame/game.h shared/cube.h shared/tools.h
+p1xbraten/serverbrowser.o: shared/geom.h shared/ents.h shared/command.h
+p1xbraten/serverbrowser.o: shared/glexts.h shared/glemu.h shared/iengine.h
+p1xbraten/serverbrowser.o: shared/igame.h fpsgame/ai.h
+p1xbraten/serverbrowser.o: p1xbraten/serverbrowser.h engine/engine.h
+p1xbraten/serverbrowser.o: engine/world.h engine/octa.h engine/lightmap.h
+p1xbraten/serverbrowser.o: engine/bih.h engine/texture.h engine/model.h
 p1xbraten/version.o: engine/engine.h shared/cube.h shared/tools.h
 p1xbraten/version.o: shared/geom.h shared/ents.h shared/command.h
 p1xbraten/version.o: shared/glexts.h shared/glemu.h shared/iengine.h

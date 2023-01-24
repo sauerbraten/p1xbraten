@@ -1233,23 +1233,13 @@ namespace game
         }
     }
 
-    #define justified(elem,handlemouse,right) \
-        { \
-            /* pushlist to go horizontal, spring to push right, pushlist again to get vertical list dir back, so mergehits works */ \
-            if((right)) { g->pushlist(); g->spring(); g->pushlist(); } \
-            int mousehit = (elem); handlemouse; \
-            if((right)) { g->poplist(); g->poplist(); } \
-        }
-
     bool serverinfostartcolumn(g3d_gui *g, int i)
     {
-        static const char * const names[] = { "ping", "players", "slots", "mode", "map", "time", "master", "host", "port", "description" };
-        static const float struts[]       = {      0,         0,       0,  12.5f,    14,      0,        0,     14,      0,         24.5f };
-        static const bool right[]         = {   true,      true,    true,  false, false,  false,    false,  false,   true,         false };
+        static const char * const names[] = { "ping ", "players ", "mode ", "map ", "time ", "master ", "host ", "port ", "description " };
+        static const float struts[] =       { 7,       7,          12.5f,   14,      7,      8,         14,      7,       24.5f };
         if(size_t(i) >= sizeof(names)/sizeof(names[0])) return false;
-        if(i) g->space(2);
         g->pushlist();
-        justified(g->text(names[i], COL_GRAY, NULL), , right[i]);
+        g->text(names[i], COL_GRAY, !i ? " " : NULL);
         if(struts[i]) g->strut(struts[i]);
         g->mergehits(true);
         return true;
@@ -1272,50 +1262,38 @@ namespace game
         return (n>=MM_START && size_t(n-MM_START)<sizeof(mastermodeicons)/sizeof(mastermodeicons[0])) ? mastermodeicons[n-MM_START] : unknown;
     }
 
-    MOD(SVAR, filterservers, "");
-    MOD(_SVAR, selectedservername, selectedservername, "", IDF_READONLY);
-    MOD(_VAR, selectedserverport, selectedserverport, 0, 0, 0xFFFF, IDF_READONLY);
-
     bool serverinfoentry(g3d_gui *g, int i, const char *name, int port, const char *sdesc, const char *map, int ping, const vector<int> &attr, int np)
     {
-        if(*filterservers)
-            if(!cubecasefind(sdesc, filterservers) &&
-               !cubecasefind(map, filterservers) &&
-               (attr.length()<2 || !cubecasefind(server::modename(attr[1], ""), filterservers))) return false;
-
-        #define handlemouse if((mousehit)&G3D_UP) { setsvar("filterservers", ""); return true; } \
-            if((mousehit)&G3D_ROLLOVER) { setsvar("selectedservername", name); setvar("selectedserverport", port); }
-        #define leftjustified(elem)   justified(elem,handlemouse,false)
-        #define rightjustified(elem)  justified(elem,handlemouse,true)
-
         if(ping < 0 || attr.empty() || attr[0]!=PROTOCOL_VERSION)
         {
             switch(i)
             {
                 case 0:
+                    if(g->button(" ", COL_WHITE, "serverunk")&G3D_UP) return true;
+                    break;
+
                 case 1:
                 case 2:
                 case 3:
                 case 4:
                 case 5:
+                    if(g->button(" ", COL_WHITE)&G3D_UP) return true;
+                    break;
+
                 case 6:
-                    leftjustified(g->button(" ", COL_WHITE));
+                    if(g->buttonf("%s ", COL_WHITE, NULL, name)&G3D_UP) return true;
                     break;
 
                 case 7:
-                    leftjustified(g->buttonf("%s", COL_WHITE, NULL, name));
+                    if(g->buttonf("%d ", COL_WHITE, NULL, port)&G3D_UP) return true;
                     break;
 
                 case 8:
-                    rightjustified(g->buttonf("%d", COL_WHITE, NULL, port));
-                    break;
-
-                case 9:
                     if(ping < 0)
                     {
-                        leftjustified(g->button(sdesc, COL_WHITE));
+                        if(g->button(sdesc, COL_WHITE)&G3D_UP) return true;
                     }
-                    else leftjustified(g->buttonf("[%s protocol]", COL_WHITE, NULL, attr.empty() ? "unknown" : (attr[0] < PROTOCOL_VERSION ? "older" : "newer")));
+                    else if(g->buttonf("[%s protocol] ", COL_WHITE, NULL, attr.empty() ? "unknown" : (attr[0] < PROTOCOL_VERSION ? "older" : "newer"))&G3D_UP) return true;
                     break;
             }
             return false;
@@ -1325,54 +1303,51 @@ namespace game
         {
             case 0:
             {
-                rightjustified(g->buttonf("%d", COL_WHITE, NULL, ping));
+                const char *icon = attr.inrange(3) && np >= attr[3] ? "serverfull" : (attr.inrange(4) ? mastermodeicon(attr[4], "serverunk") : "serverunk");
+                if(g->buttonf("%d ", COL_WHITE, icon, ping)&G3D_UP) return true;
                 break;
             }
 
             case 1:
-                rightjustified(g->buttonf(attr.length()>=4 && np >= attr[3] ? "\f3%d" : "%d", COL_WHITE, NULL, np));
+                if(attr.length()>=4)
+                {
+                    if(g->buttonf(np >= attr[3] ? "\f3%d/%d " : "%d/%d ", COL_WHITE, NULL, np, attr[3])&G3D_UP) return true;
+                }
+                else if(g->buttonf("%d ", COL_WHITE, NULL, np)&G3D_UP) return true;
                 break;
 
             case 2:
-                if(attr.length()>=4)
-                {
-                    rightjustified(g->buttonf(np >= attr[3] ? "\f3%d" : "%d", COL_WHITE, NULL, attr[3]));
-                }
-                else rightjustified(g->button(" ", COL_WHITE));
+                if(g->buttonf("%s ", COL_WHITE, NULL, attr.length()>=2 ? server::modename(attr[1], "") : "")&G3D_UP) return true;
                 break;
 
             case 3:
-                leftjustified(g->buttonf("%s", COL_WHITE, NULL, attr.length()>=2 ? server::modename(attr[1], "") : ""));
+                if(g->buttonf("%.25s ", COL_WHITE, NULL, map)&G3D_UP) return true;
                 break;
 
             case 4:
-                leftjustified(g->buttonf("%.25s", COL_WHITE, NULL, map));
-                break;
-
-            case 5:
                 if(attr.length()>=3 && attr[2] > 0)
                 {
                     int secs = clamp(attr[2], 0, 59*60+59),
                         mins = secs/60;
                     secs %= 60;
-                    leftjustified(g->buttonf("%d:%02d", COL_WHITE, NULL, mins, secs));
+                    if(g->buttonf("%d:%02d ", COL_WHITE, NULL, mins, secs)&G3D_UP) return true;
                 }
-                else leftjustified(g->button(" ", COL_WHITE));
+                else if(g->buttonf(" ", COL_WHITE)&G3D_UP) return true;
                 break;
+            case 5:
+                if(g->buttonf("%s%s ", COL_WHITE, NULL, attr.length()>=5 ? mastermodecolor(attr[4], "") : "", attr.length()>=5 ? server::mastermodename(attr[4], "") : "")&G3D_UP) return true;
+                break;
+
             case 6:
-                leftjustified(g->buttonf("%s%s", COL_WHITE, NULL, attr.length()>=5 ? mastermodecolor(attr[4], "") : "", attr.length()>=5 ? server::mastermodename(attr[4], "") : ""));
+                if(g->buttonf("%s ", COL_WHITE, NULL, name)&G3D_UP) return true;
                 break;
 
             case 7:
-                leftjustified(g->buttonf("%s", COL_WHITE, NULL, name));
+                if(g->buttonf("%d ", COL_WHITE, NULL, port)&G3D_UP) return true;
                 break;
 
             case 8:
-                rightjustified(g->buttonf("%d", COL_WHITE, NULL, port));
-                break;
-
-            case 9:
-                leftjustified(g->buttonf("%.25s", COL_WHITE, NULL, sdesc));
+                if(g->buttonf("%.25s", COL_WHITE, NULL, sdesc)&G3D_UP) return true;
                 break;
         }
         return false;
