@@ -36,6 +36,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [anticheat.patch](#anticheatpatch)
   - [setfont.patch](#setfontpatch)
   - [filterservers.patch](#filterserverspatch)
+  - [fullscreenmonitor.patch](#fullscreenmonitorpatch)
 - [Server Patches](#server-patches)
   - [authservers.patch](#authserverspatch)
   - [serverlogging.patch](#serverloggingpatch)
@@ -346,7 +347,11 @@ Integrates Epic's Online Services SDK and Anti-Cheat framework to provide protec
 
 ### [filterservers.patch](./patches/filterservers.patch)
 
+### [fullscreenmonitor.patch](./patches/fullscreenmonitor.patch)
 
+- adds the `fullscreenmonitor` variable: specifies on which display the game runs on when in fullscreen mode, 0 being the primary display
+- adds the `getnummonitors` command: returns the number of connected displays
+- adds the `getmonitorname <id>` command: returns the name of the monitor with the specified index
 
 ## Server Patches
 

@@ -81,6 +81,7 @@ apply-patches:
 	$(PATCH) < patches/serverbotbalanceearly.patch
 	$(PATCH) < patches/bans.patch
 	$(PATCH) < patches/enet_mtu_1300.patch
+	$(PATCH) < patches/fullscreenmonitor.patch
 	cd src && make depend
 
 gzip-cfgs embed-cfgs: DATA=data/p1xbraten
