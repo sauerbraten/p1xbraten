@@ -94,7 +94,7 @@ namespace game
             break;
         }
         // find player with lowest cn in next team
-        cur = 0;
+        cur = 0 - dir; // allow 0 after first +dir in loop
         loopv(clients)
         {
             cur = (cur + dir + clients.length()) % clients.length();

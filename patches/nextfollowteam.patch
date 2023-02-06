@@ -5,7 +5,7 @@ index 1f6919b..64993a9 100644
 @@ -31,19 +31,22 @@ namespace game
          intret(f ? f->clientnum : -1);
      });
- 
+
 +    void follow(int cn, int dir = 0)
 +    {
 +        int ofollowing = following;
@@ -32,7 +32,7 @@ index 1f6919b..64993a9 100644
  	}
 -    COMMAND(follow, "s");
 +    ICOMMAND(follow, "s", (char *arg), follow(arg));
- 
+
      void nextfollow(int dir)
      {
 @@ -58,10 +61,7 @@ namespace game
@@ -50,7 +50,7 @@ index 1f6919b..64993a9 100644
 @@ -69,6 +69,43 @@ namespace game
      }
      ICOMMAND(nextfollow, "i", (int *dir), nextfollow(*dir < 0 ? -1 : 1));
- 
+
 +    void nextfollowteam(int dir)
 +    {
 +        if(player1->state!=CS_SPECTATOR || clients.empty()) { stopfollowing(); return; }
@@ -76,7 +76,7 @@ index 1f6919b..64993a9 100644
 +            break;
 +        }
 +        // find player with lowest cn in next team
-+        cur = 0;
++        cur = 0 - dir; // allow 0 after first +dir in loop
 +        loopv(clients)
 +        {
 +            cur = (cur + dir + clients.length()) % clients.length();
@@ -88,6 +88,6 @@ index 1f6919b..64993a9 100644
 +        nextfollow(dir);
 +    }
 +    ICOMMAND(nextfollowteam, "i", (int *dir), nextfollowteam(*dir < 0 ? -1 : 1));
- 
+
      const char *getclientmap() { return clientmap; }
- 
+
