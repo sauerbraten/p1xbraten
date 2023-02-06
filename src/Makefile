@@ -154,6 +154,7 @@ CLIENT_OBJS= \
 	p1xbraten/detection.o \
 	p1xbraten/embedded_cfgs.o \
 	p1xbraten/fragmessages.o \
+	p1xbraten/fullscreenmonitor.o \
 	p1xbraten/managed_games.o \
 	p1xbraten/namecomplete.o \
 	p1xbraten/proxy_real_ip.o \
@@ -523,6 +524,12 @@ p1xbraten/fragmessages.o: fpsgame/game.h shared/cube.h shared/tools.h
 p1xbraten/fragmessages.o: shared/geom.h shared/ents.h shared/command.h
 p1xbraten/fragmessages.o: shared/glexts.h shared/glemu.h shared/iengine.h
 p1xbraten/fragmessages.o: shared/igame.h fpsgame/ai.h
+p1xbraten/fullscreenmonitor.o: engine/engine.h shared/cube.h shared/tools.h
+p1xbraten/fullscreenmonitor.o: shared/geom.h shared/ents.h shared/command.h
+p1xbraten/fullscreenmonitor.o: shared/glexts.h shared/glemu.h
+p1xbraten/fullscreenmonitor.o: shared/iengine.h shared/igame.h engine/world.h
+p1xbraten/fullscreenmonitor.o: engine/octa.h engine/lightmap.h engine/bih.h
+p1xbraten/fullscreenmonitor.o: engine/texture.h engine/model.h
 p1xbraten/managed_games.o: fpsgame/game.h shared/cube.h shared/tools.h
 p1xbraten/managed_games.o: shared/geom.h shared/ents.h shared/command.h
 p1xbraten/managed_games.o: shared/glexts.h shared/glemu.h shared/iengine.h

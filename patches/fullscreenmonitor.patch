@@ -1,5 +1,5 @@
 diff --git src/engine/main.cpp src/engine/main.cpp
-index 1270a20..90fd00c 100644
+index 1270a20..fc485a3 100644
 --- src/engine/main.cpp
 +++ src/engine/main.cpp
 @@ -113,9 +113,10 @@ void writeinitcfg()
@@ -14,63 +14,17 @@ index 1270a20..90fd00c 100644
      f->printf("scr_w %d\n", scr_w);
      f->printf("scr_h %d\n", scr_h);
      f->printf("depthbits %d\n", depthbits);
-@@ -561,6 +562,46 @@ void resetfullscreen()
- 
- VARF(fullscreendesktop, 0, 0, 1, if(fullscreen) resetfullscreen());
- 
-+void resetgl();
-+void setfullscreenmonitor(int);
-+VARF(fullscreenmonitor, 0, 0, 10, setfullscreenmonitor(fullscreenmonitor));
-+
-+void setfullscreenmonitor(int monitor)
-+{
-+    if (screen)
-+    {
-+        int currentmonitor = SDL_GetWindowDisplayIndex(screen);
-+
-+        if (fullscreenmonitor > SDL_GetNumVideoDisplays())
-+        {
-+            fullscreenmonitor = currentmonitor;
-+            return;
-+        }
-+
-+        if (fullscreen && monitor != currentmonitor)
-+        {
-+            resetgl();
-+        }
-+    }
-+}
-+
-+int getnummonitors() 
-+{
-+    int n = SDL_GetNumVideoDisplays();
-+    return n;
-+}
-+
-+ICOMMAND(getnummonitors, "", (), intret(getnummonitors()));
-+
-+void getmonitorname(int *id)
-+{
-+    const char* name = SDL_GetDisplayName(*id);
-+    if (name == NULL) name = "";
-+    result(name);
-+}
-+
-+COMMAND(getmonitorname, "i");
-+
- void screenres(int w, int h)
- {               
-     scr_w = clamp(w, SCR_MINW, SCR_MAXW);
-@@ -645,7 +686,7 @@ void setupscreen()
+@@ -645,7 +646,8 @@ void setupscreen()
      curvsync = -1;
- 
+
      SDL_Rect desktop;
 -    if(SDL_GetDisplayBounds(0, &desktop) < 0) fatal("failed querying desktop bounds: %s", SDL_GetError());
++    extern int fullscreenmonitor;
 +    if(SDL_GetDisplayBounds(fullscreenmonitor, &desktop) < 0) fatal("failed querying desktop bounds: %s", SDL_GetError());
      desktopw = desktop.w;
      desktoph = desktop.h;
- 
-@@ -662,6 +703,8 @@ void setupscreen()
+
+@@ -662,6 +664,8 @@ void setupscreen()
      int winx = SDL_WINDOWPOS_UNDEFINED, winy = SDL_WINDOWPOS_UNDEFINED, winw = scr_w, winh = scr_h, flags = SDL_WINDOW_RESIZABLE;
      if(fullscreen)
      {
@@ -79,10 +33,36 @@ index 1270a20..90fd00c 100644
          if(fullscreendesktop)
          {
              winw = desktopw;
-@@ -1446,4 +1489,4 @@ int main(int argc, char **argv)
-     #if defined(WIN32) && !defined(_DEBUG) && !defined(__GNUC__)
-     } __except(stackdumper(0, GetExceptionInformation()), EXCEPTION_CONTINUE_SEARCH) { return 0; }
-     #endif
--}
+diff --git src/p1xbraten/fullscreenmonitor.cpp src/p1xbraten/fullscreenmonitor.cpp
+new file mode 100644
+index 0000000..90179d9
+--- /dev/null
++++ src/p1xbraten/fullscreenmonitor.cpp
+@@ -0,0 +1,27 @@
++#include "engine.h"
++
++void setfullscreenmonitor(int);
++VARF(fullscreenmonitor, 0, 0, 10, setfullscreenmonitor(fullscreenmonitor));
++
++void setfullscreenmonitor(int monitor)
++{
++    if(!screen) return;
++
++    int currentmonitor = SDL_GetWindowDisplayIndex(screen);
++    if(fullscreenmonitor >= SDL_GetNumVideoDisplays())
++    {
++        fullscreenmonitor = currentmonitor;
++        return;
++    }
++
++    extern int fullscreen;
++    extern void resetgl();
++    if(fullscreen && monitor!=currentmonitor) resetgl();
 +}
-\ No newline at end of file
++
++ICOMMAND(getnummonitors, "", (), intret(SDL_GetNumVideoDisplays()));
++ICOMMAND(getmonitorname, "i", (int *id),
++{
++    const char *name = SDL_GetDisplayName(*id);
++    result(name ? name : "");
++});

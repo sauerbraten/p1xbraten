@@ -113,9 +113,10 @@ void writeinitcfg()
     stream *f = openutf8file("init.cfg", "w");
     if(!f) return;
     f->printf("// automatically written on exit, DO NOT MODIFY\n// modify settings in game\n");
-    extern int fullscreen, fullscreendesktop;
+    extern int fullscreen, fullscreendesktop, fullscreenmonitor;
     f->printf("fullscreen %d\n", fullscreen);
     f->printf("fullscreendesktop %d\n", fullscreendesktop);
+    f->printf("fullscreenmonitor %d\n", fullscreenmonitor);
     f->printf("scr_w %d\n", scr_w);
     f->printf("scr_h %d\n", scr_h);
     f->printf("depthbits %d\n", depthbits);
@@ -645,7 +646,8 @@ void setupscreen()
     curvsync = -1;
 
     SDL_Rect desktop;
-    if(SDL_GetDisplayBounds(0, &desktop) < 0) fatal("failed querying desktop bounds: %s", SDL_GetError());
+    extern int fullscreenmonitor;
+    if(SDL_GetDisplayBounds(fullscreenmonitor, &desktop) < 0) fatal("failed querying desktop bounds: %s", SDL_GetError());
     desktopw = desktop.w;
     desktoph = desktop.h;
 
@@ -662,6 +664,8 @@ void setupscreen()
     int winx = SDL_WINDOWPOS_UNDEFINED, winy = SDL_WINDOWPOS_UNDEFINED, winw = scr_w, winh = scr_h, flags = SDL_WINDOW_RESIZABLE;
     if(fullscreen)
     {
+        winx = desktop.x;
+        winy = desktop.y;
         if(fullscreendesktop)
         {
             winw = desktopw;
