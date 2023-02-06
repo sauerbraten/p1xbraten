@@ -1099,6 +1099,7 @@ void shader(int *type, char *name, char *vs, char *ps)
         if(strstr(vs, "//:water")) genwatervariant(*s, s->name, vs, ps);
         if(strstr(vs, "//:shadowmap")) genshadowmapvariant(*s, s->name, vs, ps);
         if(strstr(vs, "//:dynlight")) gendynlightvariant(*s, s->name, vs, ps);
+        if(strstr(ps, "//:variant") || strstr(vs, "//:variant")) gengenericvariant(*s, s->name, vs, ps);
     }
     slotparams.shrink(0);
 }

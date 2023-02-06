@@ -2656,13 +2656,13 @@ void lightreaching(const vec &target, vec &color, vec &dir, bool fast, extentity
  
         vec lightcol = vec(e.attr2, e.attr3, e.attr4).mul(1.0f/255);
         color.add(vec(lightcol).mul(intensity));
-        dir.add(vec(ray).mul(-intensity*lightcol.x*lightcol.y*lightcol.z));
+        dir.add(vec(ray).mul(-intensity*(lightcol.x+lightcol.y+lightcol.z)*(1.0f/3)));
     }
     if(sunlight && shadowray(target, sunlightdir, 1e16f, RAY_SHADOW | RAY_POLY | (skytexturelight ? RAY_SKIPSKY | (useskytexture ? RAY_SKYTEX : 0) : 0), t) > 1e15f) 
     {
         vec lightcol = vec(sunlightcolor.x, sunlightcolor.y, sunlightcolor.z).mul(sunlightscale/255);
         color.add(lightcol);
-        dir.add(vec(sunlightdir).mul(lightcol.x*lightcol.y*lightcol.z));
+        dir.add(vec(sunlightdir).mul((lightcol.x+lightcol.y+lightcol.z)*(1.0f/3)));
     }
     if(hasskylight())
     {

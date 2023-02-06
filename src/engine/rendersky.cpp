@@ -185,6 +185,7 @@ HVARFR(fogdomecolour, 0, 0, 0xFFFFFF,
     fogdomecolor = bvec((fogdomecolour>>16)&0xFF, (fogdomecolour>>8)&0xFF, fogdomecolour&0xFF);
 });
 VARR(fogdomeclouds, 0, 1, 1);
+VARR(fogdomesquare, 0, 0, 1);
 
 namespace fogdome
 {
@@ -347,7 +348,7 @@ namespace fogdome
 
 static void drawfogdome(int farplane)
 {
-    SETSHADER(skyfog);
+    SETVARIANT(skyfog, fogdomesquare ? 0 : -1, 0);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -545,7 +546,9 @@ static void drawatmosphere(int w, float z1clip = 0.0f, float z2clip = 1.0f, int 
 }
 
 VARP(sparklyfix, 0, 0, 1);
-VAR(showsky, 0, 1, 1); 
+VAR(showsky, 0, 1, 1);
+VAR(showskyoutline, 0, 0, 1);
+HVARP(skyoutlinecolour, 0, 0x800080, 0xFFFFFF);
 VAR(clipsky, 0, 1, 1);
 
 bool drawskylimits(bool explicitonly)
@@ -570,7 +573,7 @@ void drawskyoutline()
         enablepolygonoffset(GL_POLYGON_OFFSET_LINE);
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
-    gle::colorf(0.5f, 0.0f, 0.5f);
+    gle::color(vec::hexcolor(skyoutlinecolour));
     rendersky(true);
     if(!wireframe) 
     {
@@ -747,9 +750,10 @@ void drawskybox(int farplane, bool limited, bool force)
     {
         if(explicitonly) glEnable(GL_DEPTH_TEST);
         else glDepthFunc(GL_LESS);
-        if(!reflecting && !refracting && !drawtex && editmode && showsky) drawskyoutline();
     }
     else glDepthFunc(GL_LESS);
+
+    if(!reflecting && !refracting && !drawtex && editmode && ((showsky && limited) || showskyoutline)) drawskyoutline();
 }
 
 VARNR(skytexture, useskytexture, 0, 1, 1);
@@ -759,7 +763,7 @@ double skyarea = 0;
 
 bool limitsky()
 {
-    return (explicitsky && (useskytexture || editmode)) || (sparklyfix && skyarea / (double(worldsize)*double(worldsize)*6) < 0.9);
+    return (explicitsky && (useskytexture || (editmode && showsky))) || (sparklyfix && skyarea / (double(worldsize)*double(worldsize)*6) < 0.9);
 }
 
 bool shouldrenderskyenvmap()

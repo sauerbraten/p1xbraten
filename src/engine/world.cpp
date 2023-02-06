@@ -142,6 +142,7 @@ void modifyoctaentity(int flags, int id, extentity &e, cube *c, const ivec &cor,
     }
 }
 
+VAR(numoctaents, 1, 0, 0);
 vector<int> outsideents;
 
 static bool modifyoctaent(int flags, int id, extentity &e)
@@ -169,6 +170,8 @@ static bool modifyoctaent(int flags, int id, extentity &e)
         modifyoctaentity(flags, id, e, worldroot, ivec(0, 0, 0), worldsize>>1, o, r, leafsize);
     }
     e.flags ^= EF_OCTA;
+    if(e.flags&EF_OCTA) ++numoctaents;
+    else --numoctaents;
     if(e.type == ET_LIGHT) clearlightcache(id);
     else if(e.type == ET_PARTICLES) clearparticleemitters();
     else if(flags&MODOE_LIGHTENT) lightent(e);
@@ -1234,6 +1237,7 @@ void resetmap()
 
     entities::clearents();
     outsideents.setsize(0);
+    numoctaents = 0;
 }
 
 void startmap(const char *name)
