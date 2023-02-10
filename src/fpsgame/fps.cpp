@@ -278,6 +278,7 @@ namespace game
     }
 
     VAR(playerspeed, 0, 0, -1);
+    // L_VAR(playerspeed);
 
     void updateworld()        // main game update loop
     {

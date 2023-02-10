@@ -51,7 +51,7 @@ ifdef ANTICHEAT
 	endif
 endif
 
-INCLUDES= -Ishared -Iengine -Ifpsgame -Ip1xbraten -Ienet/include
+INCLUDES= -Ishared -Iengine -Ifpsgame -Ip1xbraten -Ienet/include -Ilobster/include
 ifdef ANTICHEAT
 	INCLUDES+= -Ianticheat -IEOS/include
 endif
@@ -79,7 +79,7 @@ endif
 
 ifneq (,$(findstring linux,$(TARGET)))
 	INCLUDES+= -I/usr/include
-	LIBS= -Lenet -lenet -L/usr/lib64 -lz
+	LIBS= -Lenet -lenet -Llobster -llobster -L/usr/lib64 -lz
 	ifdef ANTICHEAT
 		LIBS+= -L../bin_unix -lEOSSDK-Linux-Shipping
 	endif
@@ -155,6 +155,7 @@ CLIENT_OBJS= \
 	p1xbraten/embedded_cfgs.o \
 	p1xbraten/fragmessages.o \
 	p1xbraten/fullscreenmonitor.o \
+	p1xbraten/lobster.o \
 	p1xbraten/managed_games.o \
 	p1xbraten/namecomplete.o \
 	p1xbraten/proxy_real_ip.o \
@@ -190,6 +191,7 @@ all: client server
 
 clean:
 	cd enet && make clean && cd ..
+	cd lobster && make clean && cd ..
 	-$(RM) $(CLIENT_OBJS) $(SERVER_OBJS) sauer_client sauer_server
 
 %-standalone.o: %.cpp
@@ -202,7 +204,7 @@ $(SERVER_OBJS): CXXFLAGS += $(INCLUDES) -DSTANDALONE
 OUTBIN=p1xbraten_x86_64
 
 ifneq (,$(findstring linux,$(TARGET)))
-client:	libenet
+client:	libenet liblobster
 endif
 client: $(CLIENT_OBJS)
 	$(CXX) $(CXXFLAGS) $(LINKERFLAGS) -o sauer_client $(CLIENT_OBJS) $(LIBS) $(CLIENT_LIBS)
@@ -227,6 +229,10 @@ endif
 enet/libenet.a:
 	$(MAKE) -C enet CC='$(CC)' CFLAGS='$(CFLAGS)' AR='$(AR)'
 libenet: enet/libenet.a
+
+lobster/liblobster.a:
+	$(MAKE) -C lobster CC='$(CC)' CXX='$(CXX)' AR='$(AR)'
+liblobster: lobster/liblobster.a
 
 .PHONY: libenet
 
