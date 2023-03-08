@@ -1,7 +1,7 @@
 # building ON Windows is not supported, only building FOR Windows (set TARGET before calling make)
 HOSTOS=linux
 ifneq (,$(findstring Darwin,$(shell uname -s)))
-	HOSTOS=macos
+	HOSTOS=macos.10.5
 endif
 
 ifndef TARGET
@@ -35,8 +35,9 @@ LINKERFLAGS=
 override CXXFLAGS+= -Wall -fsigned-char -fno-exceptions -fno-rtti
 ifneq (,$(findstring macos,$(TARGET)))
 	OSXMIN=10.12 # lowest supported by EOS
-	override CFLAGS+= -mmacosx-version-min=$(OSXMIN)
-	override CXXFLAGS+= -mmacosx-version-min=$(OSXMIN)
+	# override CFLAGS+= -mmacosx-version-min=$(OSXMIN)
+	# override CXXFLAGS+= -mmacosx-version-min=$(OSXMIN)
+	override CXXFLAGS+= -DGL_SILENCE_DEPRECATION
 	override LINKERFLAGS+= -Wl,-rpath,@executable_path/../Frameworks
 endif
 
@@ -51,14 +52,14 @@ ifdef ANTICHEAT
 	endif
 endif
 
-INCLUDES= -Ishared -Iengine -Ifpsgame -Ip1xbraten -Ienet/include
+INCLUDES= -Ishared -Iengine -Ifpsgame -Ip1xbraten -Ienet/include -Ijanet
 ifdef ANTICHEAT
 	INCLUDES+= -Ianticheat -IEOS/include
 endif
 
 ifneq (,$(findstring windows,$(TARGET)))
 	INCLUDES+= -Iwindows/include/zlib
-	LIBS= -L../bin64 -Lwindows/lib64 -lzlib1 -lenet -lws2_32 -lwinmm
+	LIBS= -L../bin64 -Lwindows/lib64 -lzlib1 -lenet -lws2_32 -lwinmm -Ljanet -ljanet
 	ifdef ANTICHEAT
 		LIBS+= -lEOSSDK-Win64-Shipping
 	endif
@@ -68,7 +69,7 @@ endif
 
 ifneq (,$(findstring macos,$(TARGET)))
 	INCLUDES+= -Imacos/sdk_11.3/usr/include
-	LIBS= -Lmacos/sdk_11.3/usr/lib -lz -Lmacos/lib -lenet
+	LIBS= -Lmacos/sdk_11.3/usr/lib -lz -Lmacos/lib -lenet -Ljanet -ljanet
 	ifdef ANTICHEAT
 		LIBS+= -L../sauerbraten.app/Contents/Libraries -lEOSSDK-Mac-Shipping
 	endif
@@ -79,7 +80,7 @@ endif
 
 ifneq (,$(findstring linux,$(TARGET)))
 	INCLUDES+= -I/usr/include
-	LIBS= -Lenet -lenet -L/usr/lib64 -lz
+	LIBS= -L./enet -lenet -L./janet -ljanet -L/usr/lib64 -lz
 	ifdef ANTICHEAT
 		LIBS+= -L../bin_unix -lEOSSDK-Linux-Shipping
 	endif
@@ -155,6 +156,7 @@ CLIENT_OBJS= \
 	p1xbraten/embedded_cfgs.o \
 	p1xbraten/fragmessages.o \
 	p1xbraten/fullscreenmonitor.o \
+	p1xbraten/janet_functions.o \
 	p1xbraten/managed_games.o \
 	p1xbraten/namecomplete.o \
 	p1xbraten/proxy_real_ip.o \
@@ -177,6 +179,7 @@ SERVER_OBJS= \
 	fpsgame/server-standalone.o \
 	p1xbraten/bans-standalone.o \
 	p1xbraten/demo_info_message-standalone.o \
+	p1xbraten/janet_functions-standalone.o \
 	p1xbraten/managed_games-standalone.o \
 	p1xbraten/proxy_real_ip.o \
 	p1xbraten/remote_commands-standalone.o
@@ -190,6 +193,7 @@ all: client server
 
 clean:
 	cd enet && make clean && cd ..
+	cd janet && make clean && cd ..
 	-$(RM) $(CLIENT_OBJS) $(SERVER_OBJS) sauer_client sauer_server
 
 %-standalone.o: %.cpp
@@ -201,10 +205,7 @@ $(SERVER_OBJS): CXXFLAGS += $(INCLUDES) -DSTANDALONE
 
 OUTBIN=p1xbraten_x86_64
 
-ifneq (,$(findstring linux,$(TARGET)))
-client:	libenet
-endif
-client: $(CLIENT_OBJS)
+client: $(CLIENT_OBJS) libenet libjanet
 	$(CXX) $(CXXFLAGS) $(LINKERFLAGS) -o sauer_client $(CLIENT_OBJS) $(LIBS) $(CLIENT_LIBS)
 
 server: $(SERVER_OBJS)
@@ -228,7 +229,11 @@ enet/libenet.a:
 	$(MAKE) -C enet CC='$(CC)' CFLAGS='$(CFLAGS)' AR='$(AR)'
 libenet: enet/libenet.a
 
-.PHONY: libenet
+janet/libjanet.a:
+	$(MAKE) -C janet CC='$(CC)' CFLAGS='$(CFLAGS)' AR='$(AR)'
+libjanet: janet/libjanet.a
+
+.PHONY: libenet libjanet
 
 depend:
 	makedepend -Y -Ishared -Iengine -Ifpsgame $(CLIENT_OBJS:.o=.cpp)
@@ -530,6 +535,10 @@ p1xbraten/fullscreenmonitor.o: shared/glexts.h shared/glemu.h
 p1xbraten/fullscreenmonitor.o: shared/iengine.h shared/igame.h engine/world.h
 p1xbraten/fullscreenmonitor.o: engine/octa.h engine/lightmap.h engine/bih.h
 p1xbraten/fullscreenmonitor.o: engine/texture.h engine/model.h
+p1xbraten/janet_functions.o: fpsgame/game.h shared/cube.h shared/tools.h
+p1xbraten/janet_functions.o: shared/geom.h shared/ents.h shared/command.h
+p1xbraten/janet_functions.o: shared/glexts.h shared/glemu.h shared/iengine.h
+p1xbraten/janet_functions.o: shared/igame.h fpsgame/ai.h
 p1xbraten/managed_games.o: fpsgame/game.h shared/cube.h shared/tools.h
 p1xbraten/managed_games.o: shared/geom.h shared/ents.h shared/command.h
 p1xbraten/managed_games.o: shared/glexts.h shared/glemu.h shared/iengine.h
@@ -599,6 +608,11 @@ p1xbraten/demo_info_message-standalone.o: shared/tools.h shared/geom.h
 p1xbraten/demo_info_message-standalone.o: shared/ents.h shared/command.h
 p1xbraten/demo_info_message-standalone.o: shared/iengine.h shared/igame.h
 p1xbraten/demo_info_message-standalone.o: fpsgame/ai.h
+p1xbraten/janet_functions-standalone.o: fpsgame/game.h shared/cube.h
+p1xbraten/janet_functions-standalone.o: shared/tools.h shared/geom.h
+p1xbraten/janet_functions-standalone.o: shared/ents.h shared/command.h
+p1xbraten/janet_functions-standalone.o: shared/iengine.h shared/igame.h
+p1xbraten/janet_functions-standalone.o: fpsgame/ai.h
 p1xbraten/managed_games-standalone.o: fpsgame/game.h shared/cube.h
 p1xbraten/managed_games-standalone.o: shared/tools.h shared/geom.h
 p1xbraten/managed_games-standalone.o: shared/ents.h shared/command.h

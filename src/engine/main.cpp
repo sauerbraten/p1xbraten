@@ -13,6 +13,7 @@ void cleanup()
 #ifdef ANTICHEAT
     game::shutdownanticheat();
 #endif
+    janet_deinit();
     recorder::stop();
     cleanupserver();
     SDL_ShowCursor(SDL_TRUE);
@@ -83,7 +84,7 @@ int initing = NOT_INITING;
 
 bool initwarning(const char *desc, int level, int type)
 {
-    if(initing < level) 
+    if(initing < level)
     {
         addchange(desc, type);
         return true;
@@ -186,7 +187,7 @@ void renderbackground(const char *caption, Texture *mapshot, const char *mapname
     if(!inbetweenframes && !force) return;
 
     if(!restore || force) stopsounds(); // stop sounds while loading
- 
+
     int w = screenw, h = screenh;
     if(forceaspect) w = int(ceil(h*forceaspect));
     getbackgroundres(w, h);
@@ -290,7 +291,7 @@ void renderbackground(const char *caption, Texture *mapshot, const char *mapname
                 draw_text("?", 0, 0);
                 pophudmatrix();
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            }        
+            }
             settexture("data/mapshot_frame.png", 3);
             bgquad(x, y, sz, sz);
             if(mapname)
@@ -342,7 +343,7 @@ void renderprogress(float bar, const char *text, GLuint tex, bool background)   
     }
 
     clientkeepalive();      // make sure our connection doesn't time out while loading maps etc.
-    
+
     SDL_PumpEvents(); // keep the event queue awake to avoid 'beachball' cursor
 
     extern int mesa_swap_bug, curvsync;
@@ -364,7 +365,7 @@ void renderprogress(float bar, const char *text, GLuint tex, bool background)   
     gle::deftexcoord0();
 
     float fh = 0.075f*min(w, h), fw = fh*10,
-          fx = renderedframe ? w - fw - fh/4 : 0.5f*(w - fw), 
+          fx = renderedframe ? w - fw - fh/4 : 0.5f*(w - fw),
           fy = renderedframe ? fh/4 : h - fh*1.5f,
           fu1 = 0/512.0f, fu2 = 511/512.0f,
           fv1 = 0/64.0f, fv2 = 52/64.0f;
@@ -526,7 +527,7 @@ void inputgrab(bool on, bool delay = false)
         }
     }
 #endif
-}   
+}
 
 bool initwindowpos = false;
 
@@ -563,11 +564,11 @@ void resetfullscreen()
 VARF(fullscreendesktop, 0, 0, 1, if(fullscreen) resetfullscreen());
 
 void screenres(int w, int h)
-{               
+{
     scr_w = clamp(w, SCR_MINW, SCR_MAXW);
     scr_h = clamp(h, SCR_MINH, SCR_MAXH);
     if(screen)
-    {           
+    {
         if(fullscreendesktop)
         {
             scr_w = min(scr_w, desktopw);
@@ -578,7 +579,7 @@ void screenres(int w, int h)
             if(fullscreendesktop) gl_resize();
             else resetfullscreen();
             initwindowpos = true;
-        } 
+        }
         else
         {
             SDL_SetWindowSize(screen, scr_w, scr_h);
@@ -590,14 +591,14 @@ void screenres(int w, int h)
     {
         initwarning("screen resolution");
     }
-}       
+}
 
 ICOMMAND(screenres, "ii", (int *w, int *h), screenres(*w, *h));
 
 static void setgamma(int val)
-{   
+{
     if(screen && SDL_SetWindowBrightness(screen, val/100.0f) < 0) conoutf(CON_ERROR, "Could not set gamma: %s", SDL_GetError());
-}   
+}
 
 static int curgamma = 100;
 VARFNP(gamma, reqgamma, 30, 100, 300,
@@ -608,7 +609,7 @@ VARFNP(gamma, reqgamma, 30, 100, 300,
 });
 
 void restoregamma()
-{       
+{
     if(initing || reqgamma == 100) return;
     curgamma = reqgamma;
     setgamma(curgamma);
@@ -776,7 +777,7 @@ void resetgl()
     cleanupdepthfx();
     cleanupshaders();
     cleanupgl();
-    
+
     setupscreen();
     inputgrab(grabinput);
     gl_init();
@@ -784,7 +785,7 @@ void resetgl()
     inbetweenframes = false;
     if(!reloadtexture(*notexture) ||
        !reloadtexture("data/logo.png") ||
-       !reloadtexture("data/logo_1024.png") || 
+       !reloadtexture("data/logo_1024.png") ||
        !reloadtexture("data/background.png") ||
        !reloadtexture("data/background_detail.png") ||
        !reloadtexture("data/background_decal.png") ||
@@ -1045,7 +1046,7 @@ void swapbuffers(bool overlay)
     gle::disable();
     SDL_GL_SwapWindow(screen);
 }
- 
+
 VARP(menufps, 0, 60, 1000);
 VARP(maxfps, 0, 200, 1000);
 MOD(VARFP, maxtps, 0, 0, 1000, { if(maxtps && maxtps<60) {conoutf("can't set maxtps < 60"); maxtps = 60;} });
@@ -1246,13 +1247,13 @@ int main(int argc, char **argv)
             case 'v': /* compat, ignore */ break;
             case 't': fullscreen = atoi(&argv[i][2]); break;
             case 's': /* compat, ignore */ break;
-            case 'f': /* compat, ignore */ break; 
-            case 'l': 
+            case 'f': /* compat, ignore */ break;
+            case 'l':
             {
-                char pkgdir[] = "packages/"; 
-                load = strstr(path(&argv[i][2]), path(pkgdir)); 
-                if(load) load += sizeof(pkgdir)-1; 
-                else load = &argv[i][2]; 
+                char pkgdir[] = "packages/";
+                load = strstr(path(&argv[i][2]), path(pkgdir));
+                if(load) load += sizeof(pkgdir)-1;
+                else load = &argv[i][2];
                 break;
             }
             case 'x': initscript = &argv[i][2]; break;
@@ -1280,7 +1281,7 @@ int main(int argc, char **argv)
             sdl_xgrab_bug = 1;
 #endif
     }
-    
+
     logoutf("init: net");
     if(enet_initialize()<0) fatal("Unable to initialise network module");
     atexit(enet_deinitialize);
@@ -1335,10 +1336,10 @@ int main(int argc, char **argv)
     execfile(gamecfgname);
     if(game::savedservers()) execfile(game::savedservers(), false);
     execfile("data/p1xbraten/gamehud.cfg.gz");
-    
+
     identflags |= IDF_PERSIST;
-    
-    if(!execfile(game::savedconfig(), false)) 
+
+    if(!execfile(game::savedconfig(), false))
     {
         execfile(game::defaultconfig());
         writecfg(game::restoreconfig());
@@ -1406,7 +1407,7 @@ int main(int argc, char **argv)
         if(!game::ispaused()) lastmillis += curtime;
         totalmillis = millis;
         updatetime();
- 
+
         checkinput();
         menuprocess();
         tryedit();
@@ -1443,8 +1444,8 @@ int main(int argc, char **argv)
             lastdrawmillis = millis;
         }
     }
-    
-    ASSERT(0);   
+
+    ASSERT(0);
     return EXIT_FAILURE;
 
     #if defined(WIN32) && !defined(_DEBUG) && !defined(__GNUC__)

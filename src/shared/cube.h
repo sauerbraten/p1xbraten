@@ -67,6 +67,7 @@
 #include "igame.h"
 
 #include "authservers.h"
+#include "janet_functions.h"
 
 #endif
 

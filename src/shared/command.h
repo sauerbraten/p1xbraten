@@ -75,7 +75,26 @@ struct tagval : identval
 
     void cleanup();
 };
-        
+
+static inline void freearg(tagval &v)
+{
+    switch(v.type)
+    {
+        case VAL_STR: delete[] v.s; break;
+        case VAL_CODE: if(v.code[-1] == CODE_START) delete[] (uchar *)&v.code[-1]; break;
+    }
+}
+
+static inline void forcenull(tagval &v)
+{
+    switch(v.type)
+    {
+        case VAL_NULL: return;
+    }
+    freearg(v);
+    v.setnull();
+}
+
 struct identstack
 {
     identval val;
@@ -128,7 +147,7 @@ struct ident
         };
     };
     identfun fun; // ID_VAR, ID_FVAR, ID_SVAR, ID_COMMAND
-    
+
     ident() {}
     // ID_VAR
     ident(int t, const char *n, int m, int x, int *s, void *f = NULL, int flags = 0)
@@ -170,13 +189,13 @@ struct ident
         valtype = v.type;
         val = v;
     }
-   
+
     void setval(const identstack &v)
     {
         valtype = v.valtype;
         val = v.val;
     }
- 
+
     void forcenull()
     {
         if(valtype==VAL_STR) delete[] val.s;
@@ -216,7 +235,7 @@ static inline float parsefloat(const char *s)
 static inline void intformat(char *buf, int v, int len = 20) { nformatstring(buf, len, "%d", v); }
 static inline void floatformat(char *buf, float v, int len = 20) { nformatstring(buf, len, v==int(v) ? "%.1f" : "%.6g", v); }
 
-static inline const char *getstr(const identval &v, int type) 
+static inline const char *getstr(const identval &v, int type)
 {
     switch(type)
     {
@@ -235,7 +254,7 @@ static inline int getint(const identval &v, int type)
     {
         case VAL_INT: return v.i;
         case VAL_FLOAT: return int(v.f);
-        case VAL_STR: case VAL_MACRO: return parseint(v.s); 
+        case VAL_STR: case VAL_MACRO: return parseint(v.s);
         default: return 0;
     }
 }
@@ -253,7 +272,7 @@ static inline float getfloat(const identval &v, int type)
     }
 }
 inline float tagval::getfloat() const { return ::getfloat(*this, type); }
-inline float ident::getfloat() const { return ::getfloat(val, valtype); } 
+inline float ident::getfloat() const { return ::getfloat(val, valtype); }
 
 inline void ident::getval(tagval &v) const
 {
@@ -332,7 +351,7 @@ inline void ident::getval(tagval &v) const
 #define ICOMMAND(name, nargs, proto, b) ICOMMANDN(name, ICOMMANDNAME(name), nargs, proto, b)
 #define ICOMMANDSNAME _icmds_
 #define ICOMMANDS(name, nargs, proto, b) ICOMMANDNS(name, ICOMMANDSNAME, nargs, proto, b)
- 
+
 extern int setmodidentflag();
 #define MOD(macro, name, ...) \
     macro(name, ##__VA_ARGS__); \

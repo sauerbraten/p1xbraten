@@ -9,7 +9,7 @@ reversequeue<cline, MAXCONLINES> conlines;
 int commandmillis = -1;
 string commandbuf;
 char *commandaction = NULL, *commandprompt = NULL;
-enum { CF_COMPLETE = 1<<0, CF_EXECUTE = 1<<1, CF_GAMECOMPLETE = 1<<2 };
+enum { CF_COMPLETE = 1<<0, CF_EXECUTE = 1<<1, CF_GAMECOMPLETE = 1<<2, CF_JANETEXEC = 1<<4 };
 int commandflags = 0, commandpos = -1;
 
 VARFP(maxcon, 10, 200, MAXCONLINES, { while(conlines.length() > maxcon) delete[] conlines.pop().line; });
@@ -136,7 +136,7 @@ int drawconlines(int conskip, int confade, int conwidth, int conheight, int cono
         char *line = conlines[idx].line;
         int width, height;
         text_bounds(line, width, height, conwidth);
-        if(dir <= 0) y -= height; 
+        if(dir <= 0) y -= height;
         draw_text(line, conoff, y, 0xFF, 0xFF, 0xFF, 0xFF, -1, conwidth);
         if(dir > 0) y += height;
     }
@@ -148,13 +148,13 @@ int renderconsole(int w, int h, int abovehud)                   // render buffer
     int conpad = FONTH/4,
         conoff = FONTH/3,
         conwidth = w - 2*(conpad + conoff) - (fullconsole ? 0 : game::clipconsole(w, h));
-    
+
     if(fullconsole)
     {
         drawconlines(conskip, 0, conwidth, abovehud-(conpad+conoff), conpad+conoff, fullconfilter);
         return abovehud;
     }
-    
+
     int conheight = min(FONTH*consize, h - 2*(conpad + conoff));
     int y = drawconlines(conskip, confade, conwidth, conheight, conpad+conoff, confilter);
     if(miniconsize && miniconwidth) drawconlines(miniconskip, miniconfade, (miniconwidth*(w - 2*(conpad + conoff)))/100, min(FONTH*miniconsize, abovehud - y), conpad+conoff, miniconfilter, abovehud, -1);
@@ -172,7 +172,7 @@ struct keym
         ACTION_EDITING,
         NUMACTIONS
     };
-    
+
     int code;
     char *name;
     char *actions[NUMACTIONS];
@@ -192,7 +192,7 @@ void keymap(int *code, char *key)
     DELETEA(km.name);
     km.name = newstring(key);
 }
-    
+
 COMMAND(keymap, "is");
 
 keym *keypressed = NULL;
@@ -226,13 +226,13 @@ keym *findbind(char *key)
         if(!strcasecmp(km.name, key)) return &km;
     });
     return NULL;
-}   
-    
+}
+
 void getbind(char *key, int type)
 {
     keym *km = findbind(key);
     result(km ? km->actions[type] : "");
-}   
+}
 
 void bindkey(char *key, char *action, int state, const char *cmd)
 {
@@ -275,6 +275,7 @@ void inputcommand(char *init, char *action = NULL, char *prompt = NULL, const ch
         case 'c': commandflags |= CF_COMPLETE; break;
         case 'g': commandflags |= CF_GAMECOMPLETE; break;
         case 'x': commandflags |= CF_EXECUTE; break;
+        case 'j': commandflags |= CF_JANETEXEC; break;
     }
     if(init && init[0] == '/') commandflags |= CF_COMPLETE|CF_EXECUTE;
 }
@@ -313,7 +314,7 @@ struct hline
                (commandprompt ? !prompt || strcmp(commandprompt, prompt) : prompt!=NULL) ||
                commandflags != flags;
     }
-    
+
     void save()
     {
         buf = newstring(commandbuf);
@@ -325,6 +326,7 @@ struct hline
     void run()
     {
         if(flags&CF_EXECUTE || buf[0]=='/') execute(buf[0]=='/' ? buf+1 : buf);
+        else if(flags&CF_JANETEXEC) janet_execute(buf);
         else if(action)
         {
             alias("commandbuf", buf);
@@ -615,7 +617,7 @@ void processkey(int code, bool isdown, int modstate)
     }
     keym *haskey = keyms.access(code);
     if(haskey && haskey->pressed) execbind(*haskey, isdown); // allow pressed keys to release
-    else if(!g3d_key(code, isdown)) // 3D GUI mouse button intercept   
+    else if(!g3d_key(code, isdown)) // 3D GUI mouse button intercept
     {
         if(!consolekey(code, isdown))
         {
@@ -641,7 +643,7 @@ void writebinds(stream *f)
         loopv(binds)
         {
             keym &km = *binds[i];
-            if(*km.actions[j]) 
+            if(*km.actions[j])
             {
                 if(validateblock(km.actions[j])) f->printf("%s %s [%s]\n", cmds[j], escapestring(km.name), km.actions[j]);
                 else f->printf("%s %s %s\n", cmds[j], escapestring(km.name), escapestring(km.actions[j]));
@@ -676,14 +678,14 @@ struct filesval
     char *dir, *ext;
     vector<char *> files;
     int millis;
-    
+
     filesval(int type, const char *dir, const char *ext) : type(type), dir(newstring(dir)), ext(ext && ext[0] ? newstring(ext) : NULL), millis(-1) {}
     ~filesval() { DELETEA(dir); DELETEA(ext); files.deletearrays(); }
 
     void update()
     {
         if((type!=FILES_DIR && type!=FILES_VAR) || millis >= commandmillis) return;
-        files.deletearrays();        
+        files.deletearrays();
         if(type==FILES_VAR)
         {
             string buf;
@@ -746,7 +748,7 @@ void addcomplete(char *command, int type, char *dir, char *ext)
     if(!val)
     {
         filesval *f = new filesval(type, dir, ext);
-        if(type==FILES_LIST) explodelist(dir, f->files); 
+        if(type==FILES_LIST) explodelist(dir, f->files);
         val = &completefiles[fileskey(type, f->dir, f->ext)];
         *val = f;
     }
@@ -833,7 +835,7 @@ void writecompletions(stream *f)
     {
         char *k = cmds[i];
         filesval *v = completions[k];
-        if(v->type==FILES_LIST) 
+        if(v->type==FILES_LIST)
         {
             if(validateblock(v->dir)) f->printf("listcomplete %s [%s]\n", escapeid(k), v->dir);
             else f->printf("listcomplete %s %s\n", escapeid(k), escapestring(v->dir));
