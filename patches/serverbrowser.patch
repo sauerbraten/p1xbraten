@@ -2,12 +2,15 @@ diff --git src/engine/menus.cpp src/engine/menus.cpp
 index 8e18447..ab081be 100644
 --- src/engine/menus.cpp
 +++ src/engine/menus.cpp
-@@ -551,12 +551,17 @@ void newgui(char *name, char *contents, char *header, char *init)
+@@ -551,12 +551,20 @@ void newgui(char *name, char *contents, char *header, char *init)
 
  menu *guiserversmenu = NULL;
 
-+namespace game { extern int usep1xbratenmenus; }
-+namespace mod { namespace serverbrowser { extern const char *showservers(g3d_gui *cgui, uint *header, int pagemin, int pagemax); } }
++namespace game
++{
++    extern int usep1xbratenmenus;
++    namespace mod { extern const char *showservers(g3d_gui *cgui, uint *header, int pagemin, int pagemax); }
++}
 +
  void guiservers(uint *header, int *pagemin, int *pagemax)
  {
@@ -16,7 +19,7 @@ index 8e18447..ab081be 100644
      {
 -        const char *command = showservers(cgui, header, *pagemin, *pagemax > 0 ? *pagemax : INT_MAX);
 +        const char *command = game::usep1xbratenmenus ?
-+            mod::serverbrowser::showservers(cgui, header, *pagemin, *pagemax > 0 ? *pagemax : INT_MAX) :
++            game::mod::showservers(cgui, header, *pagemin, *pagemax > 0 ? *pagemax : INT_MAX) :
 +            showservers(cgui, header, *pagemin, *pagemax > 0 ? *pagemax : INT_MAX);
          if(command)
          {
@@ -183,8 +186,8 @@ index 0000000..e1ad208
 +extern void refreshservers();
 +extern serverinfo *selectedserver;
 +
-+namespace mod { namespace serverbrowser {
-+
++namespace game { namespace mod
++{
 +    static const char * const names[] = { "ping", "players", "slots", "mode", "map", "time", "master", "host", "port", "description" };
 +    static const float struts[]       = {      0,         0,       0,  12.5f,    14,      0,        0,     14,      0,         24.5f };
 +    static const bool right[]         = {   true,      true,    true,  false, false,  false,    false,  false,   true,         false };
@@ -299,7 +302,7 @@ index 0000000..e1ad208
 +                break;
 +
 +            case 6:
-+                leftjustified(g->buttonf("%s%s", COL_WHITE, NULL, attr.length()>=5 ? game::mastermodecolor(attr[4], "") : "", attr.length()>=5 ? server::mastermodename(attr[4], "") : ""))
++                leftjustified(g->buttonf("%s%s", COL_WHITE, NULL, attr.length()>=5 ? mastermodecolor(attr[4], "") : "", attr.length()>=5 ? server::mastermodename(attr[4], "") : ""))
 +                break;
 +
 +            case 7:

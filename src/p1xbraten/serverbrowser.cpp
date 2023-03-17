@@ -5,8 +5,8 @@ extern vector<serverinfo *> servers;
 extern void refreshservers();
 extern serverinfo *selectedserver;
 
-namespace mod { namespace serverbrowser {
-
+namespace game { namespace mod
+{
     static const char * const names[] = { "ping", "players", "slots", "mode", "map", "time", "master", "host", "port", "description" };
     static const float struts[]       = {      0,         0,       0,  12.5f,    14,      0,        0,     14,      0,         24.5f };
     static const bool right[]         = {   true,      true,    true,  false, false,  false,    false,  false,   true,         false };
@@ -121,7 +121,7 @@ namespace mod { namespace serverbrowser {
                 break;
 
             case 6:
-                leftjustified(g->buttonf("%s%s", COL_WHITE, NULL, attr.length()>=5 ? game::mastermodecolor(attr[4], "") : "", attr.length()>=5 ? server::mastermodename(attr[4], "") : ""))
+                leftjustified(g->buttonf("%s%s", COL_WHITE, NULL, attr.length()>=5 ? mastermodecolor(attr[4], "") : "", attr.length()>=5 ? server::mastermodename(attr[4], "") : ""))
                 break;
 
             case 7:
