@@ -955,36 +955,6 @@ index 0a4c901..4e9fe3a 100644
  }
 
  // additional colors
- diff --git src/fpsgame/scoreboard.cpp src/fpsgame/scoreboard.cpp
-index ef94134..1457f19 100644
---- src/fpsgame/scoreboard.cpp
-+++ src/fpsgame/scoreboard.cpp
-@@ -22,6 +22,7 @@ namespace game
-     MOD(VARP, showaccuracy, 0, 0, 1);
-     MOD(VARP, showdamage, 0, 0, 2);
-     MOD(VARP, showdamagereceived, 0, 0, 1);
-+    MOD(VARP, showanticheatstatus, 0, 0, 1);
-
-     hashset<teaminfo> teaminfos;
-
-@@ -365,6 +366,17 @@ namespace game
-                 }
-             }
-
-+#ifdef ANTICHEAT
-+            if(anticheatenabled && showanticheatstatus)
-+            {
-+                g.space(2);
-+                g.pushlist();
-+                rightjustified(g.text("anticheat", COL_GRAY))
-+                loopscoregroup(o, rightjustified(g.textf("%s", fgcolor, NULL, o->anticheatverified ? "yes" : "no")));
-+                g.poplist();
-+            }
-+#endif
-+
-             if(showclientnum || player1->privilege>=PRIV_MASTER)
-             {
-                 g.space(2);
 diff --git src/fpsgame/server.cpp src/fpsgame/server.cpp
 index e37eb57..76d231f 100644
 --- src/fpsgame/server.cpp
@@ -1136,6 +1106,36 @@ index 4272bd7..8b407e5 100644
                  return;
          }
          int stamp[3] = { totalmillis-demostartmillis, chan, len };
+ diff --git src/p1xbraten/scoreboard.cpp src/p1xbraten/scoreboard.cpp
+index ef94134..1457f19 100644
+--- src/p1xbraten/scoreboard.cpp
++++ src/p1xbraten/scoreboard.cpp
+@@ -13,6 +13,7 @@ namespace game
+     MOD(VARP, showaccuracy, 0, 0, 1);
+     MOD(VARP, showdamage, 0, 0, 2);
+     MOD(VARP, showdamagereceived, 0, 0, 1);
++    MOD(VARP, showanticheatstatus, 0, 0, 1);
+
+     hashset<teaminfo> teaminfos;
+
+@@ -230,6 +231,17 @@ namespace game
+                 }
+             }
+
++#ifdef ANTICHEAT
++            if(anticheatenabled && showanticheatstatus)
++            {
++                g.space(2);
++                g.pushlist();
++                rightjustified(g.text("anticheat", COL_GRAY))
++                loopscoregroup(o, rightjustified(g.textf("%s", fgcolor, NULL, o->anticheatverified ? "yes" : "no")));
++                g.poplist();
++            }
++#endif
++
+             if(showclientnum || player1->privilege>=PRIV_MASTER)
+             {
+                 g.space(2);
 diff --git src/shared/cube.h src/shared/cube.h
 index be7755c..c153591 100644
 --- src/shared/cube.h

@@ -1292,8 +1292,8 @@ namespace server
 
 // additional colors
 #define COL_MASTER COL_GREEN
-#define COL_AUTH COL_MAGENTA
-#define COL_ADMIN COL_ORANGE
+#define COL_AUTH   COL_MAGENTA
+#define COL_ADMIN  COL_ORANGE
 
 #endif
 

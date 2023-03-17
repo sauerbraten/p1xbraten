@@ -1,0 +1,24 @@
+diff --git src/fpsgame/scoreboard.cpp src/fpsgame/scoreboard.cpp
+index 1457f19..0c93387 100644
+--- src/fpsgame/scoreboard.cpp
++++ src/fpsgame/scoreboard.cpp
+@@ -469,6 +469,9 @@ namespace game
+             g.space(.25f);
+         }
+ 
++    extern int usep1xbratenmenus;
++    namespace mod { extern void renderscoreboard(g3d_gui &g, bool firstpass); }
++
+     struct scoreboardgui : g3d_callback
+     {
+         bool showing;
+@@ -490,7 +493,8 @@ namespace game
+         void gui(g3d_gui &g, bool firstpass)
+         {
+             g.start(menustart, 0.03f, NULL, false);
+-            renderscoreboard(g, firstpass);
++            if(usep1xbratenmenus) mod::renderscoreboard(g, firstpass);
++            else renderscoreboard(g, firstpass);
+             g.end();
+         }
+ 

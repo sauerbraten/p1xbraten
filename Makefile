@@ -42,12 +42,12 @@ apply-patches:
 	$(PATCH) < patches/moviehud.patch
 	$(PATCH) < patches/hasflag.patch
 	$(PATCH) < patches/colors.patch
+	$(PATCH) < patches/listteams.patch
 	$(PATCH) < patches/scoreboard.patch
 	$(PATCH) < patches/hudfragmessages.patch
 	$(PATCH) < patches/fullconsole.patch
 	$(PATCH) < patches/hudscore.patch
 	$(PATCH) < patches/serverbrowser.patch
-	$(PATCH) < patches/listteams.patch
 	$(PATCH) < patches/execfile.patch
 	$(PATCH) < patches/embedded_cfgs.patch
 	$(PATCH) < patches/tex_commands.patch

@@ -159,6 +159,7 @@ CLIENT_OBJS= \
 	p1xbraten/namecomplete.o \
 	p1xbraten/proxy_real_ip.o \
 	p1xbraten/remote_commands.o \
+	p1xbraten/scoreboard.o \
 	p1xbraten/serverbrowser.o \
 	p1xbraten/version.o \
 	p1xbraten/weaponstats.o
@@ -546,6 +547,10 @@ p1xbraten/remote_commands.o: fpsgame/game.h shared/cube.h shared/tools.h
 p1xbraten/remote_commands.o: shared/geom.h shared/ents.h shared/command.h
 p1xbraten/remote_commands.o: shared/glexts.h shared/glemu.h shared/iengine.h
 p1xbraten/remote_commands.o: shared/igame.h fpsgame/ai.h
+p1xbraten/scoreboard.o: fpsgame/game.h shared/cube.h shared/tools.h
+p1xbraten/scoreboard.o: shared/geom.h shared/ents.h shared/command.h
+p1xbraten/scoreboard.o: shared/glexts.h shared/glemu.h shared/iengine.h
+p1xbraten/scoreboard.o: shared/igame.h fpsgame/ai.h p1xbraten/weaponstats.h
 p1xbraten/serverbrowser.o: fpsgame/game.h shared/cube.h shared/tools.h
 p1xbraten/serverbrowser.o: shared/geom.h shared/ents.h shared/command.h
 p1xbraten/serverbrowser.o: shared/glexts.h shared/glemu.h shared/iengine.h
