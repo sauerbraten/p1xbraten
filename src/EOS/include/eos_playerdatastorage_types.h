@@ -41,7 +41,7 @@ EOS_DECLARE_FUNC(void) EOS_PlayerDataStorage_FileMetadata_Release(EOS_PlayerData
 
 /** The most recent version of the EOS_PlayerDataStorage_QueryFile API. */
 #define EOS_PLAYERDATASTORAGE_QUERYFILE_API_LATEST 1
-// For backward compatibility. Please use the value above as this will be removed in a later version
+/** DEPRECATED! Use EOS_PLAYERDATASTORAGE_QUERYFILE_API_LATEST instead. */
 #define EOS_PLAYERDATASTORAGE_QUERYFILEOPTIONS_API_LATEST EOS_PLAYERDATASTORAGE_QUERYFILE_API_LATEST
 
 /**
@@ -74,7 +74,7 @@ EOS_DECLARE_CALLBACK(EOS_PlayerDataStorage_OnQueryFileCompleteCallback, const EO
 
 /** The most recent version of the EOS_PlayerDataStorage_QueryFileList API. */
 #define EOS_PLAYERDATASTORAGE_QUERYFILELIST_API_LATEST 1
-// For backward compatibility. Please use the value above as this will be removed in a later version
+/** DEPRECATED! Use EOS_PLAYERDATASTORAGE_QUERYFILELIST_API_LATEST instead. */
 #define EOS_PLAYERDATASTORAGE_QUERYFILELISTOPTIONS_API_LATEST EOS_PLAYERDATASTORAGE_QUERYFILELIST_API_LATEST
 
 /**
@@ -107,7 +107,7 @@ EOS_DECLARE_CALLBACK(EOS_PlayerDataStorage_OnQueryFileListCompleteCallback, cons
 
 /** The most recent version of the EOS_PlayerDataStorage_GetFileMetadataCount API. */
 #define EOS_PLAYERDATASTORAGE_GETFILEMETADATACOUNT_API_LATEST 1
-// For backward compatibility. Please use the value above as this will be removed in a later version
+/** DEPRECATED! Use EOS_PLAYERDATASTORAGE_GETFILEMETADATACOUNT_API_LATEST instead. */
 #define EOS_PLAYERDATASTORAGE_GETFILEMETADATACOUNTOPTIONS_API_LATEST EOS_PLAYERDATASTORAGE_GETFILEMETADATACOUNT_API_LATEST
 
 /**
@@ -122,7 +122,7 @@ EOS_STRUCT(EOS_PlayerDataStorage_GetFileMetadataCountOptions, (
 
 /** The most recent version of the EOS_PlayerDataStorage_CopyFileMetadataAtIndex API. */
 #define EOS_PLAYERDATASTORAGE_COPYFILEMETADATAATINDEX_API_LATEST 1
-// For backward compatibility. Please use the value above as this will be removed in a later version
+/** DEPRECATED! Use EOS_PLAYERDATASTORAGE_COPYFILEMETADATAATINDEX_API_LATEST instead. */
 #define EOS_PLAYERDATASTORAGE_COPYFILEMETADATAATINDEXOPTIONS_API_LATEST EOS_PLAYERDATASTORAGE_COPYFILEMETADATAATINDEX_API_LATEST
 
 /**
@@ -139,7 +139,7 @@ EOS_STRUCT(EOS_PlayerDataStorage_CopyFileMetadataAtIndexOptions, (
 
 /** The most recent version of the EOS_PlayerDataStorage_CopyFileMetadataByFilename API. */
 #define EOS_PLAYERDATASTORAGE_COPYFILEMETADATABYFILENAME_API_LATEST 1
-// For backward compatibility. Please use the value above as this will be removed in a later version
+/** DEPRECATED! Use EOS_PLAYERDATASTORAGE_COPYFILEMETADATABYFILENAME_API_LATEST instead. */
 #define EOS_PLAYERDATASTORAGE_COPYFILEMETADATABYFILENAMEOPTIONS_API_LATEST EOS_PLAYERDATASTORAGE_COPYFILEMETADATABYFILENAME_API_LATEST
 
 /**
@@ -156,7 +156,7 @@ EOS_STRUCT(EOS_PlayerDataStorage_CopyFileMetadataByFilenameOptions, (
 
 /** The most recent version of the EOS_PlayerDataStorage_DuplicateFile API. */
 #define EOS_PLAYERDATASTORAGE_DUPLICATEFILE_API_LATEST 1
-// For backward compatibility. Please use the value above as this will be removed in a later version
+/** DEPRECATED! Use EOS_PLAYERDATASTORAGE_DUPLICATEFILE_API_LATEST instead. */
 #define EOS_PLAYERDATASTORAGE_DUPLICATEFILEOPTIONS_API_LATEST EOS_PLAYERDATASTORAGE_DUPLICATEFILE_API_LATEST
 
 /**
@@ -192,7 +192,7 @@ EOS_DECLARE_CALLBACK(EOS_PlayerDataStorage_OnDuplicateFileCompleteCallback, cons
 
 /** The most recent version of the EOS_PlayerDataStorage_DeleteFile API. */
 #define EOS_PLAYERDATASTORAGE_DELETEFILE_API_LATEST 1
-// For backward compatibility. Please use the value above as this will be removed in a later version
+/** DEPRECATED! Use EOS_PLAYERDATASTORAGE_DELETEFILE_API_LATEST instead. */
 #define EOS_PLAYERDATASTORAGE_DELETEFILEOPTIONS_API_LATEST EOS_PLAYERDATASTORAGE_DELETEFILE_API_LATEST
 
 /**
@@ -299,7 +299,7 @@ EOS_DECLARE_CALLBACK_RETVALUE(EOS_PlayerDataStorage_EReadResult, EOS_PlayerDataS
 
 /** The most recent version of the EOS_PlayerDataStorage_ReadFile API. */
 #define EOS_PLAYERDATASTORAGE_READFILE_API_LATEST 1
-// For backward compatibility. Please use the value above as this will be removed in a later version
+/** DEPRECATED! Use EOS_PLAYERDATASTORAGE_READFILE_API_LATEST instead. */
 #define EOS_PLAYERDATASTORAGE_READFILEOPTIONS_API_LATEST EOS_PLAYERDATASTORAGE_READFILE_API_LATEST
 
 /**
@@ -393,7 +393,7 @@ EOS_DECLARE_CALLBACK_RETVALUE(EOS_PlayerDataStorage_EWriteResult, EOS_PlayerData
 
 /** The most recent version of the EOS_PlayerDataStorage_WriteFile API. */
 #define EOS_PLAYERDATASTORAGE_WRITEFILE_API_LATEST 1
-// For backward compatibility. Please use the value above as this will be removed in a later version
+/** DEPRECATED! Use EOS_PLAYERDATASTORAGE_WRITEFILE_API_LATEST instead. */
 #define EOS_PLAYERDATASTORAGE_WRITEFILEOPTIONS_API_LATEST EOS_PLAYERDATASTORAGE_WRITEFILE_API_LATEST
 
 /**
@@ -446,7 +446,7 @@ EOS_DECLARE_CALLBACK(EOS_PlayerDataStorage_OnWriteFileCompleteCallback, const EO
 
 /** The most recent version of the EOS_PlayerDataStorage_DeleteCache API. */
 #define EOS_PLAYERDATASTORAGE_DELETECACHE_API_LATEST 1
-// For backward compatibility. Please use the value above as this will be removed in a later version
+/** DEPRECATED! Use EOS_PLAYERDATASTORAGE_DELETECACHE_API_LATEST instead. */
 #define EOS_PLAYERDATASTORAGE_DELETECACHEOPTIONS_API_LATEST EOS_PLAYERDATASTORAGE_DELETECACHE_API_LATEST
 
 /**

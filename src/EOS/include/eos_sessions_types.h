@@ -470,7 +470,7 @@ EOS_STRUCT(EOS_Sessions_EndSessionCallbackInfo, (
 EOS_DECLARE_CALLBACK(EOS_Sessions_OnEndSessionCallback, const EOS_Sessions_EndSessionCallbackInfo* Data);
 
 /** The most recent version of the EOS_Sessions_RegisterPlayers API. */
-#define EOS_SESSIONS_REGISTERPLAYERS_API_LATEST 2
+#define EOS_SESSIONS_REGISTERPLAYERS_API_LATEST 3
 
 /**
  * Input parameters for the EOS_Sessions_RegisterPlayers function.

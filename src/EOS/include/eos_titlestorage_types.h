@@ -37,7 +37,7 @@ EOS_DECLARE_FUNC(void) EOS_TitleStorage_FileMetadata_Release(EOS_TitleStorage_Fi
 
 /** The most recent version of the EOS_TitleStorage_QueryFile API. */
 #define EOS_TITLESTORAGE_QUERYFILE_API_LATEST 1
-// For backward compatibility. Please use the value above as this will be removed in a later version
+/** DEPRECATED! Use EOS_TITLESTORAGE_QUERYFILE_API_LATEST instead. */
 #define EOS_TITLESTORAGE_QUERYFILEOPTIONS_API_LATEST EOS_TITLESTORAGE_QUERYFILE_API_LATEST
 
 /**
@@ -71,7 +71,7 @@ EOS_DECLARE_CALLBACK(EOS_TitleStorage_OnQueryFileCompleteCallback, const EOS_Tit
 
 /** The most recent version of the EOS_TitleStorage_QueryFileList API. */
 #define EOS_TITLESTORAGE_QUERYFILELIST_API_LATEST 1
-// For backward compatibility. Please use the value above as this will be removed in a later version
+/** DEPRECATED! Use EOS_TITLESTORAGE_QUERYFILELIST_API_LATEST instead. */
 #define EOS_TITLESTORAGE_QUERYFILELISTOPTIONS_API_LATEST EOS_TITLESTORAGE_QUERYFILELIST_API_LATEST
 
 /**
@@ -109,7 +109,7 @@ EOS_DECLARE_CALLBACK(EOS_TitleStorage_OnQueryFileListCompleteCallback, const EOS
 
 /** The most recent version of the EOS_TitleStorage_GetFileMetadataCount API. */
 #define EOS_TITLESTORAGE_GETFILEMETADATACOUNT_API_LATEST 1
-// For backward compatibility. Please use the value above as this will be removed in a later version
+/** DEPRECATED! Use EOS_TITLESTORAGE_GETFILEMETADATACOUNT_API_LATEST instead. */
 #define EOS_TITLESTORAGE_GETFILEMETADATACOUNTOPTIONS_API_LATEST EOS_TITLESTORAGE_GETFILEMETADATACOUNT_API_LATEST
 
 /**
@@ -124,7 +124,7 @@ EOS_STRUCT(EOS_TitleStorage_GetFileMetadataCountOptions, (
 
 /** The most recent version of the EOS_TitleStorage_CopyFileMetadataAtIndex API. */
 #define EOS_TITLESTORAGE_COPYFILEMETADATAATINDEX_API_LATEST 1
-// For backward compatibility. Please use the value above as this will be removed in a later version
+/** DEPRECATED! Use EOS_TITLESTORAGE_COPYFILEMETADATAATINDEX_API_LATEST instead. */
 #define EOS_TITLESTORAGE_COPYFILEMETADATAATINDEXOPTIONS_API_LATEST EOS_TITLESTORAGE_COPYFILEMETADATAATINDEX_API_LATEST
 
 /**
@@ -141,7 +141,7 @@ EOS_STRUCT(EOS_TitleStorage_CopyFileMetadataAtIndexOptions, (
 
 /** The most recent version of the EOS_TitleStorage_CopyFileMetadataByFilename API. */
 #define EOS_TITLESTORAGE_COPYFILEMETADATABYFILENAME_API_LATEST 1
-// For backward compatibility. Please use the value above as this will be removed in a later version
+/** DEPRECATED! Use EOS_TITLESTORAGE_COPYFILEMETADATABYFILENAME_API_LATEST instead. */
 #define EOS_TITLESTORAGE_COPYFILEMETADATABYFILENAMEOPTIONS_API_LATEST EOS_TITLESTORAGE_COPYFILEMETADATABYFILENAME_API_LATEST
 
 
@@ -230,7 +230,7 @@ EOS_DECLARE_CALLBACK_RETVALUE(EOS_TitleStorage_EReadResult, EOS_TitleStorage_OnR
 
 /** The most recent version of the EOS_TitleStorage_ReadFile API. */
 #define EOS_TITLESTORAGE_READFILE_API_LATEST 1
-// For backward compatibility. Please use the value above as this will be removed in a later version
+/** DEPRECATED! Use EOS_TITLESTORAGE_READFILE_API_LATEST instead. */
 #define EOS_TITLESTORAGE_READFILEOPTIONS_API_LATEST EOS_TITLESTORAGE_READFILE_API_LATEST
 
 /**
@@ -272,7 +272,7 @@ EOS_DECLARE_CALLBACK(EOS_TitleStorage_OnReadFileCompleteCallback, const EOS_Titl
 
 /** The most recent version of the EOS_TitleStorage_DeleteCache API. */
 #define EOS_TITLESTORAGE_DELETECACHE_API_LATEST 1
-// For backward compatibility. Please use the value above as this will be removed in a later version
+/** DEPRECATED! Use EOS_TITLESTORAGE_DELETECACHE_API_LATEST instead. */
 #define EOS_TITLESTORAGE_DELETECACHEOPTIONS_API_LATEST EOS_TITLESTORAGE_DELETECACHE_API_LATEST
 
 /**

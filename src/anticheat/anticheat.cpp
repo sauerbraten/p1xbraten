@@ -235,7 +235,7 @@ namespace game {
 
     void onmessagetoserver(const EOS_AntiCheatClient_OnMessageToServerCallbackInfo *data)
     {
-        static uchar buf[300]; // EOS docs say message is up to 256 bytes
+        static uchar buf[1024]; // EOS docs say message is up to 256 bytes, but I saw message sizes up to 512
         ucharbuf p(buf, sizeof(buf));
         putint(p, N_P1X_ANTICHEAT_MESSAGE);
         putuint(p, data->MessageDataSizeBytes);
