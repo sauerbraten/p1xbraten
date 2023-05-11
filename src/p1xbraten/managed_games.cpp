@@ -31,11 +31,17 @@ namespace server {
         return max((mins*60 + secs)*1000, 0);
     }
 
-    bool managedgame = false;
-    bool managedgamenextmatch = false;
+    bool managedgame = false, managedgamenextmatch = false;
+    bool specmute = false, specmutenextmatch = false;
     int gamelimitnextmatch = DEFAULT_GAMELIMIT;
 
-    void setupmanagedgame(clientinfo *referee, char *duration)
+    void setspecmute(bool on)
+    {
+        specmute = on;
+        sendf(-1, 1, "ris", N_SERVMSG, specmute ? "spectators muted" : "spectators unmuted");
+    }
+
+    void setupmanagedgame(clientinfo *referee, bool mutespecs, char *duration)
     {
         if(!referee || (!referee->privilege && !referee->local)) return;
 
@@ -48,6 +54,7 @@ namespace server {
         string msg = "next match will be a managed game";
         if(maplimit) concformatstring(msg, " (%d:%02d)", (maplimit/1000)/60, (maplimit/1000)%60);
         sendf(-1, 1, "ris", N_SERVMSG, msg);
+        if(mutespecs) sendf(-1, 1, "ris", N_SERVMSG, "spectators will be muted");
 
         loopv(clients)
         {
@@ -56,13 +63,14 @@ namespace server {
         }
 
         managedgamenextmatch = true;
+        specmutenextmatch = mutespecs;
         demonextmatch = true;
     }
 
     void cleanupmanagedgame()
     {
-        managedgame = false;
-        managedgamenextmatch = false;
+        managedgame = managedgamenextmatch = false;
+        specmute = specmutenextmatch = false;
         gamelimitnextmatch = DEFAULT_GAMELIMIT;
     }
 
@@ -72,6 +80,8 @@ namespace server {
     {
         managedgame = true;
         managedgamenextmatch = false;
+        specmute = specmutenextmatch;
+        specmutenextmatch = false;
         gamelimitnextmatch = DEFAULT_GAMELIMIT;
 
         notyetspawned.shrink(0);
