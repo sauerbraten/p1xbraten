@@ -4,7 +4,7 @@
 namespace game {
     struct embeddedfile<17256> menus_cfg = {
         "data/p1xbraten/menus.cfg.gz",
-        0x0a3ea587,
+        0xa4e860c1,
         {
             #include "../../data/p1xbraten/menus.cfg.gz.xxd"
         }
