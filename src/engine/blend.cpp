@@ -354,6 +354,8 @@ void optimizeblendmap()
     optimizeblendmap(blendmap.type, blendmap);
 }
 
+ICOMMAND(optimizeblendmap, "", (), optimizeblendmap());
+
 VARF(blendpaintmode, 0, 0, 5,
 {
     if(!blendpaintmode) stoppaintblendmap();
@@ -561,11 +563,11 @@ void cleanupblendmap()
     loopv(brushes) brushes[i]->cleanup();
 }
 
-void clearblendbrushes()
+ICOMMAND(clearblendbrushes, "", (),
 {
     while(brushes.length()) delete brushes.pop();
     curbrush = -1;
-}
+});
 
 void delblendbrush(const char *name)
 {
@@ -576,6 +578,8 @@ void delblendbrush(const char *name)
     }
     curbrush = brushes.empty() ? -1 : clamp(curbrush, 0, brushes.length()-1);
 }
+
+COMMAND(delblendbrush, "s");
 
 void addblendbrush(const char *name, const char *imgname)
 {
@@ -605,35 +609,26 @@ void addblendbrush(const char *name, const char *imgname)
 
 }
 
-void nextblendbrush(int *dir)
+COMMAND(addblendbrush, "ss");
+
+ICOMMAND(nextblendbrush, "i", (int *dir),
 {
     curbrush += *dir < 0 ? -1 : 1;
     if(brushes.empty()) curbrush = -1;
     else if(!brushes.inrange(curbrush)) curbrush = *dir < 0 ? brushes.length()-1 : 0;
-}
+});
 
-void setblendbrush(const char *name)
+ICOMMAND(setblendbrush, "s", (char *name),
 {
     loopv(brushes) if(!strcmp(brushes[i]->name, name)) { curbrush = i; break; }
-}
+});
 
-void getblendbrushname(int *n)
+ICOMMAND(getblendbrushname, "i", (int *n),
 {
     result(brushes.inrange(*n) ? brushes[*n]->name : "");
-}
+});
 
-void curblendbrush()
-{
-    intret(curbrush);
-}
-
-COMMAND(clearblendbrushes, "");
-COMMAND(delblendbrush, "s");
-COMMAND(addblendbrush, "ss");
-COMMAND(nextblendbrush, "i");
-COMMAND(setblendbrush, "s");
-COMMAND(getblendbrushname, "i");
-COMMAND(curblendbrush, "");
+ICOMMAND(curblendbrush, "", (), intret(curbrush));
 
 extern int nompedit;
 
@@ -653,15 +648,13 @@ bool canpaintblendmap(bool brush = true, bool sel = false, bool msg = true)
     return true;
 }
 
-void rotateblendbrush(int *val)
+ICOMMAND(rotateblendbrush, "i", (int *val),
 {
     if(!canpaintblendmap()) return;
     BlendBrush *brush = brushes[curbrush];
     const texrotation &r = texrotations[*val < 0 ? 3 : clamp(*val, 1, 7)];
     brush->reorient(r.flipx, r.flipy, r.swapxy);
-}
-
-COMMAND(rotateblendbrush, "i");
+});
 
 void paintblendmap(bool msg)
 {
@@ -736,14 +729,12 @@ void invertblendmapsel()
 
 COMMAND(invertblendmapsel, "");
 
-void invertblendmap()
+ICOMMAND(invertblendmap, "", (),
 {
     if(noedit(false) || (nompedit && multiplayer())) return;
     invertblendmap(0, 0, worldsize>>BM_SCALE, worldsize>>BM_SCALE);
     previewblends(ivec(0, 0, 0), ivec(worldsize, worldsize, worldsize));
-}
-
-COMMAND(invertblendmap, "");
+});
 
 void showblendmap()
 {
@@ -752,7 +743,6 @@ void showblendmap()
 }
 
 COMMAND(showblendmap, "");
-COMMAND(optimizeblendmap, "");
 ICOMMAND(clearblendmap, "", (),
 {
     if(noedit(true) || (nompedit && multiplayer())) return;

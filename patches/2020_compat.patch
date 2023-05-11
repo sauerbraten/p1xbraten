@@ -1,0 +1,41 @@
+undo the changes to the default crosshair location from r6799
+
+diff --git src/engine/rendergl.cpp src/engine/rendergl.cpp
+index f35a1fb..897aecb 100644
+--- src/engine/rendergl.cpp
++++ src/engine/rendergl.cpp
+@@ -2110,7 +2110,7 @@ void loadcrosshair(const char *name, int i)
+     if(crosshairs[i] == notexture)
+     {
+         name = game::defaultcrosshair(i);
+-        if(!name) name = "packages/crosshairs/default.png";
++        if(!name) name = "data/crosshair.png";
+         crosshairs[i] = textureload(name, 3, true);
+     }
+ }
+@@ -2128,7 +2128,7 @@ ICOMMAND(getcrosshair, "i", (int *i),
+     if(*i >= 0 && *i < MAXCROSSHAIRS)
+     {
+         name = crosshairs[*i] ? crosshairs[*i]->name : game::defaultcrosshair(*i);
+-        if(!name) name = "packages/crosshairs/default.png";
++        if(!name) name = "data/crosshair.png";
+     }
+     result(name);
+ });
+diff --git src/fpsgame/fps.cpp src/fpsgame/fps.cpp
+index 7efee42..e170bc9 100644
+--- src/fpsgame/fps.cpp
++++ src/fpsgame/fps.cpp
+@@ -1165,9 +1165,9 @@ namespace game
+     {
+         switch(index)
+         {
+-            case 2: return "packages/crosshairs/default_hit.png";
+-            case 1: return "packages/crosshairs/default_teammate.png";
+-            default: return "packages/crosshairs/default.png";
++            case 2: return "data/hit.png";
++            case 1: return "data/teammate.png";
++            default: return "data/crosshair.png";
+         }
+     }
+

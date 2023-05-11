@@ -2180,12 +2180,15 @@ void texlayer(int *layer, char *name, int *mode, float *scale)
     if(slots.empty()) return;
     Slot &s = *slots.last();
     s.variants->layer = *layer < 0 ? max(slots.length()-1+*layer, 0) : *layer;
-    s.layermaskname = name[0] ? newstring(path(makerelpath("packages", name))) : NULL; 
+    s.layermaskname = name[0] ? newstring(path(makerelpath("packages", name))) : NULL;
     s.layermaskmode = *mode;
     s.layermaskscale = *scale <= 0 ? 1 : *scale;
     propagatevslot(s.variants, 1<<VSLOT_LAYER);
 }
 COMMAND(texlayer, "isif");
+ICOMMAND(getvlayermaskname, "i", (int *tex), { if(char *name = lookupvslot(*tex, false).slot->layermaskname) result(name); });
+ICOMMAND(getvlayermaskmode, "i", (int *tex), intret(lookupvslot(*tex, false).slot->layermaskmode));
+ICOMMAND(getvlayermaskscale, "i", (int *tex), floatret(lookupvslot(*tex, false).slot->layermaskscale));
 
 void texalpha(float *front, float *back)
 {
@@ -2213,6 +2216,7 @@ void texsmooth(int *id, int *angle)
     s.smooth = smoothangle(*id, *angle);
 }
 COMMAND(texsmooth, "ib");
+ICOMMAND(getvsmooth, "i", (int *tex), intret(lookupvslot(*tex, false).slot->smooth));
 
 static int findtextype(Slot &s, int type, int last = -1)
 {

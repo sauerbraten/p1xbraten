@@ -2094,8 +2094,8 @@ void drawfullconsoleshade(int w, int h)
 VAR(hidestats, 0, 0, 1);
 VAR(hidehud, 0, 0, 1);
 
-VARP(crosshairsize, 0, 15, 50);
-VARP(cursorsize, 0, 30, 50);
+VARP(crosshairsize, 0, 30, 50);
+VARP(cursorsize, 0, 20, 50);
 VARP(crosshairfx, 0, 1, 1);
 VARP(crosshaircolors, 0, 1, 1);
 MOD(HVARP, crosshaircolor, 0, 0xFFFFFF, 0xFFFFFF);

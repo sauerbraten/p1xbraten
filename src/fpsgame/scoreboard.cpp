@@ -162,7 +162,7 @@ namespace game
             string hostname;
             if(enet_address_get_host_ip(address, hostname, sizeof(hostname)) >= 0)
             {
-                if(servinfo[0]) g.titlef("%.25s", COL_WHITE, NULL, servinfo);
+                if(servdesc[0]) g.titlef("%.25s", COL_WHITE, NULL, servdesc);
                 else g.titlef("%s:%d", COL_WHITE, NULL, hostname, address->port);
             }
         }
@@ -493,10 +493,10 @@ namespace game
     VARFN(scoreboard, showscoreboard, 0, 0, 1, showscores(showscoreboard!=0));
 
     VARP(hudscore, 0, 0, 1);
-    FVARP(hudscorescale, 1e-3f, 1.0f, 1e3f);
+    FVARP(hudscorescale, 0.5, 1.0, 2.0);
     VARP(hudscorealign, -1, 0, 1);
-    FVARP(hudscorex, 0, 0.50f, 1);
-    FVARP(hudscorey, 0, 0.03f, 1);
+    FVARP(hudscorex, 0.0, 0.50, 1.0);
+    FVARP(hudscorey, 0.0, 0.03, 1.0);
     HVARP(hudscoreplayercolour, 0, COL_BLUE, COL_WHITE);
     HVARP(hudscoreenemycolour, 0, COL_RED, COL_WHITE);
     VARP(hudscorealpha, 0, 255, 255);

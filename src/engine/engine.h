@@ -226,7 +226,7 @@ extern int genclipplane(const cube &c, int i, vec *v, plane *clip);
 extern void genclipplanes(const cube &c, const ivec &co, int size, clipplanes &p, bool collide = true);
 extern bool visibleface(const cube &c, int orient, const ivec &co, int size, ushort mat = MAT_AIR, ushort nmat = MAT_AIR, ushort matmask = MATF_VOLUME);
 extern int classifyface(const cube &c, int orient, const ivec &co, int size);
-extern int visibletris(const cube &c, int orient, const ivec &co, int size, ushort nmat = MAT_ALPHA, ushort matmask = MAT_ALPHA);
+extern int visibletris(const cube &c, int orient, const ivec &co, int size, ushort nmat = MAT_ALPHA, ushort matmask = MAT_ALPHA, bool showoutside = false);
 extern int visibleorient(const cube &c, int orient);
 extern void genfaceverts(const cube &c, int orient, ivec v[4]);
 extern int calcmergedsize(int orient, const ivec &co, int size, const vertinfo *verts, int numverts);

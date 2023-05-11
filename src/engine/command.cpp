@@ -491,21 +491,70 @@ ICOMMAND(alias, "st", (const char *name, tagval *v),
 
 int variable(const char *name, int min, int cur, int max, int *storage, identfun fun, int flags)
 {
-    addident(ident(ID_VAR, name, min, max, storage, (void *)fun, flags));
+    addident(ident(ID_VAR, name, min, max, storage, fun, flags));
     return cur;
 }
 
 float fvariable(const char *name, float min, float cur, float max, float *storage, identfun fun, int flags)
 {
-    addident(ident(ID_FVAR, name, min, max, storage, (void *)fun, flags));
+    addident(ident(ID_FVAR, name, min, max, storage, fun, flags));
     return cur;
 }
 
 char *svariable(const char *name, const char *cur, char **storage, identfun fun, int flags)
 {
-    addident(ident(ID_SVAR, name, storage, (void *)fun, flags));
+    addident(ident(ID_SVAR, name, storage, fun, flags));
     return newstring(cur);
 }
+
+struct defvar : identval
+{
+    char *name;
+    uint *onchange;
+
+    defvar() : name(NULL), onchange(NULL) {}
+
+    ~defvar()
+    {
+        DELETEA(name);
+        if(onchange) freecode(onchange);
+    }
+
+    static void changed(ident *id)
+    {
+        defvar *v = (defvar *)id->storage.p;
+        if(v->onchange) execute(v->onchange);
+    }
+};
+
+hashnameset<defvar> defvars;
+
+#define DEFVAR(cmdname, fmt, args, body) \
+    ICOMMAND(cmdname, fmt, args, \
+    { \
+        if(idents.access(name)) { debugcode("cannot redefine %s as a variable", name); return; } \
+        name = newstring(name); \
+        defvar &def = defvars[name]; \
+        def.name = name; \
+        body; \
+        def.onchange = onchange[0] ? compilecode(onchange) : NULL; \
+    });
+#define DEFIVAR(cmdname, flags) \
+    DEFVAR(cmdname, "siiis", (char *name, int *min, int *cur, int *max, char *onchange), \
+        def.i = variable(name, *min, *cur, *max, &def.i, defvar::changed, flags))
+#define DEFFVAR(cmdname, flags) \
+    DEFVAR(cmdname, "sfffs", (char *name, float *min, float *cur, float *max, char *onchange), \
+        def.f = fvariable(name, *min, *cur, *max, &def.f, defvar::changed, flags))
+#define DEFSVAR(cmdname, flags) \
+    DEFVAR(cmdname, "sss", (char *name, char *cur, char *onchange), \
+        def.s = svariable(name, cur, &def.s, defvar::changed, flags))
+
+DEFIVAR(defvar, 0);
+DEFIVAR(defvarp, IDF_PERSIST);
+DEFFVAR(deffvar, 0);
+DEFFVAR(deffvarp, IDF_PERSIST);
+DEFSVAR(defsvar, 0);
+DEFSVAR(defsvarp, IDF_PERSIST);
 
 #define _GETVAR(id, vartype, name, retval) \
     ident *id = idents.access(name); \
@@ -740,7 +789,7 @@ bool addcommand(const char *name, identfun fun, const char *args)
         default: fatal("builtin %s declared with illegal type: %s", name, args); break;
     }
     if(limit && numargs > MAXCOMARGS) fatal("builtin %s declared with too many args: %d", name, numargs);
-    addident(ident(ID_COMMAND, name, args, argmask, numargs, (void *)fun, flags));
+    addident(ident(ID_COMMAND, name, args, argmask, numargs, fun, flags));
     return false;
 }
 
@@ -3362,9 +3411,13 @@ ICOMMAND(error, "C", (char *s), conoutf(CON_ERROR, "%s", s));
 ICOMMAND(strstr, "ss", (char *a, char *b), { char *s = strstr(a, b); intret(s ? s-a : -1); });
 ICOMMAND(strrstr, "ss", (char *a, char *b),
 {
-    char *last = NULL;
-    for(char *cur = a; char *s = strstr(cur, b); last = s, ++cur);
-    intret(last ? last-a : -1);
+    if(!b[0]) intret(strlen(a));
+    else
+    {
+        char *last = NULL;
+        for(char *cur = a; char *s = strstr(cur, b); last = s, cur = s+1);
+        intret(last ? last-a : -1);
+    }
 });
 ICOMMAND(strlen, "s", (char *s), intret(strlen(s)));
 ICOMMAND(strcode, "si", (char *s, int *i), intret(*i > 0 ? (memchr(s, 0, *i) ? 0 : uchar(s[*i])) : uchar(s[0])));

@@ -147,7 +147,7 @@ client &addclient(int type)
         case ST_TCPIP: nonlocalclients++; break;
         case ST_LOCAL: localclients++; break;
     }
-    c->real = ENetAddress{0, 0};
+    c->real.host = 0; c->real.port = 0;
     return *c;
 }
 

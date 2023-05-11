@@ -1,6 +1,7 @@
-#define COL_WHITE      0xFFFFFF
-#define COL_GRAY       0xA0A0A0
-#define COL_BACKGROUND 0x9A9A9A
+#define COL_WHITE       0xFFFFFF
+#define COL_LIGHTERGRAY 0xB5B5B5
+#define COL_GRAY        0xA0A0A0
+#define COL_BACKGROUND  0x9A9A9A
 
 #define COL_RED     0xED2B2C
 #define COL_BLUE    0x1A76FF

@@ -4,20 +4,20 @@ index ae9528d..0bde4c8 100644
 +++ src/fpsgame/server.cpp
 @@ -788,6 +788,7 @@ namespace server
      }
- 
+
      int welcomepacket(packetbuf &p, clientinfo *ci);
 +    bool demoinfomsg(packetbuf &p);
      void sendwelcome(clientinfo *ci);
- 
+
      void setupdemorecord()
 @@ -813,6 +814,7 @@ namespace server
- 
+
          packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
          welcomepacket(p, NULL);
 +        demoinfomsg(p);
          writedemo(1, p.buf, p.len);
      }
- 
+
 diff --git src/p1xbraten/clientdemo.cpp src/p1xbraten/clientdemo.cpp
 index 48e29ec..e5c44f7 100644
 --- src/p1xbraten/clientdemo.cpp
@@ -25,20 +25,20 @@ index 48e29ec..e5c44f7 100644
 @@ -161,6 +161,8 @@ namespace game {
          return 1;
      }
- 
+
 +    bool demoinfomsg(packetbuf &p);
 +
      void setupdemorecord()
      {
          if(!m_mp(gamemode) || m_edit || m_collect || demo || demorecord) return;
 @@ -201,6 +203,7 @@ namespace game {
- 
+
          packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
          welcomepacket(p);
 +        demoinfomsg(p);
          recordpacket(1, p.buf, p.len);
      }
- 
+
 diff --git src/p1xbraten/demo_info_message.cpp src/p1xbraten/demo_info_message.cpp
 new file mode 100644
 index 0000000..5cdab5a
@@ -95,6 +95,6 @@ index 0000000..5cdab5a
 +        return hostport;
 +    }
 +
-+    bool demoinfomsg(packetbuf &p) { return _demoinfomsg(p, serverhostport(), servinfo); }
++    bool demoinfomsg(packetbuf &p) { return _demoinfomsg(p, serverhostport(), servdesc); }
 +}
 +#endif

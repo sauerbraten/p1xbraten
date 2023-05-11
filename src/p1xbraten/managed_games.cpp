@@ -8,14 +8,13 @@ namespace game {
         conoutf("sending demo to server...");
         if(!demo) return;
         stream::offset len = demo->size();
-        if(len > 16*1024*1024) conoutf(CON_ERROR, "demo is too large"); // todo: is 16 MB enough?
+        if(len > 16*1024*1024) conoutf(CON_ERROR, "demo file too large"); // todo: is 16 MB enough?
         else if(len <= 0) conoutf(CON_ERROR, "could not read demo");
         else sendfile(-1, 3, demo);
         conoutf("client demo sent");
     }
 }
 #endif
-
 
 namespace server {
 

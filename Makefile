@@ -37,6 +37,7 @@ debian: clean
 
 apply-patches: PATCH=patch --strip=0 --remove-empty-files --ignore-whitespace --no-backup-if-mismatch
 apply-patches:
+	$(PATCH) < patches/2020_compat.patch # keeps SVN changes compatible with 2020 edition
 	$(PATCH) < patches/modconfig.patch
 	$(PATCH) < patches/modversion.patch
 	$(PATCH) < patches/moviehud.patch

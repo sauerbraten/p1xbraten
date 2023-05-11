@@ -122,7 +122,7 @@ namespace game
 
     bool connected = false, remote = false, demoplayback = false, gamepaused = false;
     int sessionid = 0, mastermode = MM_OPEN, gamespeed = 100;
-    string servinfo = "", servauth = "", connectpass = "";
+    string servdesc = "", servauth = "", connectpass = "";
 
     VARP(deadpush, 1, 2, 20);
 
@@ -570,6 +570,7 @@ namespace game
     ICOMMAND(sauth, "", (), if(servauth[0]) tryauth(servauth));
     ICOMMAND(dauth, "s", (char *desc), if(desc[0]) tryauth(desc));
 
+    ICOMMAND(getservdesc, "", (), result(servdesc));
     ICOMMAND(getservauth, "", (), result(servauth));
 
     void togglespectator(int val, const char *who)
@@ -978,6 +979,8 @@ namespace game
         if(remote) stopfollowing();
         ignores.setsize(0);
         connected = remote = false;
+        servdesc[0] = '\0';
+        servauth[0] = '\0';
         player1->clientnum = -1;
         sessionid = 0;
         mastermode = MM_OPEN;
@@ -1369,7 +1372,7 @@ namespace game
                 sessionid = getint(p);
                 player1->clientnum = mycn;      // we are now connected
                 if(getint(p) > 0) conoutf("this server is password protected");
-                getstring(servinfo, p, sizeof(servinfo));
+                getstring(servdesc, p, sizeof(servdesc));
                 getstring(servauth, p, sizeof(servauth));
                 sendintro();
                 break;

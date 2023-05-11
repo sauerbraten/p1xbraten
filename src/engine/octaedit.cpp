@@ -4,7 +4,7 @@ extern int outline;
 
 bool boxoutline = false;
 
-void boxs(int orient, vec o, const vec &s, float size) 
+void boxs(int orient, vec o, const vec &s, float size)
 {
     int d = dimension(orient), dc = dimcoord(orient);
     float f = boxoutline ? (dc>0 ? 0.2f : -0.2f) : 0;
@@ -239,10 +239,25 @@ ICOMMAND(selsave, "", (), { if(noedit(true)) return; savedsel = sel; });
 ICOMMAND(selrestore, "", (), { if(noedit(true)) return; sel = savedsel; });
 ICOMMAND(selswap, "", (), { if(noedit(true)) return; swap(sel, savedsel); });
 
+ICOMMAND(clearselsaved, "", (), { if(noedit(true)) return; savedsel = selinfo(); });
+
+ICOMMAND(getselsavedpos, "", (),
+{
+    if(noedit(true)) return;
+    defformatstring(pos, "%d %d %d", savedsel.o.x, savedsel.o.y, savedsel.o.z);
+    result(pos);
+});
+ICOMMAND(getselsavedsize, "", (),
+{
+    if(noedit(true)) return;
+    defformatstring(size, "%d %d %d", savedsel.s.x, savedsel.s.y, savedsel.s.z);
+    result(size);
+});
+
 ICOMMAND(getselpos, "", (),
 {
     if(noedit(true)) return;
-    defformatstring(pos, "%s %s %s", floatstr(sel.o.x), floatstr(sel.o.y), floatstr(sel.o.z));
+    defformatstring(pos, "%d %d %d", sel.o.x, sel.o.y, sel.o.z);
     result(pos);
 });
 
@@ -291,7 +306,7 @@ void countselchild(cube *c, const ivec &cor, int size)
     {
         ivec o(i, cor, size);
         if(c[i].children) countselchild(c[i].children, o, size/2);
-        else 
+        else
         {
             selchildcount++;
             if(c[i].material != MAT_AIR && selchildmat != MAT_AIR)
@@ -489,7 +504,7 @@ void rendereditcursor()
             selchildcount = 0;
             selchildmat = -1;
             countselchild(worldroot, ivec(0, 0, 0), worldsize/2);
-            if(mag>=1 && selchildcount==1) 
+            if(mag>=1 && selchildcount==1)
             {
                 selchildmat = c->material;
                 if(mag>1) selchildcount = -mag;
@@ -988,7 +1003,7 @@ static bool unpackblock(block3 *&b, B &buf)
 }
 
 struct vslotmap
-{   
+{
     int index;
     VSlot *vslot;
 
@@ -1369,8 +1384,8 @@ static void genprefabmesh(prefabmesh &r, cube &c, const ivec &co, int size)
     }
     else if(!isempty(c))
     {
-        int vis; 
-        loopi(6) if((vis = visibletris(c, i, co, size)))
+        int vis;
+        loopi(6) if((vis = visibletris(c, i, co, size, MAT_ALPHA, MAT_ALPHA, true)))
         {
             ivec v[4];
             genfaceverts(c, i, v);
@@ -2629,8 +2644,8 @@ void rotatecube(cube &c, int d)   // rotates cube clockwise. see pics in cvs for
 
 void mpflip(selinfo &sel, bool local)
 {
-    if(local) 
-    { 
+    if(local)
+    {
         game::edittrigger(sel, EDIT_FLIP);
         makeundo();
     }
@@ -2686,8 +2701,8 @@ COMMAND(flip, "");
 COMMAND(rotate, "i");
 
 enum { EDITMATF_EMPTY = 0x10000, EDITMATF_NOTEMPTY = 0x20000, EDITMATF_SOLID = 0x30000, EDITMATF_NOTSOLID = 0x40000 };
-static const struct { const char *name; int filter; } editmatfilters[] = 
-{ 
+static const struct { const char *name; int filter; } editmatfilters[] =
+{
     { "empty", EDITMATF_EMPTY },
     { "notempty", EDITMATF_NOTEMPTY },
     { "solid", EDITMATF_SOLID },
@@ -2754,8 +2769,8 @@ void editmat(char *name, char *filtername)
         if(filter < 0) filter = findmaterial(filtername);
         if(filter < 0)
         {
-            conoutf(CON_ERROR, "unknown material \"%s\"", filtername); 
-            return; 
+            conoutf(CON_ERROR, "unknown material \"%s\"", filtername);
+            return;
         }
     }
     int id = -1;

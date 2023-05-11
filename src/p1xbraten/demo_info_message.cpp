@@ -48,6 +48,6 @@ namespace game {
         return hostport;
     }
 
-    bool demoinfomsg(packetbuf &p) { return _demoinfomsg(p, serverhostport(), servinfo); }
+    bool demoinfomsg(packetbuf &p) { return _demoinfomsg(p, serverhostport(), servdesc); }
 }
 #endif

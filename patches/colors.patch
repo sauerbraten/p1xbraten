@@ -119,28 +119,30 @@ Index: src/engine/rendertext.cpp
 ===================================================================
 --- src/engine/rendertext.cpp	(revision 6518)
 +++ src/engine/rendertext.cpp	(working copy)
-@@ -221,15 +221,15 @@
+@@ -221,16 +221,16 @@
          else stack[sp] = c;
          switch(c)
          {
--            case '0': color = bvec( 64, 255, 128); break;   // green: player talk
--            case '1': color = bvec( 96, 160, 255); break;   // blue: "echo" command
--            case '2': color = bvec(255, 192,  64); break;   // yellow: gameplay messages
--            case '3': color = bvec(255,  64,  64); break;   // red: important errors
--            case '4': color = bvec(128, 128, 128); break;   // gray
--            case '5': color = bvec(192,  64, 192); break;   // magenta
--            case '6': color = bvec(255, 128,   0); break;   // orange
--            case '7': color = bvec(255, 255, 255); break;   // white
--            case '8': color = bvec( 96, 240, 255); break;   // cyan
-+            case '0': color = bvec::hexcolor(COL_GREEN);   break;  // player talk
-+            case '1': color = bvec::hexcolor(COL_BLUE);    break;  // "echo" command
-+            case '2': color = bvec::hexcolor(COL_YELLOW);  break;  // gameplay messages
-+            case '3': color = bvec::hexcolor(COL_RED);     break;  // important errors
-+            case '4': color = bvec::hexcolor(COL_GRAY);    break;
-+            case '5': color = bvec::hexcolor(COL_MAGENTA); break;
-+            case '6': color = bvec::hexcolor(COL_ORANGE);  break;
-+            case '7': color = bvec::hexcolor(COL_WHITE);   break;
-+            case '8': color = bvec::hexcolor(COL_CYAN);    break;
+-            case '0': color = bvec( 64, 255, 128); break;   // Green     (Player chat)
+-            case '1': color = bvec( 96, 160, 255); break;   // Blue      ("echo" Command)
+-            case '2': color = bvec(255, 192,  64); break;   // Yellow    (Gameplay Messages)
+-            case '3': color = bvec(255,  64,  64); break;   // Red       (Important Errors)
+-            case '4': color = bvec(128, 128, 128); break;   // Grey 50%
+-            case '5': color = bvec(192,  64, 192); break;   // Magenta
+-            case '6': color = bvec(255, 128,   0); break;   // Orange
+-            case '7': color = bvec(255, 255, 255); break;   // White
+-            case '8': color = bvec( 96, 240, 255); break;   // Cyan
+-            case '9': color = bvec(181, 181, 181); break;   // Grey ~70%
++            case '0': color = bvec::hexcolor(COL_GREEN);       break;  // player chat
++            case '1': color = bvec::hexcolor(COL_BLUE);        break;  // "echo" command
++            case '2': color = bvec::hexcolor(COL_YELLOW);      break;  // gameplay messages
++            case '3': color = bvec::hexcolor(COL_RED);         break;  // important errors
++            case '4': color = bvec::hexcolor(COL_GRAY);        break;
++            case '5': color = bvec::hexcolor(COL_MAGENTA);     break;
++            case '6': color = bvec::hexcolor(COL_ORANGE);      break;
++            case '7': color = bvec::hexcolor(COL_WHITE);       break;
++            case '8': color = bvec::hexcolor(COL_CYAN);        break;
++            case '9': color = bvec::hexcolor(COL_LIGHTERGRAY); break;
              // provided color: everything else
          }
          gle::color(color, a);
@@ -242,15 +244,15 @@ Index: src/fpsgame/fps.cpp
 @@ -943,9 +943,9 @@
 
      VARP(gameclock, 0, 0, 1);
-     FVARP(gameclockscale, 1e-3f, 0.75f, 1e3f);
+     FVARP(gameclockscale, 0.5, 1.0, 2.0);
 -    HVARP(gameclockcolour, 0, 0xFFFFFF, 0xFFFFFF);
 +    HVARP(gameclockcolour, 0, COL_WHITE, COL_WHITE);
      VARP(gameclockalpha, 0, 255, 255);
--    HVARP(gameclocklowcolour, 0, 0xFFC040, 0xFFFFFF);
+-    HVARP(gameclocklowcolour, 0, 0xFFA050, 0xFFFFFF);
 +    HVARP(gameclocklowcolour, 0, COL_ORANGE, COL_WHITE);
      VARP(gameclockalign, -1, 0, 1);
-     FVARP(gameclockx, 0, 0.50f, 1);
-     FVARP(gameclocky, 0, 0.03f, 1);
+     FVARP(gameclockx, 0.0, 0.50, 1.0);
+     FVARP(gameclocky, 0.0, 0.03, 1.0);
 @@ -1010,7 +1010,7 @@
          int tw, th; text_bounds(label, tw, th);
          vec2 textdrawpos = vec2(-tw, -th).div(2);
@@ -441,9 +443,9 @@ Index: src/fpsgame/scoreboard.cpp
              string hostname;
              if(enet_address_get_host_ip(address, hostname, sizeof(hostname)) >= 0)
              {
--                if(servinfo[0]) g.titlef("%.25s", 0xFFFF80, NULL, servinfo);
+-                if(servdesc[0]) g.titlef("%.25s", 0xFFFF80, NULL, servdesc);
 -                else g.titlef("%s:%d", 0xFFFF80, NULL, hostname, address->port);
-+                if(servinfo[0]) g.titlef("%.25s", COL_WHITE, NULL, servinfo);
++                if(servdesc[0]) g.titlef("%.25s", COL_WHITE, NULL, servdesc);
 +                else g.titlef("%s:%d", COL_WHITE, NULL, hostname, address->port);
              }
          }
@@ -699,8 +701,8 @@ Index: src/fpsgame/scoreboard.cpp
                      else g.poplist();
 @@ -475,8 +475,8 @@
      VARP(hudscorealign, -1, 0, 1);
-     FVARP(hudscorex, 0, 0.50f, 1);
-     FVARP(hudscorey, 0, 0.03f, 1);
+     FVARP(hudscorex, 0.0, 0.50, 1.0);
+     FVARP(hudscorey, 0.0, 0.03, 1.0);
 -    HVARP(hudscoreplayercolour, 0, 0x60A0FF, 0xFFFFFF);
 -    HVARP(hudscoreenemycolour, 0, 0xFF4040, 0xFFFFFF);
 +    HVARP(hudscoreplayercolour, 0, COL_BLUE, COL_WHITE);
@@ -725,10 +727,11 @@ Index: src/p1xbraten/colors.h
 ===================================================================
 --- src/p1xbraten/colors.h	(nonexistent)
 +++ src/p1xbraten/colors.h	(working copy)
-@@ -0,0 +1,11 @@
-+#define COL_WHITE      0xFFFFFF
-+#define COL_GRAY       0xA0A0A0
-+#define COL_BACKGROUND 0x9A9A9A
+@@ -0,0 +1,12 @@
++#define COL_WHITE       0xFFFFFF
++#define COL_LIGHTERGRAY 0xB5B5B5
++#define COL_GRAY        0xA0A0A0
++#define COL_BACKGROUND  0x9A9A9A
 +
 +#define COL_RED     0xED2B2C
 +#define COL_BLUE    0x1A76FF

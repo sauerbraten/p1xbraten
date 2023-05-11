@@ -214,7 +214,7 @@ index b59407a..64a92ad 100644
      // client
 -    extern bool connected, remote, demoplayback;
 +    extern bool connected, remote, demoplayback, gamepaused;
-     extern string servinfo;
+     extern string servdesc;
 +    extern int mastermode, gamespeed;
 +    extern hashset<teaminfo> teaminfos;
      extern vector<uchar> messages;

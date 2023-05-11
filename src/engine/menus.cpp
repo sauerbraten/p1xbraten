@@ -307,6 +307,16 @@ void guitext(char *name, char *icon)
     if(cgui) cgui->text(name, !hideicon && icon[0] ? GUI_BUTTON_COLOR : GUI_TEXT_COLOR, hideicon ? NULL : (icon[0] ? icon : "info"));
 }
 
+void guiposition(int *x, int *y)
+{
+    if(cgui) cgui->setalign(*x, *y);
+}
+
+void guiscale(float *k)
+{
+    if(cgui) cgui->setscale(*k);
+}
+
 void guititle(char *name)
 {
     if(cgui) cgui->title(name, GUI_TITLE_COLOR);
@@ -597,6 +607,8 @@ COMMAND(guimerge, "e");
 ICOMMAND(guikeeptab, "b", (int *keeptab), if(guistack.length()) guistack.last()->keeptab = *keeptab!=0);
 COMMAND(guilist, "e");
 COMMAND(guialign, "ie");
+COMMAND(guiposition, "ii");
+COMMAND(guiscale, "f");
 COMMAND(guititle, "s");
 COMMAND(guibar,"");
 COMMAND(guistrut,"fi");

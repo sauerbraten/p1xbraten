@@ -141,6 +141,7 @@ extern ident *newident(const char *name, int flags = 0);
 extern ident *readident(const char *name);
 extern ident *writeident(const char *name, int flags = 0);
 extern bool addcommand(const char *name, identfun fun, const char *narg);
+template<class F> static inline bool addcommand(const char *name, F *fun, const char *narg) { return ::addcommand(name, (identfun)fun, narg); }
 extern bool addkeyword(int type, const char *name);
 extern uint *compilecode(const char *p);
 extern void keepcode(uint *p);
@@ -547,6 +548,8 @@ struct g3d_gui
     virtual bool allowautotab(bool on) = 0;
     virtual bool shouldtab() { return false; }
 	virtual void tab(const char *name = NULL, int color = 0) = 0;
+    virtual void setalign(int x, int y) = 0;
+    virtual void setscale(float k) = 0;
     virtual int image(Texture *t, float scale, const char *overlaid = NULL) = 0;
     virtual int texture(VSlot &vslot, float scale, bool overlaid = true) = 0;
     virtual int playerpreview(int model, int team, int weap, float scale, const char *overlaid = NULL) { return 0; }

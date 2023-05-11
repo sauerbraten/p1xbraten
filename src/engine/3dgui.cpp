@@ -920,7 +920,7 @@ struct gui : g3d_gui
     } 
 
     vec origin, scale, *savedorigin;
-    float dist;
+    float dist, modscale;
     g3d_callback *cb;
     bool gui2d;
 
@@ -928,6 +928,17 @@ struct gui : g3d_gui
     static bool passthrough;
     static float alpha;
     static vec light;
+    static ivec2 align;
+
+    void setalign(int x, int y)
+    {
+        align = ivec2(clamp(x, -1, 1), clamp(y, -1, 1));
+    }
+
+    void setscale(float k)
+    {
+        modscale = k > 0 ? k : 1.0f;
+    }
 
     void adjustscale()
     {
@@ -936,9 +947,12 @@ struct gui : g3d_gui
         else h += (skiny[6]-skiny[3])*SKIN_SCALE;
 
         float aspect = forceaspect ? 1.0f/forceaspect : float(screenh)/float(screenw), fit = 1.0f;
+        basescale *= modscale;
+        scale.mul(modscale);
         if(w*aspect*basescale>1.0f) fit = 1.0f/(w*aspect*basescale);
         if(h*basescale*fit>maxscale) fit *= maxscale/(h*basescale*fit);
-        origin = vec(0.5f-((w-xsize)/2 - (skinx[2]-skinx[1])*SKIN_SCALE)*aspect*scale.x*fit, 0.5f + (0.5f*h-(skiny[9]-skiny[7])*SKIN_SCALE)*scale.y*fit, 0);
+        origin = vec(0.5f*(align.x+1)-((w*(align.x+1)-xsize)/2 - (skinx[2]-skinx[1])*SKIN_SCALE)*aspect*scale.x*fit,
+                     0.5f*(align.y+1) + (0.5f*h*(2-(align.y+1)) - (align.y < 0 ? 0.5f : 1.0f)*(skiny[9]-skiny[7])*SKIN_SCALE)*scale.y*fit, 0);
         scale = vec(aspect*scale.x*fit, scale.y*fit, 1);
     }
 
@@ -951,6 +965,7 @@ struct gui : g3d_gui
         }
         basescale = initscale;
         if(layoutpass) scale.x = scale.y = scale.z = guifadein ? basescale*min((totalmillis-starttime)/300.0f, 1.0f) : basescale;
+        else basescale *= modscale;
         alpha = allowinput ? 0.80f : 0.60f;
         passthrough = scale.x<basescale || !allowinput;
         curdepth = -1;
@@ -965,6 +980,8 @@ struct gui : g3d_gui
         {
             firstlist = nextlist = curlist;
             memset(columns, 0, sizeof(columns));
+            align = ivec2(0, 0);
+            modscale = 1.0f;
         }
         else
         {
@@ -1156,6 +1173,7 @@ vector<gui::list> gui::lists;
 float gui::basescale, gui::maxscale = 1, gui::hitx, gui::hity, gui::alpha;
 bool gui::passthrough, gui::shouldmergehits = false, gui::shouldautotab = true;
 vec gui::light;
+ivec2 gui::align(0, 0);
 int gui::curdepth, gui::curlist, gui::xsize, gui::ysize, gui::curx, gui::cury;
 int gui::ty, gui::tx, gui::tpos, *gui::tcurrent, gui::tcolor;
 static vector<gui> guis2d, guis3d;

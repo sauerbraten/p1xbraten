@@ -771,7 +771,7 @@ namespace game
 
     // client
     extern bool connected, remote, demoplayback, gamepaused;
-    extern string servinfo;
+    extern string servdesc;
     extern int mastermode, gamespeed;
     extern hashset<teaminfo> teaminfos;
     extern vector<uchar> messages;
