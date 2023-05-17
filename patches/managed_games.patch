@@ -88,7 +88,7 @@ index 02277f9..b37ef32 100644
      extern const char *mastermodename(int n, const char *unknown = "unknown");
      extern void startintermission();
      extern void stopdemo();
-@@ -1189,6 +1203,43 @@ namespace server
+@@ -1189,6 +1203,44 @@ namespace server
      extern int msgsizelookup(int msg);
      extern bool serveroption(const char *arg);
      extern bool delayspawn(int type);
@@ -113,8 +113,9 @@ index 02277f9..b37ef32 100644
 +    extern int gamelimitnextmatch;
 +#define DEFAULT_GAMELIMIT (10*60*1000)
 +    extern void probeforclientdemoupload(packetbuf &p);
-+    extern void setspecmute(bool on);
-+    extern void setupmanagedgame(clientinfo *referee, bool specmute = false, char *duration = NULL);
++    extern void setspecmute(clientinfo *ci, bool on);
++    extern void queryspecmute(clientinfo *ci);
++    extern void setupmanagedgame(clientinfo *ci, bool specmute = false, char *duration = NULL);
 +    extern void startmanagedgame();
 +    extern void cleanupmanagedgame();
 +    extern void onspawn(clientinfo *ci);
@@ -392,7 +393,7 @@ new file mode 100644
 index 0000000..1c1b1d7
 --- /dev/null
 +++ src/p1xbraten/managed_games.cpp
-@@ -0,0 +1,271 @@
+@@ -0,0 +1,281 @@
 +#include "game.h"
 +
 +#ifndef STANDALONE
@@ -430,15 +431,25 @@ index 0000000..1c1b1d7
 +    bool specmute = false, specmutenextmatch = false;
 +    int gamelimitnextmatch = DEFAULT_GAMELIMIT;
 +
-+    void setspecmute(bool on)
++    void queryspecmute(clientinfo *ci)
 +    {
++        if(!ci || (ci->privilege<=PRIV_AUTH && !ci->local)) return;
++        sendf(ci->clientnum, 1, "ris", N_SERVMSG, specmute
++            ? "spectators are muted (use #specmute 0 to unmute)"
++            : "spectators are not muted (use #specmute 1 to mute)"
++        );
++    }
++
++    void setspecmute(clientinfo *ci, bool on)
++    {
++         if(!ci || (ci->privilege<=PRIV_AUTH && !ci->local)) return;
 +        specmute = on;
 +        sendf(-1, 1, "ris", N_SERVMSG, specmute ? "spectators muted" : "spectators unmuted");
 +    }
 +
-+    void setupmanagedgame(clientinfo *referee, bool mutespecs, char *duration)
++    void setupmanagedgame(clientinfo *ci, bool mutespecs, char *duration)
 +    {
-+        if(!referee || (!referee->privilege && !referee->local)) return;
++        if(!ci || (!ci->privilege && !ci->local)) return;
 +
 +        if(mastermode < MM_LOCKED) { mastermode = MM_LOCKED; sendf(-1, 1, "rii", N_MASTERMODE, mastermode); }
 +
@@ -669,7 +680,7 @@ new file mode 100644
 index 0000000..e71f710
 --- /dev/null
 +++ src/p1xbraten/remote_commands.cpp
-@@ -0,0 +1,31 @@
+@@ -0,0 +1,28 @@
 +#include "game.h"
 +
 +namespace server {
@@ -692,11 +703,8 @@ index 0000000..e71f710
 +        else if(!strcmp(cmd, "tourney"))                      { setupmanagedgame(sender, true); return true; }
 +        else if(sscanf(cmd, "tourney %5s", sval) == 1)        { setupmanagedgame(sender, true, sval); return true; }
 +        else if(!strcmp(cmd, "mutespec") || !strcmp(cmd, "mutespecs") || !strcmp(cmd, "specmute"))
-+                                                              { sendf(sender->clientnum, 1, "ris", N_SERVMSG, specmute
-+                                                                 ? "spectators are muted (use #specmute 0 to unmute)"
-+                                                                 : "spectators are not unmuted (use #specmute 1 to mute)");
-+                                                                return true; }
-+        else if(sscanf(cmd, "specmute %d", &ival) == 1)       { setspecmute(ival!=0); return true; }
++                                                              { queryspecmute(sender); return true; }
++        else if(sscanf(cmd, "specmute %d", &ival) == 1)       { setspecmute(sender, ival!=0); return true; }
 +        return false;
 +    }
 +

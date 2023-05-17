@@ -35,15 +35,25 @@ namespace server {
     bool specmute = false, specmutenextmatch = false;
     int gamelimitnextmatch = DEFAULT_GAMELIMIT;
 
-    void setspecmute(bool on)
+    void queryspecmute(clientinfo *ci)
     {
+        if(!ci || (ci->privilege<=PRIV_AUTH && !ci->local)) return;
+        sendf(ci->clientnum, 1, "ris", N_SERVMSG, specmute
+            ? "spectators are muted (use #specmute 0 to unmute)"
+            : "spectators are not muted (use #specmute 1 to mute)"
+        );
+    }
+
+    void setspecmute(clientinfo *ci, bool on)
+    {
+         if(!ci || (ci->privilege<=PRIV_AUTH && !ci->local)) return;
         specmute = on;
         sendf(-1, 1, "ris", N_SERVMSG, specmute ? "spectators muted" : "spectators unmuted");
     }
 
-    void setupmanagedgame(clientinfo *referee, bool mutespecs, char *duration)
+    void setupmanagedgame(clientinfo *ci, bool mutespecs, char *duration)
     {
-        if(!referee || (!referee->privilege && !referee->local)) return;
+        if(!ci || (!ci->privilege && !ci->local)) return;
 
         if(mastermode < MM_LOCKED) { mastermode = MM_LOCKED; sendf(-1, 1, "rii", N_MASTERMODE, mastermode); }
 
