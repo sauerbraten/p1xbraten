@@ -159,6 +159,7 @@ a.k.a. Features
       round (divf (getfrags) (max (getdeaths) 1)) 0.1	)
   ]
   ```
+Use `/usep1xbratenmenus 0` to use the default scoreboard.
 
 ### [hudfragmessages.patch](./patches/hudfragmessages.patch)
 
@@ -195,9 +196,10 @@ You can easily configure the hud frag messages using the [improved menu](#menu) 
 - styles the serverbrowser to be consistent with the cleaned up scoreboard
 - divides 'players' column into 'players' and 'slots'
 - right-justifies ping, players, slots, and port columns
+- adds the `serverbrowsershow[ping|players|slots|mode|map|time|master|host|port|description]` variables: set to 0 to hide the respective column from the UI
 - adds the `filterservers` string variable to only show servers in the serverbrowser whose mode, map or description matches (using case-insensitive substring matching)
 
-The p1xbraten menu gives you a simple search field on the serverbrowser using this variable.
+The p1xbraten menu gives you a simple search field on the serverbrowser using this variable. Use `/p1xbratenmenus 0` to use the default serverbrowser.
 
 ### [listteams.patch](./patches/listteams.patch)
 
@@ -389,6 +391,8 @@ Improves logging when running a dedicated server:
   - accept client demo uploads at intermission
   - save all demo files of the match to disk
   - not auto-load the next map
+- adds the `#specmute` remote variable: when 1, spectators can't send any chat messages (requires auth or admin)
+- adds the `#tourney [MM:[SS]]` remote command, which is the same as `#competitive`, but also enables specmute for the next match
 - adds the (admin-only) `#do` remote command to evaluate arbitrary cubescript on the server, for example `#do persistteams 1`, `#do servermotd "happy fragging"` or `#do concat $serverauth`
 
 ### [autoauthdomains.patch](./patches/autoauthdomains.patch)
