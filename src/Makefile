@@ -179,7 +179,7 @@ SERVER_OBJS= \
 	p1xbraten/bans-standalone.o \
 	p1xbraten/demo_info_message-standalone.o \
 	p1xbraten/managed_games-standalone.o \
-	p1xbraten/proxy_real_ip.o \
+	p1xbraten/proxy_real_ip-standalone.o \
 	p1xbraten/remote_commands-standalone.o
 ifdef ANTICHEAT
 	override SERVER_OBJS+= anticheat/anticheat-standalone.o
@@ -609,6 +609,11 @@ p1xbraten/managed_games-standalone.o: shared/tools.h shared/geom.h
 p1xbraten/managed_games-standalone.o: shared/ents.h shared/command.h
 p1xbraten/managed_games-standalone.o: shared/iengine.h shared/igame.h
 p1xbraten/managed_games-standalone.o: fpsgame/ai.h
+p1xbraten/proxy_real_ip-standalone.o: fpsgame/game.h shared/cube.h
+p1xbraten/proxy_real_ip-standalone.o: shared/tools.h shared/geom.h
+p1xbraten/proxy_real_ip-standalone.o: shared/ents.h shared/command.h
+p1xbraten/proxy_real_ip-standalone.o: shared/iengine.h shared/igame.h
+p1xbraten/proxy_real_ip-standalone.o: fpsgame/ai.h
 p1xbraten/remote_commands-standalone.o: fpsgame/game.h shared/cube.h
 p1xbraten/remote_commands-standalone.o: shared/tools.h shared/geom.h
 p1xbraten/remote_commands-standalone.o: shared/ents.h shared/command.h
