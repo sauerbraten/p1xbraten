@@ -290,7 +290,7 @@ index 7d25726..4f4d1a4 100644
                  break;
              }
 
-@@ -3049,9 +3056,10 @@ namespace server
+@@ -3049,9 +3056,11 @@ namespace server
              case N_TEXT:
              {
                  QUEUE_AI;
@@ -298,11 +298,12 @@ index 7d25726..4f4d1a4 100644
                  getstring(text, p);
                  filtertext(text, text, true, true);
 +                if(text[0]=='#' && handleservcmd(cq, &text[1])) break;
++                if(specmute && cq->state.state==CS_SPECTATOR && cq->privilege<PRIV_AUTH) break;
 +                QUEUE_INT(N_TEXT);
                  QUEUE_STR(text);
                  if(isdedicatedserver() && cq) logoutf("%s (cn %d): %s", colorname(cq), cq->clientnum, text);
                  break;
-@@ -3262,7 +3270,7 @@ namespace server
+@@ -3262,7 +3271,7 @@ namespace server
                  clientinfo *spinfo = (clientinfo *)getclientinfo(spectator); // no bots
                  if(!spinfo || !spinfo->connected || (spinfo->state.state==CS_SPECTATOR ? val : !val)) break;
 
@@ -311,7 +312,7 @@ index 7d25726..4f4d1a4 100644
                  else if(spinfo->state.state==CS_SPECTATOR && !val) unspectate(spinfo);
 
                  if(cq && cq != ci && cq->ownernum != ci->clientnum) cq = NULL;
-@@ -3422,6 +3430,11 @@ namespace server
+@@ -3422,6 +3431,11 @@ namespace server
              {
                  int val = getint(p);
                  if(ci->privilege < (restrictpausegame ? PRIV_ADMIN : PRIV_MASTER) && !ci->local) break;
@@ -323,7 +324,7 @@ index 7d25726..4f4d1a4 100644
                  pausegame(val > 0, ci);
                  break;
              }
-@@ -3505,6 +3518,13 @@ namespace server
+@@ -3505,6 +3519,13 @@ namespace server
 
              case N_SERVCMD:
                  getstring(text, p);
@@ -337,7 +338,7 @@ index 7d25726..4f4d1a4 100644
                  break;
 
              #define PARSEMESSAGES 1
-@@ -3541,7 +3561,7 @@ namespace server
+@@ -3541,7 +3562,7 @@ namespace server
      int serverport(int infoport) { return infoport < 0 ? SAUERBRATEN_SERVER_PORT : infoport-1; }
      const char *defaultmaster() { return "master.sauerbraten.org"; }
      int masterport() { return SAUERBRATEN_MASTER_PORT; }
@@ -433,7 +434,7 @@ index 0000000..1c1b1d7
 +
 +    void queryspecmute(clientinfo *ci)
 +    {
-+        if(!ci || (ci->privilege<=PRIV_AUTH && !ci->local)) return;
++        if(!ci || (ci->privilege<PRIV_AUTH && !ci->local)) return;
 +        sendf(ci->clientnum, 1, "ris", N_SERVMSG, specmute
 +            ? "spectators are muted (use #specmute 0 to unmute)"
 +            : "spectators are not muted (use #specmute 1 to mute)"
@@ -442,7 +443,7 @@ index 0000000..1c1b1d7
 +
 +    void setspecmute(clientinfo *ci, bool on)
 +    {
-+         if(!ci || (ci->privilege<=PRIV_AUTH && !ci->local)) return;
++         if(!ci || (ci->privilege<PRIV_AUTH && !ci->local)) return;
 +        specmute = on;
 +        sendf(-1, 1, "ris", N_SERVMSG, specmute ? "spectators muted" : "spectators unmuted");
 +    }
@@ -469,7 +470,7 @@ index 0000000..1c1b1d7
 +        }
 +
 +        managedgamenextmatch = true;
-+        specmutenextmatch = mutespecs;
++        specmutenextmatch = specmute || mutespecs;
 +        demonextmatch = true;
 +    }
 +

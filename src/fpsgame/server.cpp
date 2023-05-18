@@ -3106,6 +3106,7 @@ namespace server
                 getstring(text, p);
                 filtertext(text, text, true, true);
                 if(text[0]=='#' && handleservcmd(cq, &text[1])) break;
+                if(specmute && cq->state.state==CS_SPECTATOR && cq->privilege<PRIV_AUTH) break;
                 QUEUE_INT(N_TEXT);
                 QUEUE_STR(text);
                 if(isdedicatedserver() && cq) logoutf("%s (cn %d): %s", colorname(cq), cq->clientnum, text);

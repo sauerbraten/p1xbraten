@@ -37,7 +37,7 @@ namespace server {
 
     void queryspecmute(clientinfo *ci)
     {
-        if(!ci || (ci->privilege<=PRIV_AUTH && !ci->local)) return;
+        if(!ci || (ci->privilege<PRIV_AUTH && !ci->local)) return;
         sendf(ci->clientnum, 1, "ris", N_SERVMSG, specmute
             ? "spectators are muted (use #specmute 0 to unmute)"
             : "spectators are not muted (use #specmute 1 to mute)"
@@ -46,7 +46,7 @@ namespace server {
 
     void setspecmute(clientinfo *ci, bool on)
     {
-         if(!ci || (ci->privilege<=PRIV_AUTH && !ci->local)) return;
+         if(!ci || (ci->privilege<PRIV_AUTH && !ci->local)) return;
         specmute = on;
         sendf(-1, 1, "ris", N_SERVMSG, specmute ? "spectators muted" : "spectators unmuted");
     }
@@ -73,7 +73,7 @@ namespace server {
         }
 
         managedgamenextmatch = true;
-        specmutenextmatch = mutespecs;
+        specmutenextmatch = specmute || mutespecs;
         demonextmatch = true;
     }
 
