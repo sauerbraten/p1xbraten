@@ -1,7 +1,7 @@
 #include "engine.h"
 
 void setfullscreenmonitor(int);
-VARF(fullscreenmonitor, 0, 0, 10, setfullscreenmonitor(fullscreenmonitor));
+MOD(VARF, fullscreenmonitor, 0, 0, 10, setfullscreenmonitor(fullscreenmonitor));
 
 void setfullscreenmonitor(int monitor)
 {

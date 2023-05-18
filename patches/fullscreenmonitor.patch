@@ -2,19 +2,7 @@ diff --git src/engine/main.cpp src/engine/main.cpp
 index 1270a20..fc485a3 100644
 --- src/engine/main.cpp
 +++ src/engine/main.cpp
-@@ -113,9 +113,10 @@ void writeinitcfg()
-     stream *f = openutf8file("init.cfg", "w");
-     if(!f) return;
-     f->printf("// automatically written on exit, DO NOT MODIFY\n// modify settings in game\n");
--    extern int fullscreen, fullscreendesktop;
-+    extern int fullscreen, fullscreendesktop, fullscreenmonitor;
-     f->printf("fullscreen %d\n", fullscreen);
-     f->printf("fullscreendesktop %d\n", fullscreendesktop);
-+    f->printf("fullscreenmonitor %d\n", fullscreenmonitor);
-     f->printf("scr_w %d\n", scr_w);
-     f->printf("scr_h %d\n", scr_h);
-     f->printf("depthbits %d\n", depthbits);
-@@ -645,7 +646,8 @@ void setupscreen()
+@@ -645,7 +644,8 @@ void setupscreen()
      curvsync = -1;
 
      SDL_Rect desktop;
@@ -24,7 +12,7 @@ index 1270a20..fc485a3 100644
      desktopw = desktop.w;
      desktoph = desktop.h;
 
-@@ -662,6 +664,8 @@ void setupscreen()
+@@ -662,6 +663,8 @@ void setupscreen()
      int winx = SDL_WINDOWPOS_UNDEFINED, winy = SDL_WINDOWPOS_UNDEFINED, winw = scr_w, winh = scr_h, flags = SDL_WINDOW_RESIZABLE;
      if(fullscreen)
      {
@@ -42,7 +30,7 @@ index 0000000..90179d9
 +#include "engine.h"
 +
 +void setfullscreenmonitor(int);
-+VARF(fullscreenmonitor, 0, 0, 10, setfullscreenmonitor(fullscreenmonitor));
++MOD(VARF, fullscreenmonitor, 0, 0, 10, setfullscreenmonitor(fullscreenmonitor));
 +
 +void setfullscreenmonitor(int monitor)
 +{

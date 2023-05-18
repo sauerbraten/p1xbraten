@@ -113,10 +113,9 @@ void writeinitcfg()
     stream *f = openutf8file("init.cfg", "w");
     if(!f) return;
     f->printf("// automatically written on exit, DO NOT MODIFY\n// modify settings in game\n");
-    extern int fullscreen, fullscreendesktop, fullscreenmonitor;
+    extern int fullscreen, fullscreendesktop;
     f->printf("fullscreen %d\n", fullscreen);
     f->printf("fullscreendesktop %d\n", fullscreendesktop);
-    f->printf("fullscreenmonitor %d\n", fullscreenmonitor);
     f->printf("scr_w %d\n", scr_w);
     f->printf("scr_h %d\n", scr_h);
     f->printf("depthbits %d\n", depthbits);
