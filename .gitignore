@@ -15,6 +15,7 @@ patch_drafts
 
 bin64/p1xbraten*
 bin_unix/p1xbraten*
+bin_macos/p1xbraten*
 sauerbraten.app/Contents/MacOS/p1xbraten*
 data/p1xbraten/*.gz
 

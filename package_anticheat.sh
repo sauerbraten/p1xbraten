@@ -42,7 +42,7 @@ function pack() {
             configFile="windows.cfg"
             ;;
         macos)
-            binDir="sauerbraten.app/Contents/MacOS"
+            binDir="bin_macos"
             configFile="macos.cfg"
             ;;
     esac
