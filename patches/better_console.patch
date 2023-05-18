@@ -9,36 +9,36 @@ index 3664668..ffe61ef 100644
 -enum { CF_COMPLETE = 1<<0, CF_EXECUTE = 1<<1 };
 +enum { CF_COMPLETE = 1<<0, CF_EXECUTE = 1<<1, CF_GAMECOMPLETE = 1<<2 };
  int commandflags = 0, commandpos = -1;
- 
+
  VARFP(maxcon, 10, 200, MAXCONLINES, { while(conlines.length() > maxcon) delete[] conlines.pop().line; });
 @@ -258,7 +258,7 @@ ICOMMAND(searchbinds,     "s", (char *action), searchbinds(action, keym::ACTION_
  ICOMMAND(searchspecbinds, "s", (char *action), searchbinds(action, keym::ACTION_SPECTATOR));
  ICOMMAND(searcheditbinds, "s", (char *action), searchbinds(action, keym::ACTION_EDITING));
- 
+
 -void inputcommand(char *init, char *action = NULL, char *prompt = NULL, char *flags = NULL) // turns input to the command line on or off
 +void inputcommand(char *init, char *action = NULL, char *prompt = NULL, const char *flags = NULL) // turns input to the command line on or off
  {
      commandmillis = init ? totalmillis : -1;
      textinput(commandmillis >= 0, TI_CONSOLE);
-@@ -273,13 +273,13 @@ void inputcommand(char *init, char *action = NULL, char *prompt = NULL, char *fl
+@@ -273,13 +273,14 @@ void inputcommand(char *init, char *action = NULL, char *prompt = NULL, char *fl
      if(flags) while(*flags) switch(*flags++)
      {
          case 'c': commandflags |= CF_COMPLETE; break;
 +        case 'g': commandflags |= CF_GAMECOMPLETE; break;
          case 'x': commandflags |= CF_EXECUTE; break;
--        case 's': commandflags |= CF_COMPLETE|CF_EXECUTE; break;
+         case 's': commandflags |= CF_COMPLETE|CF_EXECUTE; break;
      }
 -    else if(init) commandflags |= CF_COMPLETE|CF_EXECUTE;
 +    if(init && init[0] == '/') commandflags |= CF_COMPLETE|CF_EXECUTE;
  }
- 
+
 -ICOMMAND(saycommand, "C", (char *init), inputcommand(init));
 +ICOMMAND(saycommand, "C", (char *init), inputcommand(init, NULL, NULL, "g"));
  COMMAND(inputcommand, "ssss");
- 
+
  void pasteconsole()
-@@ -336,7 +336,7 @@ struct hline
- 
+@@ -336,7 +337,7 @@ struct hline
+
      void run()
      {
 -        if(flags&CF_EXECUTE && buf[0]=='/') execute(buf+1);
@@ -46,9 +46,9 @@ index 3664668..ffe61ef 100644
          else if(action)
          {
              alias("commandbuf", buf);
-@@ -504,9 +504,15 @@ bool consolekey(int code, bool isdown)
+@@ -504,9 +505,15 @@ bool consolekey(int code, bool isdown)
                  break;
- 
+
              case SDLK_TAB:
 -                if(commandflags&CF_COMPLETE)
 +                if(commandflags&CF_COMPLETE || (commandflags&CF_GAMECOMPLETE && commandbuf[0]=='/'))
@@ -64,7 +64,7 @@ index 3664668..ffe61ef 100644
                      if(commandpos>=0 && commandpos>=(int)strlen(commandbuf)) commandpos = -1;
                  }
                  break;
-@@ -536,12 +540,14 @@ bool consolekey(int code, bool isdown)
+@@ -536,12 +541,14 @@ bool consolekey(int code, bool isdown)
              }
              histpos = history.length();
              inputcommand(NULL);
@@ -79,13 +79,13 @@ index 3664668..ffe61ef 100644
          }
      }
 
-@@ -668,7 +676,7 @@ static hashtable<char *, filesval *> completions;
+@@ -668,7 +677,7 @@ static hashtable<char *, filesval *> completions;
  int completesize = 0;
  char *lastcomplete = NULL;
- 
+
 -void resetcomplete() { completesize = 0; }
 +void resetcomplete() { completesize = 0; game::resetcomplete(); }
- 
+
  void addcomplete(char *command, int type, char *dir, char *ext)
  {
 diff --git src/fpsgame/client.cpp src/fpsgame/client.cpp
@@ -116,14 +116,14 @@ index 843dc15..49ad01b 100644
 +++ src/fpsgame/game.h
 @@ -563,6 +563,7 @@ struct fpsent : dynent, fpsstate
      int smoothmillis;
- 
+
      string name, team, info;
 +    string alphanumname;
      int playermodel;
      ai::aiinfo *ai;
      int ownernum, lastnode;
 @@ -572,7 +573,7 @@ struct fpsent : dynent, fpsstate
- 
+
      fpsent() : weight(100), clientnum(-1), privilege(PRIV_NONE), lastupdate(0), plag(0), ping(0), lifesequence(0), respawned(-1), suicided(-1), lastpain(0), attacksound(-1), attackchan(-1), idlesound(-1), idlechan(-1), frags(0), flags(0), deaths(0), totaldamage(0), totalshots(0), suicides(0), edit(NULL), smoothmillis(-1), playermodel(-1), ai(NULL), ownernum(-1), p1xbratenversion(0, 0, 0), muzzle(-1, -1, -1)
      {
 -        name[0] = team[0] = info[0] = 0;
@@ -136,7 +136,7 @@ index 843dc15..49ad01b 100644
      extern void broadcastp1xbratenversion();
      extern bool setp1xbratenversion(fpsent *d, int version);
 +    extern void filternonalphanum(char *dst, const char *src, size_t len);
- 
+
      // monster
      struct monster;
 diff --git src/p1xbraten/namecomplete.cpp src/p1xbraten/namecomplete.cpp
@@ -247,6 +247,6 @@ index 1c532c1..37a3537 100644
      extern int writeembeddedcfgs();
 +    extern void complete(char *s, int cursor, int maxlen);
 +    extern void resetcomplete();
- 
+
      extern void updateworld();
      extern void initclient();

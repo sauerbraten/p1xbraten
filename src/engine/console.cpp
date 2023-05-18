@@ -275,6 +275,7 @@ void inputcommand(char *init, char *action = NULL, char *prompt = NULL, const ch
         case 'c': commandflags |= CF_COMPLETE; break;
         case 'g': commandflags |= CF_GAMECOMPLETE; break;
         case 'x': commandflags |= CF_EXECUTE; break;
+        case 's': commandflags |= CF_COMPLETE|CF_EXECUTE; break;
     }
     if(init && init[0] == '/') commandflags |= CF_COMPLETE|CF_EXECUTE;
 }
