@@ -407,7 +407,7 @@ namespace server {
         sendpacket(ci->clientnum, 1, packet);
     }
 
-    MOD(VAR, forceanticheatclient, 0, 0, 1);
+    MOD(VARF, forceanticheatclient, 0, 0, 1, { loopv(clients) if(shouldspectate(clients[i])) forcespectator(clients[i]); });
 
     void onclientactionrequired(const EOS_AntiCheatCommon_OnClientActionRequiredCallbackInfo *data)
     {

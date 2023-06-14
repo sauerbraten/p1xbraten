@@ -1281,8 +1281,9 @@ namespace server
     extern void receiveanticheatmessage(clientinfo *c, ucharbuf &p);
     extern void handleviolation(clientinfo *ci, int code, const char *details);
     extern bool unregisteranticheatclient(clientinfo *c);
+    extern bool shouldspectate(clientinfo *ci, clientinfo *requester = NULL);
     extern void forcespectator(clientinfo *ci);
-    extern void unspectate(clientinfo *ci);
+    extern void unspectate(clientinfo *ci, clientinfo *requester = NULL);
     extern void notifyprivclients(int minpriv, char *msg);
 #endif
 

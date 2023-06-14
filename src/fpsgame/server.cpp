@@ -2347,12 +2347,12 @@ namespace server
         }
     }
 
-    bool shouldspectate(clientinfo *ci, clientinfo *requester = NULL, bool printreason = false)
+    bool shouldspectate(clientinfo *ci, clientinfo *requester)
     {
         if(ci->local) return false;
         if(ci->warned && modifiedmapspectator && (mcrc || modifiedmapspectator > 1))
         {
-            if(requester && printreason)
+            if(requester)
             {
                 defformatstring(msg, "%s has modified map \"%s\"", colorname(ci), smapname);
                 sendf(requester->clientnum, 1, "ris", N_SERVMSG, msg);
@@ -2362,7 +2362,7 @@ namespace server
 #ifdef ANTICHEAT
         if(anticheatenabled && forceanticheatclient && !ci->anticheatverified)
     {
-            if(requester && printreason)
+            if(requester)
             {
                 defformatstring(msg, "%s is not running an anti-cheat client", colorname(ci));
                 sendf(requester->clientnum, 1, "ris", N_SERVMSG, msg);
@@ -2373,9 +2373,9 @@ namespace server
         return false;
     }
 
-    void unspectate(clientinfo *ci)
+    void unspectate(clientinfo *ci, clientinfo *requester)
     {
-        if(shouldspectate(ci)) return;
+        if(shouldspectate(ci, requester)) return;
         ci->state.state = CS_DEAD;
         ci->state.respawn();
         ci->state.lasttimeplayed = lastmillis;
@@ -3293,7 +3293,7 @@ namespace server
                 if(!spinfo || !spinfo->connected || (spinfo->state.state==CS_SPECTATOR ? val : !val)) break;
 
                 if(spinfo->state.state!=CS_SPECTATOR && val) { forcespectator(spinfo); if(managedgame) pausegame(true, ci); }
-                else if(spinfo->state.state==CS_SPECTATOR && !val) unspectate(spinfo);
+                else if(spinfo->state.state==CS_SPECTATOR && !val) unspectate(spinfo, ci);
 
                 if(cq && cq != ci && cq->ownernum != ci->clientnum) cq = NULL;
                 break;

@@ -413,7 +413,7 @@ index 0000000..2fe07ee
 +        sendpacket(ci->clientnum, 1, packet);
 +    }
 +
-+    MOD(VAR, forceanticheatclient, 0, 0, 1);
++    MOD(VARF, forceanticheatclient, 0, 0, 1, { loopv(clients) if(shouldspectate(clients[i])) forcespectator(clients[i]); });
 +
 +    void onclientactionrequired(const EOS_AntiCheatCommon_OnClientActionRequiredCallbackInfo *data)
 +    {
@@ -935,7 +935,7 @@ index 0a4c901..4e9fe3a 100644
      extern const char *modename(int n, const char *unknown = "unknown");
      extern int mastermode;
      extern const char *mastermodename(int n, const char *unknown = "unknown");
-@@ -1243,6 +1264,19 @@ namespace server
+@@ -1243,6 +1264,20 @@ namespace server
 
      // proxy support
      extern void setip(clientinfo *sender, uint ip);
@@ -948,8 +948,9 @@ index 0a4c901..4e9fe3a 100644
 +    extern void receiveanticheatmessage(clientinfo *c, ucharbuf &p);
 +    extern void handleviolation(clientinfo *ci, int code, const char *details);
 +    extern bool unregisteranticheatclient(clientinfo *c);
++    extern bool shouldspectate(clientinfo *ci, clientinfo *requester = NULL);
 +    extern void forcespectator(clientinfo *ci);
-+    extern void unspectate(clientinfo *ci);
++    extern void unspectate(clientinfo *ci, clientinfo *requester = NULL);
 +    extern void notifyprivclients(int minpriv, char *msg);
 +#endif
  }
@@ -982,17 +983,17 @@ index e37eb57..76d231f 100644
          sendpacket(ci->clientnum, chan, p.finalize());
      }
 
-@@ -2338,9 +2345,30 @@ namespace server
+@@ -2338,14 +2345,35 @@ namespace server
          }
      }
 
 -    bool shouldspectate(clientinfo *ci)
-+    bool shouldspectate(clientinfo *ci, clientinfo *requester = NULL, bool printreason = false)
++    bool shouldspectate(clientinfo *ci, clientinfo *requester)
 +    {
 +        if(ci->local) return false;
 +        if(ci->warned && modifiedmapspectator && (mcrc || modifiedmapspectator > 1))
 +        {
-+            if(requester && printreason)
++            if(requester)
 +            {
 +                defformatstring(msg, "%s has modified map \"%s\"", colorname(ci), smapname);
 +                sendf(requester->clientnum, 1, "ris", N_SERVMSG, msg);
@@ -1003,7 +1004,7 @@ index e37eb57..76d231f 100644
 +        if(anticheatenabled && forceanticheatclient && !ci->anticheatverified)
      {
 -        return !ci->local && ci->warned && modifiedmapspectator && (mcrc || modifiedmapspectator > 1);
-+            if(requester && printreason)
++            if(requester)
 +            {
 +                defformatstring(msg, "%s is not running an anti-cheat client", colorname(ci));
 +                sendf(requester->clientnum, 1, "ris", N_SERVMSG, msg);
@@ -1014,7 +1015,14 @@ index e37eb57..76d231f 100644
 +        return false;
      }
 
-     void unspectate(clientinfo *ci)
+-    void unspectate(clientinfo *ci)
++    void unspectate(clientinfo *ci, clientinfo *requester)
+     {
+-        if(shouldspectate(ci)) return;
++        if(shouldspectate(ci, requester)) return;
+         ci->state.state = CS_DEAD;
+         ci->state.respawn();
+         ci->state.lasttimeplayed = lastmillis;
 @@ -2408,6 +2436,9 @@ namespace server
              ci->state.timeplayed += lastmillis - ci->state.lasttimeplayed;
              savescore(ci);
@@ -1035,6 +1043,15 @@ index e37eb57..76d231f 100644
          if(!ci->local) loopv(autoauthdomains) sendf(ci->clientnum, 1, "ris", N_REQAUTH, autoauthdomains[i]);
 
          aiman::addclient(ci);
+@@ -3262,7 +3293,7 @@ namespace server
+                 if(!spinfo || !spinfo->connected || (spinfo->state.state==CS_SPECTATOR ? val : !val)) break;
+
+                 if(spinfo->state.state!=CS_SPECTATOR && val) { forcespectator(spinfo); if(managedgame) pausegame(true, ci); }
+-                else if(spinfo->state.state==CS_SPECTATOR && !val) unspectate(spinfo);
++                else if(spinfo->state.state==CS_SPECTATOR && !val) unspectate(spinfo, ci);
+
+                 if(cq && cq != ci && cq->ownernum != ci->clientnum) cq = NULL;
+                 break;
 @@ -3537,7 +3571,42 @@ namespace server
                  conoutf("client %d supports the client demo upload protocol extension!", ci->clientnum);
                  ci->supportsclientdemoupload = true;
