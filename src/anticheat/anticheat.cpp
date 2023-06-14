@@ -482,8 +482,11 @@ namespace server {
             conoutf(CON_WARN, "%s", msg);
             if(ci->anticheatverified==2)
             {
-                loopv(clients) if(clients[i]->supportsanticheat)
-                    sendf(clients[i]->clientnum, 1, "ri3", N_P1X_ANTICHEAT_VERIFIED, ci->clientnum, 1);
+                loopv(clients)
+                {
+                    if(clients[i]->supportsanticheat) sendf(clients[i]->clientnum, 1, "ri3", N_P1X_ANTICHEAT_VERIFIED, ci->clientnum, 1);
+                    if(clients[i]->anticheatverified==2) sendf(ci->clientnum, 1, "ri3", N_P1X_ANTICHEAT_VERIFIED, clients[i]->clientnum, 1);
+                }
                 defformatstring(msg, "\fs\f8[anti-cheat]\fr %s is using the p1xbraten anti-cheat client", colorname(ci));
                 sendf(-1, 1, "ris", N_SERVMSG, msg);
                 if(ci->state.state==CS_SPECTATOR && mastermode<MM_LOCKED) unspectate(ci);
