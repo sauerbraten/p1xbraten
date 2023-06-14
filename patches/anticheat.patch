@@ -33,12 +33,12 @@ index 0000000..2fe07ee
 +and ends when the server says so or the client disconnects.
 +
 +Regarding this file's code structure:
-+- All functions in this file starting with "on" are callbacks and only ever called by the SDK.
-+- SDK & Platform setup is the same on client and server and is defined first.
-+- Inside the game namespace, first come Connect related things to log the user in, then anti-
-+  cheat callback functions, then all functions exposed via game.h, then the functions exposed
-+  via igame.h.
-+- The server namespace is organized similarly, just without the Connect stuff at the top.
++ - All functions in this file starting with "on" are callbacks and only ever called by the SDK.
++ - SDK & Platform setup is the same on client and server and is defined first.
++ - Inside the game namespace, first come Connect related things to log the user in, then anti-
++   cheat callback functions, then all functions exposed via game.h, then the functions exposed
++   via igame.h.
++ - The server namespace is organized similarly, just without the Connect stuff at the top.
 +*/
 +
 +#include "game.h"
@@ -977,7 +977,7 @@ index e37eb57..76d231f 100644
          int chan = welcomepacket(p, ci);
          if(!ci->local) probeforclientdemoupload(p);
 +#ifdef ANTICHEAT
-+        if(!ci->local) probeforanticheatclient(p);
++        if(!ci->local && anticheatenabled) probeforanticheatclient(p);
 +#endif
          sendpacket(ci->clientnum, chan, p.finalize());
      }
@@ -1000,7 +1000,7 @@ index e37eb57..76d231f 100644
 +            return true;
 +        }
 +#ifdef ANTICHEAT
-+        if(forceanticheatclient && !ci->anticheatverified)
++        if(anticheatenabled && forceanticheatclient && !ci->anticheatverified)
      {
 -        return !ci->local && ci->warned && modifiedmapspectator && (mcrc || modifiedmapspectator > 1);
 +            if(requester && printreason)
@@ -1020,7 +1020,7 @@ index e37eb57..76d231f 100644
              savescore(ci);
              sendf(-1, 1, "ri2", N_CDIS, n);
 +#ifdef ANTICHEAT
-+            if(ci->supportsanticheat) unregisteranticheatclient(ci);
++            if(anticheatenabled && ci->supportsanticheat) unregisteranticheatclient(ci);
 +#endif
              if(managedgame && ci->state.state!=CS_SPECTATOR) pausegame(true);
              clients.removeobj(ci);
@@ -1030,7 +1030,7 @@ index e37eb57..76d231f 100644
          sendinitclient(ci);
          if(isdedicatedserver()) logoutf("join: %s (cn %d)", ci->name, ci->clientnum);
 +#ifdef ANTICHEAT
-+        if(forceanticheatclient && !ci->local) forcespectator(ci);
++        if(anticheatenabled && forceanticheatclient && !ci->local) forcespectator(ci);
 +#endif
          if(!ci->local) loopv(autoauthdomains) sendf(ci->clientnum, 1, "ris", N_REQAUTH, autoauthdomains[i]);
 
@@ -1041,7 +1041,7 @@ index e37eb57..76d231f 100644
                  break;
 +#ifdef ANTICHEAT
 +            case N_P1X_ANTICHEAT_SUPPORTED:
-+                if(!ci || ci->local) return;
++                if(!anticheatenabled || !ci || ci->local) return;
 +                conoutf("client %d supports our anti-cheat protocol extension!", ci->clientnum);
 +                loopv(clients) if(clients[i]->anticheatverified==2)
 +                    sendf(sender, 1, "ri2", N_P1X_ANTICHEAT_VERIFIED, clients[i]->clientnum, 1);
@@ -1053,7 +1053,7 @@ index e37eb57..76d231f 100644
 +            case N_P1X_ANTICHEAT_BEGINSESSION:
 +                string useridstring;
 +                getstring(useridstring, p, sizeof(useridstring));
-+                if(!ci || ci->local) return;
++                if(!anticheatenabled || !ci || ci->local) return;
 +                registeranticheatclient(ci, useridstring);
 +                break;
 
@@ -1061,7 +1061,7 @@ index e37eb57..76d231f 100644
 +            {
 +                int len = getuint(p);
 +                ucharbuf q = p.subbuf(len);
-+                if(!ci || ci->local) return;
++                if(!anticheatenabled || !ci || ci->local) return;
 +                receiveanticheatmessage(ci, q);
 +                break;
 +            }
@@ -1071,7 +1071,7 @@ index e37eb57..76d231f 100644
 +                string details;
 +                int code = getint(p);
 +                getstring(details, p);
-+                if(!ci || ci->local) return;
++                if(!anticheatenabled || !ci || ci->local) return;
 +                handleviolation(ci, code, details);
 +            }
 +#endif

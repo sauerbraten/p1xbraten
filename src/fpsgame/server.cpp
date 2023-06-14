@@ -1544,7 +1544,7 @@ namespace server
         int chan = welcomepacket(p, ci);
         if(!ci->local) probeforclientdemoupload(p);
 #ifdef ANTICHEAT
-        if(!ci->local) probeforanticheatclient(p);
+        if(!ci->local && anticheatenabled) probeforanticheatclient(p);
 #endif
         sendpacket(ci->clientnum, chan, p.finalize());
     }
@@ -2360,7 +2360,7 @@ namespace server
             return true;
         }
 #ifdef ANTICHEAT
-        if(forceanticheatclient && !ci->anticheatverified)
+        if(anticheatenabled && forceanticheatclient && !ci->anticheatverified)
     {
             if(requester && printreason)
             {
@@ -2439,7 +2439,7 @@ namespace server
             savescore(ci);
             sendf(-1, 1, "ri2", N_CDIS, n);
 #ifdef ANTICHEAT
-            if(ci->supportsanticheat) unregisteranticheatclient(ci);
+            if(anticheatenabled && ci->supportsanticheat) unregisteranticheatclient(ci);
 #endif
             if(managedgame && ci->state.state!=CS_SPECTATOR) pausegame(true);
             clients.removeobj(ci);
@@ -2757,7 +2757,7 @@ namespace server
         sendinitclient(ci);
         if(isdedicatedserver()) logoutf("join: %s (cn %d)", ci->name, ci->clientnum);
 #ifdef ANTICHEAT
-        if(forceanticheatclient && !ci->local) forcespectator(ci);
+        if(anticheatenabled && forceanticheatclient && !ci->local) forcespectator(ci);
 #endif
         if(!ci->local) loopv(autoauthdomains) sendf(ci->clientnum, 1, "ris", N_REQAUTH, autoauthdomains[i]);
 
@@ -3576,7 +3576,7 @@ namespace server
                 break;
 #ifdef ANTICHEAT
             case N_P1X_ANTICHEAT_SUPPORTED:
-                if(!ci || ci->local) return;
+                if(!anticheatenabled || !ci || ci->local) return;
                 conoutf("client %d supports our anti-cheat protocol extension!", ci->clientnum);
                 loopv(clients) if(clients[i]->anticheatverified==2)
                     sendf(sender, 1, "ri2", N_P1X_ANTICHEAT_VERIFIED, clients[i]->clientnum, 1);
@@ -3588,7 +3588,7 @@ namespace server
             case N_P1X_ANTICHEAT_BEGINSESSION:
                 string useridstring;
                 getstring(useridstring, p, sizeof(useridstring));
-                if(!ci || ci->local) return;
+                if(!anticheatenabled || !ci || ci->local) return;
                 registeranticheatclient(ci, useridstring);
                 break;
                      
@@ -3596,7 +3596,7 @@ namespace server
             {
                 int len = getuint(p);
                 ucharbuf q = p.subbuf(len);
-                if(!ci || ci->local) return;
+                if(!anticheatenabled || !ci || ci->local) return;
                 receiveanticheatmessage(ci, q);
                 break;
             }
@@ -3606,7 +3606,7 @@ namespace server
                 string details;
                 int code = getint(p);
                 getstring(details, p);
-                if(!ci || ci->local) return;
+                if(!anticheatenabled || !ci || ci->local) return;
                 handleviolation(ci, code, details);
             }
 #endif

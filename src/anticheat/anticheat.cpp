@@ -27,12 +27,12 @@ terminated/killed/whatever. A client's anti-cheat session starts when triggered 
 and ends when the server says so or the client disconnects.
 
 Regarding this file's code structure:
-- All functions in this file starting with "on" are callbacks and only ever called by the SDK.
-- SDK & Platform setup is the same on client and server and is defined first.
-- Inside the game namespace, first come Connect related things to log the user in, then anti-
-  cheat callback functions, then all functions exposed via game.h, then the functions exposed
-  via igame.h.
-- The server namespace is organized similarly, just without the Connect stuff at the top.
+ - All functions in this file starting with "on" are callbacks and only ever called by the SDK.
+ - SDK & Platform setup is the same on client and server and is defined first.
+ - Inside the game namespace, first come Connect related things to log the user in, then anti-
+   cheat callback functions, then all functions exposed via game.h, then the functions exposed
+   via igame.h.
+ - The server namespace is organized similarly, just without the Connect stuff at the top.
 */
 
 #include "game.h"
