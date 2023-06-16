@@ -18,6 +18,8 @@ namespace game {
 
 namespace server {
 
+    MOD(VAR, autolockedcompetitive, 0, 0, 1);
+
     void probeforclientdemoupload(packetbuf &p)
     {
         putint(p, N_SERVCMD);
@@ -34,6 +36,7 @@ namespace server {
     bool managedgame = false, managedgamenextmatch = false;
     bool specmute = false, specmutenextmatch = false;
     int gamelimitnextmatch = DEFAULT_GAMELIMIT;
+    bool waitingforspawns = false;
 
     void queryspecmute(clientinfo *ci)
     {
@@ -100,9 +103,10 @@ namespace server {
             clientinfo *ci = clients[i];
             if(ci->state.state!=CS_SPECTATOR) notyetspawned.add(ci);
         }
+        if(notyetspawned.empty()) return;
         pausegame(true);
         sendf(-1, 1, "ris", N_SERVMSG, "waiting for all players to load the map");
-        resuming = true;
+        waitingforspawns = true;
     }
 
     void managedgameended()
@@ -217,6 +221,7 @@ namespace server {
         if(!notyetspawned.length())
         {
             sendf(-1, 1, "ris", N_SERVMSG, "all players ready, game starts in 3");
+            waitingforspawns = false;
 
             messageevent *m2 = new messageevent;
             m2->millis = totalmillis + 1*COUNTDOWN_INTERVAL;
@@ -244,11 +249,6 @@ namespace server {
         bool flush(clientinfo *_ , int fmillis)
         {
             if(millis > fmillis) return false;
-            if(ci)
-            {
-                if(!ci->connected) return true;
-                if(ci->state.state==CS_SPECTATOR && ci->privilege < (restrictpausegame ? PRIV_ADMIN : PRIV_MASTER) && !ci->local) return true;
-            }
             pausegame(false, ci);
             return true;
         }

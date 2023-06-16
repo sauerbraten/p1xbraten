@@ -88,7 +88,7 @@ index 02277f9..b37ef32 100644
      extern const char *mastermodename(int n, const char *unknown = "unknown");
      extern void startintermission();
      extern void stopdemo();
-@@ -1189,6 +1203,44 @@ namespace server
+@@ -1189,6 +1203,46 @@ namespace server
      extern int msgsizelookup(int msg);
      extern bool serveroption(const char *arg);
      extern bool delayspawn(int type);
@@ -108,10 +108,12 @@ index 02277f9..b37ef32 100644
 +    extern bool savedemo(demofile &d, const char *povname = "server");
 +
 +    // managed games
++    extern int autolockedcompetitive;
 +    extern bool managedgame, managedgamenextmatch;
 +    extern bool specmute;
 +    extern int gamelimitnextmatch;
 +#define DEFAULT_GAMELIMIT (10*60*1000)
++    extern bool waitingforspawns;
 +    extern void probeforclientdemoupload(packetbuf &p);
 +    extern void setspecmute(clientinfo *ci, bool on);
 +    extern void queryspecmute(clientinfo *ci);
@@ -226,7 +228,7 @@ index 7d25726..4f4d1a4 100644
 
          if(smode) smode->setup();
 
-+        if(managedgamenextmatch) startmanagedgame();
++        if(managedgamenextmatch || (mastermode>=MM_LOCKED && autolockedcompetitive)) startmanagedgame();
 +        else cleanupmanagedgame();
 +
          if(isdedicatedserver()) logoutf("started %s on %s", modename(mode, "unknown mode"), smapname);
@@ -312,12 +314,13 @@ index 7d25726..4f4d1a4 100644
                  else if(spinfo->state.state==CS_SPECTATOR && !val) unspectate(spinfo);
 
                  if(cq && cq != ci && cq->ownernum != ci->clientnum) cq = NULL;
-@@ -3422,6 +3431,11 @@ namespace server
+@@ -3422,6 +3431,12 @@ namespace server
              {
                  int val = getint(p);
                  if(ci->privilege < (restrictpausegame ? PRIV_ADMIN : PRIV_MASTER) && !ci->local) break;
 +                if(managedgame && !val)
 +                {
++                    if(waitingforspawns && ci->privilege < PRIV_ADMIN) break;
 +                    if(!resuming) resumewithcountdown(ci);
 +                    break;
 +                }
@@ -415,6 +418,8 @@ index 0000000..1c1b1d7
 +
 +namespace server {
 +
++    MOD(VAR, autolockedcompetitive, 0, 0, 1);
++
 +    void probeforclientdemoupload(packetbuf &p)
 +    {
 +        putint(p, N_SERVCMD);
@@ -431,6 +436,7 @@ index 0000000..1c1b1d7
 +    bool managedgame = false, managedgamenextmatch = false;
 +    bool specmute = false, specmutenextmatch = false;
 +    int gamelimitnextmatch = DEFAULT_GAMELIMIT;
++    bool waitingforspawns = false;
 +
 +    void queryspecmute(clientinfo *ci)
 +    {
@@ -497,9 +503,10 @@ index 0000000..1c1b1d7
 +            clientinfo *ci = clients[i];
 +            if(ci->state.state!=CS_SPECTATOR) notyetspawned.add(ci);
 +        }
++        if(notyetspawned.empty()) return;
 +        pausegame(true);
 +        sendf(-1, 1, "ris", N_SERVMSG, "waiting for all players to load the map");
-+        resuming = true;
++        waitingforspawns = true;
 +    }
 +
 +    void managedgameended()
@@ -614,6 +621,7 @@ index 0000000..1c1b1d7
 +        if(!notyetspawned.length())
 +        {
 +            sendf(-1, 1, "ris", N_SERVMSG, "all players ready, game starts in 3");
++            waitingforspawns = false;
 +
 +            messageevent *m2 = new messageevent;
 +            m2->millis = totalmillis + 1*COUNTDOWN_INTERVAL;
@@ -641,11 +649,6 @@ index 0000000..1c1b1d7
 +        bool flush(clientinfo *_ , int fmillis)
 +        {
 +            if(millis > fmillis) return false;
-+            if(ci)
-+            {
-+                if(!ci->connected) return true;
-+                if(ci->state.state==CS_SPECTATOR && ci->privilege < (restrictpausegame ? PRIV_ADMIN : PRIV_MASTER) && !ci->local) return true;
-+            }
 +            pausegame(false, ci);
 +            return true;
 +        }

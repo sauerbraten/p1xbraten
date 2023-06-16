@@ -388,6 +388,7 @@ Improves logging when running a dedicated server:
   - accept client demo uploads at intermission
   - save all demo files of the match to disk
   - not auto-load the next map
+- adds the `autolockedcompetitive` variable: if 1, games will automatically start in competitive mode while master mode is locked or higher
 - adds the `#specmute` remote variable: when 1, spectators can't send any chat messages (requires auth or admin)
 - adds the `#tourney [MM:[SS]]` remote command, which is the same as `#competitive`, but also enables specmute for the next match
 - adds the (admin-only) `#do` remote command to evaluate arbitrary cubescript on the server, for example `#do persistteams 1`, `#do servermotd "happy fragging"` or `#do concat $serverauth`

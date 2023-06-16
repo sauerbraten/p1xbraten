@@ -1812,7 +1812,7 @@ namespace server
 
         if(smode) smode->setup();
 
-        if(managedgamenextmatch) startmanagedgame();
+        if(managedgamenextmatch || (mastermode>=MM_LOCKED && autolockedcompetitive)) startmanagedgame();
         else cleanupmanagedgame();
 
         if(isdedicatedserver()) logoutf("started %s on %s", modename(mode, "unknown mode"), smapname);
@@ -3491,6 +3491,7 @@ namespace server
                 if(ci->privilege < (restrictpausegame ? PRIV_ADMIN : PRIV_MASTER) && !ci->local) break;
                 if(managedgame && !val)
                 {
+                    if(waitingforspawns && ci->privilege < PRIV_ADMIN) break;
                     if(!resuming) resumewithcountdown(ci);
                     break;
                 }
