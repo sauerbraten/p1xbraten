@@ -88,7 +88,7 @@ index 02277f9..b37ef32 100644
      extern const char *mastermodename(int n, const char *unknown = "unknown");
      extern void startintermission();
      extern void stopdemo();
-@@ -1189,6 +1203,44 @@ namespace server
+@@ -1189,6 +1203,45 @@ namespace server
      extern int msgsizelookup(int msg);
      extern bool serveroption(const char *arg);
      extern bool delayspawn(int type);
@@ -108,6 +108,7 @@ index 02277f9..b37ef32 100644
 +    extern bool savedemo(demofile &d, const char *povname = "server");
 +
 +    // managed games
++    extern int autolockedcompetitive;
 +    extern bool managedgame, managedgamenextmatch;
 +    extern bool specmute;
 +    extern int gamelimitnextmatch;
@@ -226,7 +227,7 @@ index 7d25726..4f4d1a4 100644
 
          if(smode) smode->setup();
 
-+        if(managedgamenextmatch) startmanagedgame();
++        if(managedgamenextmatch || (mastermode>=MM_LOCKED && autolockedcompetitive)) startmanagedgame();
 +        else cleanupmanagedgame();
 +
          if(isdedicatedserver()) logoutf("started %s on %s", modename(mode, "unknown mode"), smapname);
@@ -394,7 +395,7 @@ new file mode 100644
 index 0000000..1c1b1d7
 --- /dev/null
 +++ src/p1xbraten/managed_games.cpp
-@@ -0,0 +1,281 @@
+@@ -0,0 +1,283 @@
 +#include "game.h"
 +
 +#ifndef STANDALONE
@@ -414,6 +415,8 @@ index 0000000..1c1b1d7
 +#endif
 +
 +namespace server {
++
++    MOD(VAR, autolockedcompetitive, 0, 0, 1);
 +
 +    void probeforclientdemoupload(packetbuf &p)
 +    {

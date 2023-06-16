@@ -1247,6 +1247,7 @@ namespace server
     extern bool savedemo(demofile &d, const char *povname = "server");
 
     // managed games
+    extern int autolockedcompetitive;
     extern bool managedgame, managedgamenextmatch;
     extern bool specmute;
     extern int gamelimitnextmatch;

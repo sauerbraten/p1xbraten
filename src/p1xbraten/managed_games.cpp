@@ -18,6 +18,8 @@ namespace game {
 
 namespace server {
 
+    MOD(VAR, autolockedcompetitive, 0, 0, 1);
+
     void probeforclientdemoupload(packetbuf &p)
     {
         putint(p, N_SERVCMD);
