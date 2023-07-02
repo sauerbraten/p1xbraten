@@ -35,7 +35,6 @@ This repository contains the source for my client mod, as well as the patches ap
   - [nextfollowteam.patch](#nextfollowteampatch)
   - [anticheat.patch](#anticheatpatch)
   - [setfont.patch](#setfontpatch)
-  - [filterservers.patch](#filterserverspatch)
   - [fullscreenmonitor.patch](#fullscreenmonitorpatch)
 - [Server Patches](#server-patches)
   - [authservers.patch](#authserverspatch)
@@ -346,8 +345,6 @@ Integrates Epic's Online Services SDK and Anti-Cheat framework to provide protec
 ### [setfont.patch](./patches/setfont.patch)
 
 - adds the `setfont <name>` command to set the UI font after registering the font using `font <name> ...` (`setfont "default"` to reset)
-
-### [filterservers.patch](./patches/filterservers.patch)
 
 ### [fullscreenmonitor.patch](./patches/fullscreenmonitor.patch)
 
