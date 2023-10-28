@@ -5,5 +5,7 @@
 	"sandboxid": "7743e9c6960a42c7a32772a6d1b8af60",
 	"deploymentid": "011295e7b04049d7978fcaa38d79bf86",
 	"requested_splash": "../data/logo_800.png",
-	"wait_for_game_process_exit": "true"
+	"wait_for_game_process_exit": "true",
+	"hide_bootstrapper": "false",
+	"hide_gui": "false"
 }
