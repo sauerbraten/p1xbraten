@@ -254,6 +254,7 @@ namespace game {
     bool anticheatinitialized = false;
     EOS_HAntiCheatClient acc = NULL;
     bool anticheatsessionactive = false;
+    uint anticheatnonce = 0;
 
     bool anticheatready() { return eossdkinitialized; }
 
@@ -319,6 +320,38 @@ namespace game {
             case EOS_EResult::EOS_InvalidParameters: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr receiving message from server: input data invalid"); return;
             case EOS_EResult::EOS_AntiCheat_InvalidMode: /* conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr receiving message from server: function not supported in current mode"); */ return;
             default: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr EOS_AntiCheatClient_ReceiveMessageFromServer() failed with result code %d", (int) e); return;
+        }
+    }
+
+    size_t protectedlength(size_t inlen)
+    {
+        static EOS_AntiCheatClient_GetProtectMessageOutputLengthOptions getoutlenopts;
+        getoutlenopts.ApiVersion = EOS_ANTICHEATCLIENT_GETPROTECTMESSAGEOUTPUTLENGTH_API_LATEST;
+        getoutlenopts.DataLengthBytes = inlen;
+        static uint32_t outlen;
+        switch (EOS_EResult e = EOS_AntiCheatClient_GetProtectMessageOutputLength(acc, &getoutlenopts, &outlen))
+        {
+            case EOS_EResult::EOS_Success: return outlen;
+            case EOS_EResult::EOS_InvalidParameters: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr error calculating output length of input length %zu", inlen); return 0;
+            case EOS_EResult::EOS_AntiCheat_InvalidMode: /* conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr ending session: function not supported in current mode"); */ return 0;
+            default: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr EOS_AntiCheatClient_GetProtectMessageOutputLength() failed with result code %d", (int) e); return 0;
+        }
+    }
+
+    size_t protectbytes(ucharbuf &p)
+    {
+        static EOS_AntiCheatClient_ProtectMessageOptions protectopts;
+        protectopts.ApiVersion = EOS_ANTICHEATCLIENT_PROTECTMESSAGE_API_LATEST;
+        protectopts.DataLengthBytes = p.length();
+        protectopts.Data = p.getbuf();
+        protectopts.OutBufferSizeBytes = p.length()+p.remaining();
+        static uint32_t outlen;
+        switch (EOS_EResult e = EOS_AntiCheatClient_ProtectMessage(acc, &protectopts, p.getbuf(), &outlen))
+        {
+            case EOS_EResult::EOS_Success: return size_t(outlen);
+            case EOS_EResult::EOS_InvalidParameters: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr error protecting %p (length %d)", p.getbuf(), p.length()); return 0;
+            case EOS_EResult::EOS_AntiCheat_InvalidMode: /* conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr ending session: function not supported in current mode"); */ return 0;
+            default: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr EOS_AntiCheatClient_ProtectMessage() failed with result code %d", (int) e); return 0;
         }
     }
 
@@ -421,25 +454,17 @@ namespace server {
         if(data->ClientAction==EOS_EAntiCheatCommonClientAction::EOS_ACCCA_RemovePlayer)
         {
             string msg;
-            if(data->ActionReasonCode == EOS_EAntiCheatCommonClientActionReason::EOS_ACCCAR_ClientViolation)
-            {
-                formatstring(msg, "\fs\f8[anti-cheat] \f3violation by %s: %s (code: %d)\fr",
+            formatstring(msg, "\fs\f8[anti-cheat]\fr \f3%s should be removed from the game: %s (code: %d)\fr",
                     colorname(ci), data->ActionReasonDetailsString, (int) data->ActionReasonCode
                 );
-            }
-            else
-            {
-                formatstring(msg, "\fs\f8[anti-cheat] \f3%s should be removed from the game: %s (code: %d)\fr",
-                    colorname(ci), data->ActionReasonDetailsString, (int) data->ActionReasonCode
-                );
-            }
             conoutf(CON_WARN, "%s", msg);
             if(!forceanticheatclient) notifyprivclients(PRIV_AUTH, msg);
             else
             {
                 sendf(-1, 1, "ris", N_SERVMSG, msg);
+                ci->anticheatverified = 0;
                 forcespectator(ci);
-                formatstring(msg, "\fs\f8[anti-cheat] \f3forced %s to spectator\fr", colorname(ci));
+                formatstring(msg, "\fs\f8[anti-cheat]\fr \f3forced %s to spectator\fr", colorname(ci));
             }
         }
     }
@@ -482,14 +507,11 @@ namespace server {
             conoutf(CON_WARN, "%s", msg);
             if(ci->anticheatverified==2)
             {
-                loopv(clients)
-                {
-                    if(clients[i]->supportsanticheat) sendf(clients[i]->clientnum, 1, "ri3", N_P1X_ANTICHEAT_VERIFIED, ci->clientnum, 1);
-                    if(clients[i]->anticheatverified==2) sendf(ci->clientnum, 1, "ri3", N_P1X_ANTICHEAT_VERIFIED, clients[i]->clientnum, 1);
-                }
+                loopv(clients) if(clients[i]->supportsanticheat) sendf(clients[i]->clientnum, 1, "ri3", N_P1X_ANTICHEAT_VERIFIED, ci->clientnum, 1);
                 defformatstring(msg, "\fs\f8[anti-cheat]\fr %s is using the p1xbraten anti-cheat client", colorname(ci));
                 sendf(-1, 1, "ris", N_SERVMSG, msg);
                 if(ci->state.state==CS_SPECTATOR && mastermode<MM_LOCKED) unspectate(ci);
+                else sendspawn(ci);
             }
         }
     }
@@ -502,7 +524,7 @@ namespace server {
 
     bool registeranticheatclient(clientinfo *ci, const char *useridstring)
     {
-        conoutf("\fs\f8[anti-cheat]\fr registering %s (%d) with Epic's backend",  ci->name, ci->clientnum);
+        conoutf("\fs\f8[anti-cheat]\fr registering %s (%d) with Epic's backend as %s",  ci->name, ci->clientnum, useridstring);
         EOS_ProductUserId eosuserid = EOS_ProductUserId_FromString(useridstring);
 
         static EOS_AntiCheatServer_RegisterClientOptions registeropts;
@@ -536,11 +558,36 @@ namespace server {
         }
     }
 
+    size_t unprotectbytes(clientinfo *ci, ucharbuf &p)
+    {
+        static EOS_AntiCheatServer_UnprotectMessageOptions unprotectopts;
+        unprotectopts.ApiVersion = EOS_ANTICHEATSERVER_UNPROTECTMESSAGE_API_LATEST;
+        unprotectopts.ClientHandle = (EOS_AntiCheatCommon_ClientHandle) ci;
+        unprotectopts.DataLengthBytes = p.remaining();
+        unprotectopts.Data = p.getbuf();
+        unprotectopts.OutBufferSizeBytes = p.remaining();
+        uint32_t outlen;
+        switch (EOS_EResult e = EOS_AntiCheatServer_UnprotectMessage(acs, &unprotectopts, p.getbuf(), &outlen))
+        {
+            case EOS_EResult::EOS_Success: return size_t(outlen);
+            case EOS_EResult::EOS_InvalidParameters: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr error unprotecting %p (length %d)", p.getbuf(), p.remaining()); return 0;
+            case EOS_EResult::EOS_AntiCheat_InvalidMode: /* conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr ending session: function not supported in current mode"); */ return 0;
+            default: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr EOS_AntiCheatServer_UnprotectMessage() failed with result code %d", (int) e); return 0;
+        }
+    }
+
     void handleviolation(clientinfo *ci, int code, const char *details)
     {
-        defformatstring(msg, "\fs\f3%s self-reported a violation: %s (code: %d)\fr", colorname(ci), details, code);
+        defformatstring(msg, "\fs\f8[anti-cheat]\fr \fs\f3%s self-reported a violation: %s (code: %d)\fr", colorname(ci), details, code);
         conoutf(CON_WARN, "%s", msg);
-        notifyprivclients(PRIV_AUTH, msg);
+        if(!forceanticheatclient) notifyprivclients(PRIV_AUTH, msg);
+        else
+        {
+            sendf(-1, 1, "ris", N_SERVMSG, msg);
+            ci->anticheatverified = 0;
+            forcespectator(ci);
+            formatstring(msg, "\fs\f8[anti-cheat] \f3forced %s to spectator\fr", colorname(ci));
+        }
     }
 
     bool unregisteranticheatclient(clientinfo *ci)

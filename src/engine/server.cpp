@@ -258,6 +258,12 @@ ENetPacket *sendf(int cn, int chan, const char *format, ...)
             loopi(n) putint(p, va_arg(args, int));
             break;
         }
+        case 'u':
+        {
+            int n = isdigit(*format) ? *format++-'0' : 1;
+            loopi(n) putuint(p, va_arg(args, uint));
+            break;
+        }
         case 'f':
         {
             int n = isdigit(*format) ? *format++-'0' : 1;

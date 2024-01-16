@@ -215,7 +215,7 @@ enum
 
 // protocol extensions
 static const char * const CAP_PROBE_CLIENT_DEMO_UPLOAD = "capability_probe_protocol_extension_p1x_client_demo_upload_v2";
-static const char * const CAP_PROBE_ANTICHEAT          = "capability_probe_protocol_extension_p1x_anticheat_v3";
+static const char * const CAP_PROBE_ANTICHEAT          = "capability_probe_protocol_extension_p1x_anticheat_v4";
 
 // network messages codes, c2s, c2c, s2c
 
@@ -250,7 +250,7 @@ enum
     // N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED = 1000, N_P1X_RECORDDEMO, // legacy
     N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED = 1002, N_P1X_RECORDDEMO, // guarded by CAP_PROBE_CLIENT_DEMO_UPLOAD
 #ifdef ANTICHEAT
-    N_P1X_ANTICHEAT_SUPPORTED = 2000, N_P1X_ANTICHEAT_BEGINSESSION, N_P1X_ANTICHEAT_MESSAGE, N_P1X_ANTICHEAT_VIOLATION, N_P1X_ANTICHEAT_ENDSESSION, N_P1X_ANTICHEAT_VERIFIED, // guarded by CAP_PROBE_ANTICHEAT
+    N_P1X_ANTICHEAT_SUPPORTED = 2000, N_P1X_ANTICHEAT_BEGINSESSION, N_P1X_ANTICHEAT_VERIFIED, N_P1X_ANTICHEAT_PROTECTED, N_P1X_ANTICHEAT_NONCE, N_P1X_ANTICHEAT_MESSAGE, N_P1X_ANTICHEAT_VIOLATION, N_P1X_ANTICHEAT_ENDSESSION,  // guarded by CAP_PROBE_ANTICHEAT
 #endif
     NUMMSG
 };
@@ -285,7 +285,7 @@ static const int msgsizes[] =               // size inclusive message token, 0 f
     N_P1X_SETIP, 2,
     N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED, 1, N_P1X_RECORDDEMO, 1,
 #ifdef ANTICHEAT
-    N_P1X_ANTICHEAT_SUPPORTED, 1, N_P1X_ANTICHEAT_BEGINSESSION, 0, N_P1X_ANTICHEAT_MESSAGE, 0, N_P1X_ANTICHEAT_VIOLATION, 0, N_P1X_ANTICHEAT_ENDSESSION, 1, N_P1X_ANTICHEAT_VERIFIED, 3,
+    N_P1X_ANTICHEAT_SUPPORTED, 1, N_P1X_ANTICHEAT_BEGINSESSION, 0, N_P1X_ANTICHEAT_VERIFIED, 3, N_P1X_ANTICHEAT_PROTECTED, 0, N_P1X_ANTICHEAT_NONCE, 2, N_P1X_ANTICHEAT_MESSAGE, 0, N_P1X_ANTICHEAT_VIOLATION, 0, N_P1X_ANTICHEAT_ENDSESSION, 1,
 #endif
     -1
 };
@@ -897,7 +897,11 @@ namespace game
     // anticheat
     extern bool anticheatready();
     extern void triggeranticheatsession();
+    extern bool anticheatsessionactive;
+    extern uint anticheatnonce;
     extern void receiveanticheatmessage(ucharbuf &p);
+    extern size_t protectedlength(size_t inlen);
+    extern size_t protectbytes(ucharbuf &p);
     extern bool endanticheatsession();
 #endif
 }
@@ -1084,6 +1088,7 @@ namespace server
         bool supportsclientdemoupload;
         bool supportsanticheat;
         int anticheatverified; // 0 = no anti-cheat, 1 = locally verified, 2 = verified by Epic's backend
+        uint anticheatnonce;
 
         clientinfo() : getdemo(NULL), getmap(NULL), clipboard(NULL), authchallenge(NULL), authkickreason(NULL) { reset(); }
         ~clientinfo() { events.deletecontents(); cleanclipboard(); cleanauth(); }
@@ -1196,6 +1201,7 @@ namespace server
             supportsclientdemoupload = false;
             supportsanticheat = false;
             anticheatverified = 0;
+            anticheatnonce = 0;
         }
 
         int geteventmillis(int servmillis, int clientmillis)
@@ -1279,6 +1285,7 @@ namespace server
     extern void probeforanticheatclient(packetbuf &p);
     extern bool registeranticheatclient(clientinfo *ci, const char *useridstring);
     extern void receiveanticheatmessage(clientinfo *c, ucharbuf &p);
+    extern size_t unprotectbytes(clientinfo *ci, ucharbuf &p);
     extern void handleviolation(clientinfo *ci, int code, const char *details);
     extern bool unregisteranticheatclient(clientinfo *c);
     extern bool shouldspectate(clientinfo *ci, clientinfo *requester = NULL);

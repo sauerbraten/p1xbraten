@@ -1302,6 +1302,9 @@ case N_TRYDROPFLAG:
 case N_TAKEFLAG:
 {
     int flag = getint(p), version = getint(p);
+#ifdef ANTICHEAT
+    if(cq && cq->anticheatverified>=2 && !protectedmessages) break;
+#endif
     if((ci->state.state!=CS_SPECTATOR || ci->local || ci->privilege) && cq && smode==&ctfmode) ctfmode.takeflag(cq, flag, version);
     break;
 }

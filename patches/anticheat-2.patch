@@ -1,0 +1,454 @@
+diff --git src/anticheat/anticheat.cpp src/anticheat/anticheat.cpp
+index 56f912d..db09bd9 100644
+--- src/anticheat/anticheat.cpp
++++ src/anticheat/anticheat.cpp
+@@ -254,6 +254,7 @@ namespace game {
+     bool anticheatinitialized = false;
+     EOS_HAntiCheatClient acc = NULL;
+     bool anticheatsessionactive = false;
++    uint anticheatnonce = 0;
+ 
+     bool anticheatready() { return eossdkinitialized; }
+ 
+@@ -322,6 +323,38 @@ namespace game {
+         }
+     }
+ 
++    size_t protectedlength(size_t inlen)
++    {
++        static EOS_AntiCheatClient_GetProtectMessageOutputLengthOptions getoutlenopts;
++        getoutlenopts.ApiVersion = EOS_ANTICHEATCLIENT_GETPROTECTMESSAGEOUTPUTLENGTH_API_LATEST;
++        getoutlenopts.DataLengthBytes = inlen;
++        static uint32_t outlen;
++        switch (EOS_EResult e = EOS_AntiCheatClient_GetProtectMessageOutputLength(acc, &getoutlenopts, &outlen))
++        {
++            case EOS_EResult::EOS_Success: return outlen;
++            case EOS_EResult::EOS_InvalidParameters: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr error calculating output length of input length %zu", inlen); return 0;
++            case EOS_EResult::EOS_AntiCheat_InvalidMode: /* conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr ending session: function not supported in current mode"); */ return 0;
++            default: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr EOS_AntiCheatClient_GetProtectMessageOutputLength() failed with result code %d", (int) e); return 0;
++        }
++    }
++
++    size_t protectbytes(ucharbuf &p)
++    {
++        static EOS_AntiCheatClient_ProtectMessageOptions protectopts;
++        protectopts.ApiVersion = EOS_ANTICHEATCLIENT_PROTECTMESSAGE_API_LATEST;
++        protectopts.DataLengthBytes = p.length();
++        protectopts.Data = p.getbuf();
++        protectopts.OutBufferSizeBytes = p.length()+p.remaining();
++        static uint32_t outlen;
++        switch (EOS_EResult e = EOS_AntiCheatClient_ProtectMessage(acc, &protectopts, p.getbuf(), &outlen))
++        {
++            case EOS_EResult::EOS_Success: return size_t(outlen);
++            case EOS_EResult::EOS_InvalidParameters: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr error protecting %p (length %d)", p.getbuf(), p.length()); return 0;
++            case EOS_EResult::EOS_AntiCheat_InvalidMode: /* conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr ending session: function not supported in current mode"); */ return 0;
++            default: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr EOS_AntiCheatClient_ProtectMessage() failed with result code %d", (int) e); return 0;
++        }
++    }
++
+     bool endanticheatsession()
+     {
+         if(!acc || !anticheatsessionactive) return true;
+@@ -421,25 +454,17 @@ namespace server {
+         if(data->ClientAction==EOS_EAntiCheatCommonClientAction::EOS_ACCCA_RemovePlayer)
+         {
+             string msg;
+-            if(data->ActionReasonCode == EOS_EAntiCheatCommonClientActionReason::EOS_ACCCAR_ClientViolation)
+-            {
+-                formatstring(msg, "\fs\f8[anti-cheat] \f3violation by %s: %s (code: %d)\fr",
+-                    colorname(ci), data->ActionReasonDetailsString, (int) data->ActionReasonCode
+-                );
+-            }
+-            else
+-            {
+-                formatstring(msg, "\fs\f8[anti-cheat] \f3%s should be removed from the game: %s (code: %d)\fr",
++            formatstring(msg, "\fs\f8[anti-cheat]\fr \f3%s should be removed from the game: %s (code: %d)\fr",
+                 colorname(ci), data->ActionReasonDetailsString, (int) data->ActionReasonCode
+             );
+-            }
+             conoutf(CON_WARN, "%s", msg);
+             if(!forceanticheatclient) notifyprivclients(PRIV_AUTH, msg);
+             else
+             {
+                 sendf(-1, 1, "ris", N_SERVMSG, msg);
++                ci->anticheatverified = 0;
+                 forcespectator(ci);
+-                formatstring(msg, "\fs\f8[anti-cheat] \f3forced %s to spectator\fr", colorname(ci));
++                formatstring(msg, "\fs\f8[anti-cheat]\fr \f3forced %s to spectator\fr", colorname(ci));
+             }
+         }
+     }
+@@ -482,14 +507,11 @@ namespace server {
+             conoutf(CON_WARN, "%s", msg);
+             if(ci->anticheatverified==2)
+             {
+-                loopv(clients)
+-                {
+-                    if(clients[i]->supportsanticheat) sendf(clients[i]->clientnum, 1, "ri3", N_P1X_ANTICHEAT_VERIFIED, ci->clientnum, 1);
+-                    if(clients[i]->anticheatverified==2) sendf(ci->clientnum, 1, "ri3", N_P1X_ANTICHEAT_VERIFIED, clients[i]->clientnum, 1);
+-                }
++                loopv(clients) if(clients[i]->supportsanticheat) sendf(clients[i]->clientnum, 1, "ri3", N_P1X_ANTICHEAT_VERIFIED, ci->clientnum, 1);
+                 defformatstring(msg, "\fs\f8[anti-cheat]\fr %s is using the p1xbraten anti-cheat client", colorname(ci));
+                 sendf(-1, 1, "ris", N_SERVMSG, msg);
+                 if(ci->state.state==CS_SPECTATOR && mastermode<MM_LOCKED) unspectate(ci);
++                else sendspawn(ci);
+             }
+         }
+     }
+@@ -502,7 +524,7 @@ namespace server {
+ 
+     bool registeranticheatclient(clientinfo *ci, const char *useridstring)
+     {
+-        conoutf("\fs\f8[anti-cheat]\fr registering %s (%d) with Epic's backend",  ci->name, ci->clientnum);
++        conoutf("\fs\f8[anti-cheat]\fr registering %s (%d) with Epic's backend as %s",  ci->name, ci->clientnum, useridstring);
+         EOS_ProductUserId eosuserid = EOS_ProductUserId_FromString(useridstring);
+ 
+         static EOS_AntiCheatServer_RegisterClientOptions registeropts;
+@@ -536,11 +558,36 @@ namespace server {
+         }
+     }
+ 
++    size_t unprotectbytes(clientinfo *ci, ucharbuf &p)
++    {
++        static EOS_AntiCheatServer_UnprotectMessageOptions unprotectopts;
++        unprotectopts.ApiVersion = EOS_ANTICHEATSERVER_UNPROTECTMESSAGE_API_LATEST;
++        unprotectopts.ClientHandle = (EOS_AntiCheatCommon_ClientHandle) ci;
++        unprotectopts.DataLengthBytes = p.remaining();
++        unprotectopts.Data = p.getbuf();
++        unprotectopts.OutBufferSizeBytes = p.remaining();
++        uint32_t outlen;
++        switch (EOS_EResult e = EOS_AntiCheatServer_UnprotectMessage(acs, &unprotectopts, p.getbuf(), &outlen))
++        {
++            case EOS_EResult::EOS_Success: return size_t(outlen);
++            case EOS_EResult::EOS_InvalidParameters: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr error unprotecting %p (length %d)", p.getbuf(), p.remaining()); return 0;
++            case EOS_EResult::EOS_AntiCheat_InvalidMode: /* conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr ending session: function not supported in current mode"); */ return 0;
++            default: conoutf(CON_ERROR, "\fs\f8[anti-cheat]\fr EOS_AntiCheatServer_UnprotectMessage() failed with result code %d", (int) e); return 0;
++        }
++    }
++
+     void handleviolation(clientinfo *ci, int code, const char *details)
+     {
+-        defformatstring(msg, "\fs\f3%s self-reported a violation: %s (code: %d)\fr", colorname(ci), details, code);
++        defformatstring(msg, "\fs\f8[anti-cheat]\fr \fs\f3%s self-reported a violation: %s (code: %d)\fr", colorname(ci), details, code);
+         conoutf(CON_WARN, "%s", msg);
+-        notifyprivclients(PRIV_AUTH, msg);
++        if(!forceanticheatclient) notifyprivclients(PRIV_AUTH, msg);
++        else
++        {
++            sendf(-1, 1, "ris", N_SERVMSG, msg);
++            ci->anticheatverified = 0;
++            forcespectator(ci);
++            formatstring(msg, "\fs\f8[anti-cheat] \f3forced %s to spectator\fr", colorname(ci));
++        }
+     }
+ 
+     bool unregisteranticheatclient(clientinfo *ci)
+diff --git src/engine/server.cpp src/engine/server.cpp
+index d79944d..f1a870d 100644
+--- src/engine/server.cpp
++++ src/engine/server.cpp
+@@ -258,6 +258,12 @@ ENetPacket *sendf(int cn, int chan, const char *format, ...)
+             loopi(n) putint(p, va_arg(args, int));
+             break;
+         }
++        case 'u':
++        {
++            int n = isdigit(*format) ? *format++-'0' : 1;
++            loopi(n) putuint(p, va_arg(args, uint));
++            break;
++        }
+         case 'f':
+         {
+             int n = isdigit(*format) ? *format++-'0' : 1;
+diff --git src/fpsgame/client.cpp src/fpsgame/client.cpp
+index c5cecd0..d1772a3 100644
+--- src/fpsgame/client.cpp
++++ src/fpsgame/client.cpp
+@@ -950,6 +950,29 @@ namespace game
+             messages.put(mbuf, m.length());
+             messagecn = mcn;
+         }
++#ifdef ANTICHEAT
++        else if(anticheatsessionactive && anticheatnonce) switch(type)
++        {
++            case N_TRYSPAWN: case N_SHOOT: case N_EXPLODE: case N_ITEMPICKUP: case N_TAKEFLAG:
++            {
++                // wrap in N_P1X_ANTICHEAT_PROTECTED
++                int noncepos = p.length();
++                putuint(p, anticheatnonce);
++                size_t protectedlen = protectedlength(p.length());
++                if(protectedlen > sizeof(buf)) return false; // packet too big
++                static uchar qbuf[MAXTRANS];
++                ucharbuf q(qbuf, sizeof(qbuf));
++                putint(q, N_P1X_ANTICHEAT_PROTECTED);
++                putuint(q, protectedlen);
++                putuint(q, noncepos);
++                if(protectbytes(p)!=protectedlen) { conoutf("protected bytes have wrong length"); return false; }
++                q.put(buf, protectedlen);
++                messages.put(qbuf, q.length());
++                anticheatnonce++;
++                return true;
++            }
++        }
++#endif
+         messages.put(buf, p.length());
+         return true;
+     }
+@@ -2086,9 +2109,22 @@ namespace game
+                 triggeranticheatsession();
+                 break;
+ 
++            case N_P1X_ANTICHEAT_VERIFIED:
++            {
++                int vn = getint(p), val = getint(p);
++                fpsent *v = getclient(vn);
++                if(!v) return;
++                v->anticheatverified = val>0;
++                break;
++            }
++
++            case N_P1X_ANTICHEAT_NONCE:
++                anticheatnonce = getuint(p);
++                break;
++
+             case N_P1X_ANTICHEAT_MESSAGE:
+             {
+-                int len = getuint(p);
++                uint len = getuint(p);
+                 ucharbuf q = p.subbuf(len);
+                 receiveanticheatmessage(q);
+                 break;
+@@ -2097,15 +2133,6 @@ namespace game
+             case N_P1X_ANTICHEAT_ENDSESSION:
+                 endanticheatsession();
+                 break;
+-
+-            case N_P1X_ANTICHEAT_VERIFIED:
+-            {
+-                int vn = getint(p), val = getint(p);
+-                fpsent *v = getclient(vn);
+-                if(!v) return;
+-                v->anticheatverified = val>0;
+-                break;
+-            }
+ #endif
+             default:
+                 neterr("type", cn < 0);
+diff --git src/fpsgame/ctf.h src/fpsgame/ctf.h
+index 0ad5e9b..a3abb83 100644
+--- src/fpsgame/ctf.h
++++ src/fpsgame/ctf.h
+@@ -1302,6 +1302,9 @@ case N_TRYDROPFLAG:
+ case N_TAKEFLAG:
+ {
+     int flag = getint(p), version = getint(p);
++#ifdef ANTICHEAT
++    if(cq && cq->anticheatverified>=2 && !protectedmessages) break;
++#endif
+     if((ci->state.state!=CS_SPECTATOR || ci->local || ci->privilege) && cq && smode==&ctfmode) ctfmode.takeflag(cq, flag, version);
+     break;
+ }
+diff --git src/fpsgame/game.h src/fpsgame/game.h
+index 305a516..ba748a6 100644
+--- src/fpsgame/game.h
++++ src/fpsgame/game.h
+@@ -215,7 +215,7 @@ enum
+ 
+ // protocol extensions
+ static const char * const CAP_PROBE_CLIENT_DEMO_UPLOAD = "capability_probe_protocol_extension_p1x_client_demo_upload_v2";
+-static const char * const CAP_PROBE_ANTICHEAT          = "capability_probe_protocol_extension_p1x_anticheat_v3";
++static const char * const CAP_PROBE_ANTICHEAT          = "capability_probe_protocol_extension_p1x_anticheat_v4";
+ 
+ // network messages codes, c2s, c2c, s2c
+ 
+@@ -250,7 +250,7 @@ enum
+     // N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED = 1000, N_P1X_RECORDDEMO, // legacy
+     N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED = 1002, N_P1X_RECORDDEMO, // guarded by CAP_PROBE_CLIENT_DEMO_UPLOAD
+ #ifdef ANTICHEAT
+-    N_P1X_ANTICHEAT_SUPPORTED = 2000, N_P1X_ANTICHEAT_BEGINSESSION, N_P1X_ANTICHEAT_MESSAGE, N_P1X_ANTICHEAT_VIOLATION, N_P1X_ANTICHEAT_ENDSESSION, N_P1X_ANTICHEAT_VERIFIED, // guarded by CAP_PROBE_ANTICHEAT
++    N_P1X_ANTICHEAT_SUPPORTED = 2000, N_P1X_ANTICHEAT_BEGINSESSION, N_P1X_ANTICHEAT_VERIFIED, N_P1X_ANTICHEAT_PROTECTED, N_P1X_ANTICHEAT_NONCE, N_P1X_ANTICHEAT_MESSAGE, N_P1X_ANTICHEAT_VIOLATION, N_P1X_ANTICHEAT_ENDSESSION,  // guarded by CAP_PROBE_ANTICHEAT
+ #endif
+     NUMMSG
+ };
+@@ -285,7 +285,7 @@ static const int msgsizes[] =               // size inclusive message token, 0 f
+     N_P1X_SETIP, 2,
+     N_P1X_CLIENT_DEMO_UPLOAD_SUPPORTED, 1, N_P1X_RECORDDEMO, 1,
+ #ifdef ANTICHEAT
+-    N_P1X_ANTICHEAT_SUPPORTED, 1, N_P1X_ANTICHEAT_BEGINSESSION, 0, N_P1X_ANTICHEAT_MESSAGE, 0, N_P1X_ANTICHEAT_VIOLATION, 0, N_P1X_ANTICHEAT_ENDSESSION, 1, N_P1X_ANTICHEAT_VERIFIED, 3,
++    N_P1X_ANTICHEAT_SUPPORTED, 1, N_P1X_ANTICHEAT_BEGINSESSION, 0, N_P1X_ANTICHEAT_VERIFIED, 3, N_P1X_ANTICHEAT_PROTECTED, 0, N_P1X_ANTICHEAT_NONCE, 2, N_P1X_ANTICHEAT_MESSAGE, 0, N_P1X_ANTICHEAT_VIOLATION, 0, N_P1X_ANTICHEAT_ENDSESSION, 1,
+ #endif
+     -1
+ };
+@@ -897,7 +897,11 @@ namespace game
+     // anticheat
+     extern bool anticheatready();
+     extern void triggeranticheatsession();
++    extern bool anticheatsessionactive;
++    extern uint anticheatnonce;
+     extern void receiveanticheatmessage(ucharbuf &p);
++    extern size_t protectedlength(size_t inlen);
++    extern size_t protectbytes(ucharbuf &p);
+     extern bool endanticheatsession();
+ #endif
+ }
+@@ -1084,6 +1088,7 @@ namespace server
+         bool supportsclientdemoupload;
+         bool supportsanticheat;
+         int anticheatverified; // 0 = no anti-cheat, 1 = locally verified, 2 = verified by Epic's backend
++        uint anticheatnonce;
+ 
+         clientinfo() : getdemo(NULL), getmap(NULL), clipboard(NULL), authchallenge(NULL), authkickreason(NULL) { reset(); }
+         ~clientinfo() { events.deletecontents(); cleanclipboard(); cleanauth(); }
+@@ -1196,6 +1201,7 @@ namespace server
+             supportsclientdemoupload = false;
+             supportsanticheat = false;
+             anticheatverified = 0;
++            anticheatnonce = 0;
+         }
+ 
+         int geteventmillis(int servmillis, int clientmillis)
+@@ -1279,6 +1285,7 @@ namespace server
+     extern void probeforanticheatclient(packetbuf &p);
+     extern bool registeranticheatclient(clientinfo *ci, const char *useridstring);
+     extern void receiveanticheatmessage(clientinfo *c, ucharbuf &p);
++    extern size_t unprotectbytes(clientinfo *ci, ucharbuf &p);
+     extern void handleviolation(clientinfo *ci, int code, const char *details);
+     extern bool unregisteranticheatclient(clientinfo *c);
+     extern bool shouldspectate(clientinfo *ci, clientinfo *requester = NULL);
+diff --git src/fpsgame/server.cpp src/fpsgame/server.cpp
+index aeb1ee3..bbbbca6 100644
+--- src/fpsgame/server.cpp
++++ src/fpsgame/server.cpp
+@@ -1536,6 +1536,13 @@ namespace server
+             gs.armour, gs.armourtype,
+             gs.gunselect, GUN_PISTOL-GUN_SG+1, &gs.ammo[GUN_SG]);
+         gs.lastspawn = gamemillis;
++#ifdef ANTICHEAT
++        if(ci->anticheatverified>=2)
++        {
++            ci->anticheatnonce = ((uint) rnd(0xFFFFFFF)) + 1; // prevent 0
++            sendf(ci->clientnum, 1, "riu", N_P1X_ANTICHEAT_NONCE, ci->anticheatnonce);
++        }
++#endif
+     }
+ 
+     void sendwelcome(clientinfo *ci)
+@@ -2768,9 +2775,12 @@ namespace server
+         if(servermotd[0]) sendf(ci->clientnum, 1, "ris", N_SERVMSG, servermotd);
+     }
+ 
+-    void parsepacket(int sender, int chan, packetbuf &p)     // has to parse exactly each byte of the packet
++#ifdef ANTICHEAT
++    void parsemessages(int sender, int chan, ucharbuf &p, bool reliablemessages = false, bool protectedmessages = false)
++#else
++    void parsemessages(int sender, int chan, ucharbuf &p, bool reliablemessages = false)
++#endif
+     {
+-        if(sender<0 || p.packet->flags&ENET_PACKET_FLAG_UNSEQUENCED || chan >= numchannels()) return;
+         char text[MAXTRANS];
+         int type;
+         clientinfo *ci = sender>=0 ? getinfo(sender) : NULL, *cq = ci, *cm = ci;
+@@ -2844,8 +2854,6 @@ namespace server
+             receiveclientdemo(sender, p.buf, p.maxlen);
+             return;
+         }
+-
+-        if(p.packet->flags&ENET_PACKET_FLAG_RELIABLE) reliablemessages = true;
+         #define QUEUE_AI clientinfo *cm = cq;
+         #define QUEUE_MSG { if(cm && (!cm->local || demorecord || hasnonlocalclients())) while(curmsg<p.length()) cm->messages.add(p.buf[curmsg++]); }
+         #define QUEUE_BUF(body) { \
+@@ -2989,6 +2997,9 @@ namespace server
+ 
+             case N_TRYSPAWN:
+                 if(!ci || !cq || cq->state.state!=CS_DEAD || cq->state.lastspawn>=0 || (smode && !smode->canspawn(cq))) break;
++#ifdef ANTICHEAT
++                if(ci->anticheatverified>=2 && !protectedmessages) break;
++#endif
+                 if(!ci->clientmap[0] && !ci->mapcrc)
+                 {
+                     ci->mapcrc = -1;
+@@ -3058,7 +3069,11 @@ namespace server
+                     hit.rays = getint(p);
+                     loopk(3) hit.dir[k] = getint(p)/DNF;
+                 }
++#ifdef ANTICHEAT
++                if(cq && (cq->anticheatverified<2 || protectedmessages))
++#else
+                 if(cq)
++#endif
+                 {
+                     cq->addevent(shot);
+                     cq->setpushed();
+@@ -3085,7 +3100,11 @@ namespace server
+                     hit.rays = getint(p);
+                     loopk(3) hit.dir[k] = getint(p)/DNF;
+                 }
++#ifdef ANTICHEAT
++                if(cq && (cq->anticheatverified<2 || protectedmessages)) cq->addevent(exp);
++#else
+                 if(cq) cq->addevent(exp);
++#endif
+                 else delete exp;
+                 break;
+             }
+@@ -3094,6 +3113,9 @@ namespace server
+             {
+                 int n = getint(p);
+                 if(!cq) break;
++#ifdef ANTICHEAT
++                if(cq->anticheatverified>=2 && !protectedmessages) break;
++#endif
+                 pickupevent *pickup = new pickupevent;
+                 pickup->ent = n;
+                 cq->addevent(pickup);
+@@ -3578,9 +3600,8 @@ namespace server
+             case N_P1X_ANTICHEAT_SUPPORTED:
+                 if(!anticheatenabled || !ci || ci->local) return;
+                 conoutf("client %d supports our anti-cheat protocol extension!", ci->clientnum);
+-                loopv(clients) if(clients[i]->anticheatverified==2)
+-                    sendf(sender, 1, "ri2", N_P1X_ANTICHEAT_VERIFIED, clients[i]->clientnum, 1);
+                 ci->supportsanticheat = true;
++                loopv(clients) if(clients[i]->anticheatverified>=2) sendf(sender, 1, "ri3", N_P1X_ANTICHEAT_VERIFIED, clients[i]->clientnum, 1);
+                 sendf(sender, 1, "ris", N_SERVMSG, "\fs\f8[anti-cheat]\fr verifying your client ...");
+                 sendf(sender, 1, "ri", N_P1X_ANTICHEAT_BEGINSESSION);
+                 break;
+@@ -3592,9 +3613,25 @@ namespace server
+                 registeranticheatclient(ci, useridstring);
+                 break;
+ 
++            case N_P1X_ANTICHEAT_PROTECTED:
++            {
++                uint len = getuint(p), noncepos = getuint(p);
++                if(p.remaining()<len) { disconnect_client(sender, DISC_MSGERR); return; }
++                ucharbuf payloadandnonce = p.subbuf(len);
++                if(!anticheatenabled || !ci || ci->anticheatverified<2) break; // discard
++                size_t outlen = unprotectbytes(ci, payloadandnonce); // in-place
++                if(outlen<noncepos) break;
++                ucharbuf plain = payloadandnonce.subbuf(noncepos);
++                uint nonce = getuint(payloadandnonce);
++                if(nonce!=ci->anticheatnonce) break;
++                ci->anticheatnonce++;
++                parsemessages(sender, chan, plain, reliablemessages, true);
++                break;
++            }
++
+             case N_P1X_ANTICHEAT_MESSAGE:
+             {
+-                int len = getuint(p);
++                uint len = getuint(p);
+                 ucharbuf q = p.subbuf(len);
+                 if(!anticheatenabled || !ci || ci->local) return;
+                 receiveanticheatmessage(ci, q);
+@@ -3639,6 +3676,12 @@ namespace server
+         }
+     }
+ 
++    void parsepacket(int sender, int chan, packetbuf &p)     // has to parse exactly each byte of the packet
++    {
++        if(sender<0 || p.packet->flags&ENET_PACKET_FLAG_UNSEQUENCED || chan >= numchannels()) return;
++        parsemessages(sender, chan, p, p.packet->flags&ENET_PACKET_FLAG_RELIABLE);
++    }
++
+     int laninfoport() { return SAUERBRATEN_LANINFO_PORT; }
+     int serverinfoport(int servport) { return servport < 0 ? SAUERBRATEN_SERVINFO_PORT : servport+1; }
+     int serverport(int infoport) { return infoport < 0 ? SAUERBRATEN_SERVER_PORT : infoport-1; }

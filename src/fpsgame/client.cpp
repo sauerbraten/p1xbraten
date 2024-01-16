@@ -950,6 +950,29 @@ namespace game
             messages.put(mbuf, m.length());
             messagecn = mcn;
         }
+#ifdef ANTICHEAT
+        else if(anticheatsessionactive && anticheatnonce) switch(type)
+        {
+            case N_TRYSPAWN: case N_SHOOT: case N_EXPLODE: case N_ITEMPICKUP: case N_TAKEFLAG:
+            {
+                // wrap in N_P1X_ANTICHEAT_PROTECTED
+                int noncepos = p.length();
+                putuint(p, anticheatnonce);
+                size_t protectedlen = protectedlength(p.length());
+                if(protectedlen > sizeof(buf)) return false; // packet too big
+                static uchar qbuf[MAXTRANS];
+                ucharbuf q(qbuf, sizeof(qbuf));
+                putint(q, N_P1X_ANTICHEAT_PROTECTED);
+                putuint(q, protectedlen);
+                putuint(q, noncepos);
+                if(protectbytes(p)!=protectedlen) { conoutf("protected bytes have wrong length"); return false; }
+                q.put(buf, protectedlen);
+                messages.put(qbuf, q.length());
+                anticheatnonce++;
+                return true;
+            }
+        }
+#endif
         messages.put(buf, p.length());
         return true;
     }
@@ -2086,18 +2109,6 @@ namespace game
                 triggeranticheatsession();
                 break;
 
-            case N_P1X_ANTICHEAT_MESSAGE:
-            {
-                int len = getuint(p);
-                ucharbuf q = p.subbuf(len);
-                receiveanticheatmessage(q);
-                break;
-            }
-
-            case N_P1X_ANTICHEAT_ENDSESSION:
-                endanticheatsession();
-                break;
-
             case N_P1X_ANTICHEAT_VERIFIED:
             {
                 int vn = getint(p), val = getint(p);
@@ -2106,6 +2117,22 @@ namespace game
                 v->anticheatverified = val>0;
                 break;
             }
+
+            case N_P1X_ANTICHEAT_NONCE:
+                anticheatnonce = getuint(p);
+                break;
+
+            case N_P1X_ANTICHEAT_MESSAGE:
+            {
+                uint len = getuint(p);
+                ucharbuf q = p.subbuf(len);
+                receiveanticheatmessage(q);
+                break;
+            }
+
+            case N_P1X_ANTICHEAT_ENDSESSION:
+                endanticheatsession();
+                break;
 #endif
             default:
                 neterr("type", cn < 0);

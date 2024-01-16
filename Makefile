@@ -78,6 +78,7 @@ apply-patches:
 	$(PATCH) < patches/demo_info_message.patch
 	$(PATCH) < patches/extinfo_mod_id.patch
 	$(PATCH) < patches/anticheat.patch
+	$(PATCH) < patches/anticheat-2.patch
 	$(PATCH) < patches/setfont.patch
 	$(PATCH) < patches/serverbotbalanceearly.patch
 	$(PATCH) < patches/bans.patch

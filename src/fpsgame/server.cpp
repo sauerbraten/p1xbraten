@@ -1536,6 +1536,13 @@ namespace server
             gs.armour, gs.armourtype,
             gs.gunselect, GUN_PISTOL-GUN_SG+1, &gs.ammo[GUN_SG]);
         gs.lastspawn = gamemillis;
+#ifdef ANTICHEAT
+        if(ci->anticheatverified>=2)
+        {
+            ci->anticheatnonce = ((uint) rnd(0xFFFFFFF)) + 1; // prevent 0
+            sendf(ci->clientnum, 1, "riu", N_P1X_ANTICHEAT_NONCE, ci->anticheatnonce);
+        }
+#endif
     }
 
     void sendwelcome(clientinfo *ci)
@@ -2768,9 +2775,12 @@ namespace server
         if(servermotd[0]) sendf(ci->clientnum, 1, "ris", N_SERVMSG, servermotd);
     }
 
-    void parsepacket(int sender, int chan, packetbuf &p)     // has to parse exactly each byte of the packet
+#ifdef ANTICHEAT
+    void parsemessages(int sender, int chan, ucharbuf &p, bool reliablemessages = false, bool protectedmessages = false)
+#else
+    void parsemessages(int sender, int chan, ucharbuf &p, bool reliablemessages = false)
+#endif
     {
-        if(sender<0 || p.packet->flags&ENET_PACKET_FLAG_UNSEQUENCED || chan >= numchannels()) return;
         char text[MAXTRANS];
         int type;
         clientinfo *ci = sender>=0 ? getinfo(sender) : NULL, *cq = ci, *cm = ci;
@@ -2844,8 +2854,6 @@ namespace server
             receiveclientdemo(sender, p.buf, p.maxlen);
             return;
         }
-
-        if(p.packet->flags&ENET_PACKET_FLAG_RELIABLE) reliablemessages = true;
         #define QUEUE_AI clientinfo *cm = cq;
         #define QUEUE_MSG { if(cm && (!cm->local || demorecord || hasnonlocalclients())) while(curmsg<p.length()) cm->messages.add(p.buf[curmsg++]); }
         #define QUEUE_BUF(body) { \
@@ -2989,6 +2997,9 @@ namespace server
 
             case N_TRYSPAWN:
                 if(!ci || !cq || cq->state.state!=CS_DEAD || cq->state.lastspawn>=0 || (smode && !smode->canspawn(cq))) break;
+#ifdef ANTICHEAT
+                if(ci->anticheatverified>=2 && !protectedmessages) break;
+#endif
                 if(!ci->clientmap[0] && !ci->mapcrc)
                 {
                     ci->mapcrc = -1;
@@ -3058,7 +3069,11 @@ namespace server
                     hit.rays = getint(p);
                     loopk(3) hit.dir[k] = getint(p)/DNF;
                 }
+#ifdef ANTICHEAT
+                if(cq && (cq->anticheatverified<2 || protectedmessages))
+#else
                 if(cq) 
+#endif
                 {
                     cq->addevent(shot);
                     cq->setpushed();
@@ -3085,7 +3100,11 @@ namespace server
                     hit.rays = getint(p);
                     loopk(3) hit.dir[k] = getint(p)/DNF;
                 }
+#ifdef ANTICHEAT
+                if(cq && (cq->anticheatverified<2 || protectedmessages)) cq->addevent(exp);
+#else
                 if(cq) cq->addevent(exp);
+#endif
                 else delete exp;
                 break;
             }
@@ -3094,6 +3113,9 @@ namespace server
             {
                 int n = getint(p);
                 if(!cq) break;
+#ifdef ANTICHEAT
+                if(cq->anticheatverified>=2 && !protectedmessages) break;
+#endif
                 pickupevent *pickup = new pickupevent;
                 pickup->ent = n;
                 cq->addevent(pickup);
@@ -3578,9 +3600,8 @@ namespace server
             case N_P1X_ANTICHEAT_SUPPORTED:
                 if(!anticheatenabled || !ci || ci->local) return;
                 conoutf("client %d supports our anti-cheat protocol extension!", ci->clientnum);
-                loopv(clients) if(clients[i]->anticheatverified==2)
-                    sendf(sender, 1, "ri2", N_P1X_ANTICHEAT_VERIFIED, clients[i]->clientnum, 1);
                 ci->supportsanticheat = true;
+                loopv(clients) if(clients[i]->anticheatverified>=2) sendf(sender, 1, "ri3", N_P1X_ANTICHEAT_VERIFIED, clients[i]->clientnum, 1);
                 sendf(sender, 1, "ris", N_SERVMSG, "\fs\f8[anti-cheat]\fr verifying your client ...");
                 sendf(sender, 1, "ri", N_P1X_ANTICHEAT_BEGINSESSION);
                 break;
@@ -3592,9 +3613,25 @@ namespace server
                 registeranticheatclient(ci, useridstring);
                 break;
                      
+            case N_P1X_ANTICHEAT_PROTECTED:
+            {
+                uint len = getuint(p), noncepos = getuint(p);
+                if(p.remaining()<len) { disconnect_client(sender, DISC_MSGERR); return; }
+                ucharbuf payloadandnonce = p.subbuf(len);
+                if(!anticheatenabled || !ci || ci->anticheatverified<2) break; // discard
+                size_t outlen = unprotectbytes(ci, payloadandnonce); // in-place
+                if(outlen<noncepos) break;
+                ucharbuf plain = payloadandnonce.subbuf(noncepos);
+                uint nonce = getuint(payloadandnonce);
+                if(nonce!=ci->anticheatnonce) break;
+                ci->anticheatnonce++;
+                parsemessages(sender, chan, plain, reliablemessages, true);
+                break;
+            }
+
             case N_P1X_ANTICHEAT_MESSAGE:
             {
-                int len = getuint(p);
+                uint len = getuint(p);
                 ucharbuf q = p.subbuf(len);
                 if(!anticheatenabled || !ci || ci->local) return;
                 receiveanticheatmessage(ci, q);
@@ -3637,6 +3674,12 @@ namespace server
                 break;
             }
         }
+    }
+
+    void parsepacket(int sender, int chan, packetbuf &p)     // has to parse exactly each byte of the packet
+    {
+        if(sender<0 || p.packet->flags&ENET_PACKET_FLAG_UNSEQUENCED || chan >= numchannels()) return;
+        parsemessages(sender, chan, p, p.packet->flags&ENET_PACKET_FLAG_RELIABLE);
     }
 
     int laninfoport() { return SAUERBRATEN_LANINFO_PORT; }
