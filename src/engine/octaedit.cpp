@@ -178,7 +178,7 @@ void toggleedit(bool force)
     cancelsel();
     stoppaintblendmap();
     keyrepeat(editmode);
-    editing = entediting = editmode;
+    editing = editmode;
     extern int fullbright;
     if(fullbright) { initlights(); lightents(); }
     if(!force) game::edittoggled(editmode);
@@ -298,6 +298,8 @@ cube &blockcube(int x, int y, int z, const block3 &b, int rgrid) // looks up a w
 int selchildcount = 0, selchildmat = -1;
 
 ICOMMAND(havesel, "", (), intret(havesel ? selchildcount : 0));
+ICOMMAND(selchildcount, "", (), { if(selchildcount < 0) result(tempformatstring("1/%d", -selchildcount)); else intret(selchildcount); });
+ICOMMAND(selchildmat, "s", (char *prefix), { if(selchildmat > 0) result(getmaterialdesc(selchildmat, prefix)); });
 
 void countselchild(cube *c, const ivec &cor, int size)
 {

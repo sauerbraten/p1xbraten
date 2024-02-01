@@ -517,9 +517,9 @@ void renderellipse(vec &o, float xradius, float yradius, float yaw)
     gle::colorf(0.5f, 0.5f, 0.5f);
     gle::defvertex();
     gle::begin(GL_LINE_LOOP);
-    loopi(15)
+    loopi(16)
     {
-        const vec2 &sc = sincos360[i*(360/15)];
+        const vec2 &sc = sincos360[(i*360+8)/16];
         gle::attrib(vec(xradius*sc.x, yradius*sc.y, 0).rotate_around_z((yaw+90)*RAD).add(o));
     }
     xtraverts += gle::end();

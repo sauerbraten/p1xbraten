@@ -1090,9 +1090,13 @@ namespace game
         pophudmatrix();
     }
 
-    static inline bool ammobargunvisible(const fpsent *d, int gun)
+    static inline bool ammobargunvisible(const fpsent *d, int gun, bool hideempty)
     {
-        return d->ammo[gun] > 0 || d->gunselect == gun;
+        if(d->ammo[gun] > 0 || d->gunselect == gun) return true;
+        if(hideempty) return false;
+        if(m_efficiency) return gun!=GUN_PISTOL;
+        if(m_insta) return gun==GUN_RIFLE;
+        return true;
     }
 
     void drawammobar(int w, int h, fpsent *p)
@@ -1101,7 +1105,7 @@ namespace game
 
         int NUMPLAYERGUNS = GUN_PISTOL - GUN_SG + 1;
         int numvisibleguns = NUMPLAYERGUNS;
-        if(ammobarhideempty) loopi(NUMPLAYERGUNS) if(!ammobargunvisible(p, GUN_SG + i)) numvisibleguns--;
+        loopi(NUMPLAYERGUNS) if(!ammobargunvisible(p, GUN_SG + i, ammobarhideempty!=0)) numvisibleguns--;
 
         vec2 origin = vec2(ammobarx, ammobary).mul(vec2(w, h).div(ammobarscale));
         vec2 offsetdir = ammobarhorizontal ? vec2(1, 0) : vec2(0, 1);
@@ -1113,7 +1117,7 @@ namespace game
         flushhudmatrix();
 
         int numskippedguns = 0;
-        loopi(NUMPLAYERGUNS) if(ammobargunvisible(p, GUN_SG + i) || !ammobarhideempty)
+        loopi(NUMPLAYERGUNS) if(ammobargunvisible(p, GUN_SG + i, ammobarhideempty!=0))
         {
             float offset = initialoffset + (i - numskippedguns) * stepsize;
             vec2 drawpos = vec2(offsetdir).mul(offset).add(origin);

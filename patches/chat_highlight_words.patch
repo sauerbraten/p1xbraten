@@ -53,7 +53,7 @@ Index: src/fpsgame/client.cpp
 @@ -1343,6 +1348,7 @@
                  if(t->state!=CS_DEAD && t->state!=CS_SPECTATOR)
                      particle_textcopy(t->abovehead(), text, PART_TEXT, 2000, 0x6496FF, 4.0f, -8);
-                 conoutf(CON_TEAMCHAT, "\fs\f8[team]\fr %s: \f8%s", chatcolorname(t), text);
+                 conoutf(CON_TEAMCHAT, "\fs\f8[%s]\fr %s: \f8%s", t->state==CS_SPECTATOR ? "spec" : "team", chatcolorname(t), text);
 +                if(!hasfocus) loopv(chathighlightwords) if(strstr(text, chathighlightwords[i])) { playsoundname(chathighlightsound); break; }
                  break;
              }
