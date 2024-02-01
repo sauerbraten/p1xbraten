@@ -84,6 +84,7 @@ apply-patches:
 	$(PATCH) < patches/enet_mtu_1300.patch
 	$(PATCH) < patches/fullscreenmonitor.patch
 	$(PATCH) < patches/enet_partial_flood.patch
+	$(PATCH) < patches/enet_fragment_flood.patch
 	cd src && make depend
 
 gzip-cfgs embed-cfgs: DATA=data/p1xbraten
