@@ -115,7 +115,7 @@ clean-sauer: ensure-sauer-dir
 	cd $(SAUER_DIR)/src && make clean
 
 VANILLA_SOURCE_FILES=enet,engine,fpsgame,shared
-P1XBRATEN_SOURCE_FILES=$(VANILLA_SOURCE_FILES),p1xbraten,anticheat/anticheat.cpp,Makefile
+P1XBRATEN_SOURCE_FILES=$(VANILLA_SOURCE_FILES),p1xbraten,anticheat/anticheat.cpp
 
 update-src: clean-sauer
 	rm --recursive --force src/{$(P1XBRATEN_SOURCE_FILES)}
