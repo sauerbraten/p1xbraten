@@ -81,9 +81,7 @@ apply-patches:
 	$(PATCH) < patches/setfont.patch
 	$(PATCH) < patches/serverbotbalanceearly.patch
 	$(PATCH) < patches/bans.patch
-	$(PATCH) < patches/enet_mtu_1300.patch
 	$(PATCH) < patches/fullscreenmonitor.patch
-	$(PATCH) < patches/enet_partial_flood.patch
 	$(PATCH) < patches/enet_fragment_flood.patch
 	cd src && make depend
 
@@ -124,7 +122,7 @@ update-src: clean-sauer
 from-patches: | update-src apply-patches embed-cfgs build
 
 changes-to-patch:
-	git diff --no-prefix --ignore-all-space --staged data/p1xbraten src/{$(P1XBRATEN_SOURCE_FILES)} > patches/new_changes.patch
+	git diff --no-prefix --ignore-all-space --staged data/p1xbraten src/{$(P1XBRATEN_SOURCE_FILES)} src/Makefile > patches/new_changes.patch
 
 ensure-sauer-dir:
 ifndef SAUER_DIR
