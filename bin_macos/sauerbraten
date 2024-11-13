@@ -23,4 +23,4 @@ else
     exit 1
 fi
 
-./start_protected_game.app/Contents/MacOS/start_protected_game -e -k"${CONTENT_DIR}" -q"${SAUER_HOME}" -glog.txt ${SAUER_OPTIONS} $@
+./start_protected_game_x86-64.app/Contents/MacOS/start_protected_game -e -k"${CONTENT_DIR}" -q"${SAUER_HOME}" -glog.txt ${SAUER_OPTIONS} $@

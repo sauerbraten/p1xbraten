@@ -72,9 +72,9 @@ Download and run p1xbraten_setup_\<version\>.exe from the link above. p1xbraten 
 6. Drag the `Contents` folder from the zip file into the Finder window, merging it with the existing folder and replacing any existing files.
 7. Open a Terminal and type `chmod +x ` (note the space at the end), then drag the `p1xbraten_x86_64_client` file from Finder into the Terminal window
 8. When it says `chmod +x [...]/Contents/MacOS/p1xbraten_x86_64_client`, press Enter to execute
-9. In Finder, right click start_protected_game.app, select "Show Package Contents", go into `Contents`, then into `MacOS`
+9. In Finder, right click start_protected_game_x86-64.app, select "Show Package Contents", go into `Contents`, then into `MacOS`
 10. In the terminal, type `chmod +x ` again, then drag the `start_protected_game` file from Finder into the Terminal window
-11. When it says `chmod +x [...]/Contents/MacOS/start_protected_game.app/Contents/MacOS/start_protected_game`, press Enter to execute
+11. When it says `chmod +x [...]/Contents/MacOS/start_protected_game_x86-64.app/Contents/MacOS/start_protected_game`, press Enter to execute
 
 If this seems like a lot of work that's because it is. I blame Apple.
 

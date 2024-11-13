@@ -64,7 +64,7 @@ EOS_DECLARE_FUNC(EOS_Bool) EOS_UI_GetFriendsExclusiveInput(EOS_HUI Handle, const
 /**
  * Register to receive notifications when the overlay display settings are updated.
  * Newly registered handlers will always be called the next tick with the current state.
- * @note must call RemoveNotifyDisplaySettingsUpdated to remove the notification.
+ * @note If the returned NotificationId is valid, you must call EOS_UI_RemoveNotifyDisplaySettingsUpdated when you no longer wish to have your NotificationHandler called.
  *
  * @param Options Structure containing information about the request.
  * @param ClientData Arbitrary data that is passed back to you in the NotificationFn.
@@ -128,6 +128,8 @@ EOS_DECLARE_FUNC(EOS_Bool) EOS_UI_IsValidKeyCombination(EOS_HUI Handle, EOS_UI_E
  *
  * On PC the EOS Overlay automatically listens to gamepad input and routes it to the overlay when appropriate. If this button is configured, the user may open the overlay using either this button or the toggle friends key.
  * On console platforms, the game must be calling EOS_UI_ReportInputState to route gamepad input to the EOS Overlay.
+ *
+ * Note: If you do not have a button mapped, it'll suppress the part of the toast notification that prompts the user to press it.
  *
  * @param Options Structure containing the button combination to use.
  *
@@ -271,7 +273,7 @@ EOS_DECLARE_FUNC(EOS_Bool) EOS_UI_IsSocialOverlayPaused(EOS_HUI Handle, const EO
 /**
  * Register to receive notifications from the memory monitor.
  * Newly registered handlers will always be called the next tick with the current state.
- * @note must call EOS_UI_RemoveNotifyMemoryMonitor to remove the notification.
+ * @note If the returned NotificationId is valid, you must call EOS_UI_RemoveNotifyMemoryMonitor when you no longer wish to have your NotificationHandler called.
  *
  * @param Options Structure containing information about the request.
  * @param ClientData Arbitrary data that is passed back to you in the NotificationFn.

@@ -145,7 +145,7 @@ EOS_DECLARE_FUNC(EOS_ProductUserId) EOS_ProductUserId_FromString(const char* Pro
 #define EOS_PRODUCTUSERID_MAX_LENGTH 32
 
 /** Handle to an existing registered notification (0 is an invalid handle) */
-EXTERN_C typedef uint64_t EOS_NotificationId;
+EOS_EXTERN_C typedef uint64_t EOS_NotificationId;
 
 /** An invalid notification ID */
 #define EOS_INVALID_NOTIFICATIONID ((EOS_NotificationId)0)
@@ -321,7 +321,9 @@ EOS_ENUM(EOS_EExternalAccountType,
 	/** External account is associated with itch.io */
 	EOS_EAT_ITCHIO = 12,
 	/** External account is associated with Amazon */
-	EOS_EAT_AMAZON = 13
+	EOS_EAT_AMAZON = 13,
+	/** External account is associated with Viveport */
+	EOS_EAT_VIVEPORT = 14
 );
 
 /**
@@ -350,6 +352,7 @@ EOS_ENUM(EOS_EExternalCredentialType,
 	EOS_ECT_EPIC = 0,
 	/**
 	 * Steam Encrypted App Ticket
+	 * Note that EOS_ECT_STEAM_APP_TICKET is deprecated for use with EOS_Auth_Login. Use EOS_ECT_STEAM_SESSION_TICKET instead.
 	 *
 	 * Generated using the ISteamUser::RequestEncryptedAppTicket API of Steamworks SDK.
 	 * For ticket generation parameters, use pDataToInclude(NULL) and cbDataToInclude(0).
@@ -358,7 +361,6 @@ EOS_ENUM(EOS_EExternalCredentialType,
 	 * EOS_ByteArray_ToString can be used for this conversion.
 	 *
 	 * Supported with EOS_Connect_Login.
-	 * Note that EOS_ECT_STEAM_APP_TICKET is deprecated for use with EOS_Auth_Login. Use EOS_ECT_STEAM_SESSION_TICKET instead.
 	 *
 	 * @see EOS_ECT_STEAM_SESSION_TICKET
 	 */
@@ -407,6 +409,8 @@ EOS_ENUM(EOS_EExternalCredentialType,
 	 * This is the common Nintendo account that users login with outside the Nintendo Switch device.
 	 *
 	 * Supported with EOS_Auth_Login, EOS_Connect_Login.
+	 * 
+	 * Note: EOS_Auth_Login usage is restricted to Epic first party products only, attempting to use it will result in authentication failures.
 	 */
 	EOS_ECT_NINTENDO_ID_TOKEN = 6,
 	/**
@@ -428,10 +432,14 @@ EOS_ENUM(EOS_EExternalCredentialType,
 	 * progression if it is only associated with this account type.
 	 *
 	 * Supported with EOS_Auth_Login, EOS_Connect_Login.
+	 * 
+	 * Note: EOS_Auth_Login usage is restricted to Epic first party products only, attempting to use it will result in authentication failures.
 	 */
 	EOS_ECT_NINTENDO_NSA_ID_TOKEN = 7,
 	/**
 	 * Uplay Access Token
+	 * 
+	 * Supported with EOS_Connect_Login.
 	 */
 	EOS_ECT_UPLAY_ACCESS_TOKEN = 8,
 	/**
@@ -541,22 +549,31 @@ EOS_ENUM(EOS_EExternalCredentialType,
 	 *
 	 * @version 1.15.1+
 	 */
-	EOS_ECT_STEAM_SESSION_TICKET = 18
+	EOS_ECT_STEAM_SESSION_TICKET = 18,
+	/**
+	 * VIVEPORT User Session Token
+	 *
+	 * Supported with EOS_Connect_Login.
+	 */
+	EOS_ECT_VIVEPORT_USER_TOKEN = 19
 );
 
 /**
  * This type is used to distinguish between different supported integrated platforms.
  * Integrated platforms which are common across multiple host platforms will be defined here.
  */
-EXTERN_C typedef const char* EOS_IntegratedPlatformType;
+EOS_EXTERN_C typedef const char* EOS_IntegratedPlatformType;
 /** A macro to identify an unknown integrated platform. */
 #define EOS_IPT_Unknown (const char*)NULL
 
 /** This type is used to distinguish between different online platforms. */
-EXTERN_C typedef uint32_t EOS_OnlinePlatformType;
+EOS_EXTERN_C typedef uint32_t EOS_OnlinePlatformType;
 
 #define EOS_OPT_Unknown 0
 #define EOS_OPT_Epic 100
+#define EOS_OPT_PSN 1000
+#define EOS_OPT_Nintendo 2000
+#define EOS_OPT_XBL 3000
 #define EOS_OPT_Steam 4000
 
 #pragma pack(pop)

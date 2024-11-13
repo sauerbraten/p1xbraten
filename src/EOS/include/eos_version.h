@@ -7,7 +7,7 @@
 // newer than a 4.11.* version, regardless of the changelist that it was built with)
 #define EOS_MAJOR_VERSION	1
 #define EOS_MINOR_VERSION	16
-#define EOS_PATCH_VERSION	1
+#define EOS_PATCH_VERSION	4
  
 // Macros for encoding strings
 #define EOS_VERSION_STRINGIFY_2(x) #x
@@ -46,7 +46,15 @@
 
 #include "eos_base.h"
 
-/** Get the version of the EOSSDK binary */
+/**
+ * Get the version of the compiled EOSSDK binary
+ * MAJOR.MINOR.PATCH-CHANGELIST#-PLATFORMSDKVERSION
+ * 
+ * It is the version available at runtime
+ * It should match the version of the headers being used
+ * 
+ * @return the version of the compiled EOSSDK binary
+ */
 EOS_DECLARE_FUNC(const char*) EOS_GetVersion(void);
 
 #endif /* #ifndef RC_INVOKED */

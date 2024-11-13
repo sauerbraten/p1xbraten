@@ -13,7 +13,7 @@
  * Typically this is a pointer to an object describing the
  * player, but it can be anything that is locally unique.
  */
-EXTERN_C typedef void* EOS_AntiCheatCommon_ClientHandle;
+EOS_EXTERN_C typedef void* EOS_AntiCheatCommon_ClientHandle;
 
 /** Flags describing the type of a remote client */
 EOS_ENUM(EOS_EAntiCheatCommonClientType,
@@ -151,7 +151,21 @@ EOS_ENUM(EOS_EAntiCheatCommonEventParamType,
 	/** EOS_AntiCheatCommon_Vec3f */
 	EOS_ACCEPT_Vector3f = 7,
 	/** EOS_AntiCheatCommon_Quat */
-	EOS_ACCEPT_Quat = 8
+	EOS_ACCEPT_Quat = 8,
+	/** float */
+	EOS_ACCEPT_Float = 9
+);
+
+/** Flags describing the type of competition taking place */
+EOS_ENUM(EOS_EAntiCheatCommonGameRoundCompetitionType,
+	/** No particular competition type applies */
+	EOS_ACCGRCT_None = 0,
+	/** Casual unranked play */
+	EOS_ACCGRCT_Casual = 1,
+	/** Ranked play, usually with skill based matchmaking */
+	EOS_ACCGRCT_Ranked = 2,
+	/** Organized competitive play like a tournament */
+	EOS_ACCGRCT_Competitive = 3
 );
 
 /** Details of a player's movement state */
@@ -202,10 +216,16 @@ EOS_ENUM(EOS_EAntiCheatCommonPlayerTakeDamageType,
 EOS_ENUM(EOS_EAntiCheatCommonPlayerTakeDamageResult,
 	/** No direct state change consequence for the victim */
 	EOS_ACCPTDR_None = 0,
-	/** Player character is temporarily incapacitated and requires assistance to recover */
-	EOS_ACCPTDR_Downed = 1,
-	/** Player character is permanently incapacitated and cannot recover (e.g. dead) */
-	EOS_ACCPTDR_Eliminated = 2
+	/** Deprecated - use more specific values below instead */
+	EOS_ACCPTDR_Downed_DEPRECATED = 1,
+	/** Deprecated - use more specific values below instead */
+	EOS_ACCPTDR_Eliminated_DEPRECATED = 2,
+	/** Player character transitioned from a normal state to temporarily incapacitated and requires assistance to recover. */
+	EOS_ACCPTDR_NormalToDowned = 3,
+	/** Player character transitioned from a normal state to permanently incapacitated and cannot recover (e.g. dead). */
+	EOS_ACCPTDR_NormalToEliminated = 4,
+	/** Player character transitioned from a temporarily incapacitated state to permanently incapacitated and cannot recover (e.g. dead). */
+	EOS_ACCPTDR_DownedToEliminated = 5
 );
 
 /** Vector using left-handed coordinate system (as in Unreal Engine) */
@@ -328,6 +348,7 @@ EOS_STRUCT(EOS_AntiCheatCommon_LogEventParamPair, (
 		int64_t Int64;
 		EOS_AntiCheatCommon_Vec3f Vec3f;
 		EOS_AntiCheatCommon_Quat Quat;
+		float Float;
 	} ParamValue;
 ));
 EOS_STRUCT(EOS_AntiCheatCommon_LogEventOptions, (
@@ -343,7 +364,7 @@ EOS_STRUCT(EOS_AntiCheatCommon_LogEventOptions, (
 	const EOS_AntiCheatCommon_LogEventParamPair* Params;
 ));
 
-#define EOS_ANTICHEATCOMMON_LOGGAMEROUNDSTART_API_LATEST 1
+#define EOS_ANTICHEATCOMMON_LOGGAMEROUNDSTART_API_LATEST 2
 EOS_STRUCT(EOS_AntiCheatCommon_LogGameRoundStartOptions, (
 	/** API Version: Set this to EOS_ANTICHEATCOMMON_LOGGAMEROUNDSTART_API_LATEST. */
 	int32_t ApiVersion;
@@ -355,6 +376,8 @@ EOS_STRUCT(EOS_AntiCheatCommon_LogGameRoundStartOptions, (
 	const char* ModeName;
 	/** Optional length of the game round to be played, in seconds. If none, use 0. */
 	uint32_t RoundTimeSeconds;
+	/** Type of competition for this game round */
+	EOS_EAntiCheatCommonGameRoundCompetitionType CompetitionType;
 ));
 
 #define EOS_ANTICHEATCOMMON_LOGGAMEROUNDEND_API_LATEST 1
@@ -395,15 +418,15 @@ EOS_STRUCT(EOS_AntiCheatCommon_LogPlayerReviveOptions, (
 	EOS_AntiCheatCommon_ClientHandle ReviverPlayerHandle;
 ));
 
-#define EOS_ANTICHEATCOMMON_LOGPLAYERTICK_API_LATEST 2
+#define EOS_ANTICHEATCOMMON_LOGPLAYERTICK_API_LATEST 3
 EOS_STRUCT(EOS_AntiCheatCommon_LogPlayerTickOptions, (
 	/** API Version: Set this to EOS_ANTICHEATCOMMON_LOGPLAYERTICK_API_LATEST. */
 	int32_t ApiVersion;
 	/** Locally unique value used in RegisterClient/RegisterPeer */
 	EOS_AntiCheatCommon_ClientHandle PlayerHandle;
-	/** Player's current world position as a 3D vector */
+	/** Player character's current world position as a 3D vector. This should be the center of the character. */
 	EOS_AntiCheatCommon_Vec3f* PlayerPosition;
-	/** Player's view rotation as a quaternion */
+	/** Player camera's current world rotation as a quaternion. */
 	EOS_AntiCheatCommon_Quat* PlayerViewRotation;
 	/** True if the player's view is zoomed (e.g. using a sniper rifle), otherwise false */
 	EOS_Bool bIsPlayerViewZoomed;
@@ -411,6 +434,8 @@ EOS_STRUCT(EOS_AntiCheatCommon_LogPlayerTickOptions, (
 	float PlayerHealth;
 	/** Any movement state applicable */
 	EOS_EAntiCheatCommonPlayerMovementState PlayerMovementState;
+	/** Player camera's current world position as a 3D vector. */
+	EOS_AntiCheatCommon_Vec3f* PlayerViewPosition;
 ));
 
 #define EOS_ANTICHEATCOMMON_LOGPLAYERUSEWEAPON_API_LATEST 2
@@ -450,21 +475,21 @@ EOS_STRUCT(EOS_AntiCheatCommon_LogPlayerUseAbilityOptions, (
 	uint32_t AbilityCooldownMs;
 ));
 
-#define EOS_ANTICHEATCOMMON_LOGPLAYERTAKEDAMAGE_API_LATEST 3
+#define EOS_ANTICHEATCOMMON_LOGPLAYERTAKEDAMAGE_API_LATEST 4
 EOS_STRUCT(EOS_AntiCheatCommon_LogPlayerTakeDamageOptions, (
 	/** API Version: Set this to EOS_ANTICHEATCOMMON_LOGPLAYERTAKEDAMAGE_API_LATEST. */
 	int32_t ApiVersion;
 	/** Locally unique value used in RegisterClient/RegisterPeer */
 	EOS_AntiCheatCommon_ClientHandle VictimPlayerHandle;
-	/** Victim player's current world position as a 3D vector */
+	/** Victim player character's world position as a 3D vector. This should be the center of the character. */
 	EOS_AntiCheatCommon_Vec3f* VictimPlayerPosition;
-	/** Victim player's view rotation as a quaternion */
+	/** Victim player camera's world rotation as a quaternion. */
 	EOS_AntiCheatCommon_Quat* VictimPlayerViewRotation;
 	/** Locally unique value used in RegisterClient/RegisterPeer if applicable, otherwise 0. */
 	EOS_AntiCheatCommon_ClientHandle AttackerPlayerHandle;
-	/** Attacker player's current world position as a 3D vector if applicable, otherwise NULL. */
+	/** Attacker player character's world position as a 3D vector if applicable, otherwise NULL. */
 	EOS_AntiCheatCommon_Vec3f* AttackerPlayerPosition;
-	/** Attacker player's view rotation as a quaternion if applicable, otherwise NULL. */
+	/** Attacker player camera's world rotation as a quaternion if applicable, otherwise NULL. */
 	EOS_AntiCheatCommon_Quat* AttackerPlayerViewRotation;
 	/**
 	 * True if the damage was applied instantly at the time of attack from the game
@@ -502,6 +527,8 @@ EOS_STRUCT(EOS_AntiCheatCommon_LogPlayerTakeDamageOptions, (
 	uint32_t TimeSincePlayerUseWeaponMs;
 	/** World position where damage hit the victim as a 3D vector if available, otherwise NULL */
 	EOS_AntiCheatCommon_Vec3f* DamagePosition;
+	/** Attacker player camera's world position as a 3D vector if applicable, otherwise NULL */
+	EOS_AntiCheatCommon_Vec3f* AttackerPlayerViewPosition;
 ));
 
 #pragma pack(pop)

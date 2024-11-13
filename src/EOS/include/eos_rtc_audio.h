@@ -95,17 +95,21 @@ EOS_DECLARE_FUNC(void) EOS_RTCAudio_UpdateReceivingVolume(EOS_HRTCAudio Handle, 
 EOS_DECLARE_FUNC(void) EOS_RTCAudio_UpdateParticipantVolume(EOS_HRTCAudio Handle, const EOS_RTCAudio_UpdateParticipantVolumeOptions* Options, void* ClientData, const EOS_RTCAudio_OnUpdateParticipantVolumeCallback CompletionDelegate);
 
 /**
- * Register to receive notifications when a room participant audio status is updated (f.e when speaking flag changes).
+ * Register to receive notifications when a room participant audio status is updated (f.e when mute state changes or speaking flag changes).
+ *
+ * The notification is raised when the participant's audio status is updated. In order not to miss any participant status changes, applications need to add the notification before joining a room.
  *
  * If the returned NotificationId is valid, you must call EOS_RTCAudio_RemoveNotifyParticipantUpdated when you no longer wish
  * to have your CompletionDelegate called.
  *
  * @param ClientData Arbitrary data that is passed back in the CompletionDelegate
- * @param CompletionDelegate The callback to be fired when a presence change occurs
+ * @param CompletionDelegate The callback to be fired when a participant changes audio status
  * @return Notification ID representing the registered callback if successful, an invalid NotificationId if not
  *
  * @see EOS_INVALID_NOTIFICATIONID
  * @see EOS_RTCAudio_RemoveNotifyParticipantUpdated
+ * @see EOS_RTCAudio_ParticipantUpdatedCallbackInfo
+ * @see EOS_ERTCAudioStatus
  */
 EOS_DECLARE_FUNC(EOS_NotificationId) EOS_RTCAudio_AddNotifyParticipantUpdated(EOS_HRTCAudio Handle, const EOS_RTCAudio_AddNotifyParticipantUpdatedOptions* Options, void* ClientData, const EOS_RTCAudio_OnParticipantUpdatedCallback CompletionDelegate);
 
@@ -200,8 +204,10 @@ EOS_DECLARE_FUNC(void) EOS_RTCAudio_RemoveNotifyAudioOutputState(EOS_HRTCAudio H
  * If the returned NotificationId is valid, you must call EOS_RTCAudio_RemoveNotifyAudioBeforeSend when you no longer wish to
  * have your CompletionDelegate called.
  *
+ * @note The CompletionDelegate may be called from a thread other than the one from which the SDK is ticking.
+ *
  * @param ClientData Arbitrary data that is passed back in the CompletionDelegate
- * @param CompletionDelegate The callback to be fired when a presence change occurs
+ * @param CompletionDelegate The callback to be fired when local audio buffers are about to be encoded and sent
  * @return Notification ID representing the registered callback if successful, an invalid NotificationId if not
  *
  * @see EOS_INVALID_NOTIFICATIONID
@@ -224,8 +230,10 @@ EOS_DECLARE_FUNC(void) EOS_RTCAudio_RemoveNotifyAudioBeforeSend(EOS_HRTCAudio Ha
  * If the returned NotificationId is valid, you must call EOS_RTCAudio_RemoveNotifyAudioBeforeRender when you no longer wish to
  * have your CompletionDelegate called.
  *
+ * @note The CompletionDelegate may be called from a thread other than the one from which the SDK is ticking.
+ *
  * @param ClientData Arbitrary data that is passed back in the CompletionDelegate
- * @param CompletionDelegate The callback to be fired when a presence change occurs
+ * @param CompletionDelegate The callback to be fired when remote audio buffers are about to be rendered
  * @return Notification ID representing the registered callback if successful, an invalid NotificationId if not
  *
  * @see EOS_INVALID_NOTIFICATIONID

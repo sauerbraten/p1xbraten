@@ -5,7 +5,7 @@
 
 #pragma pack(push, 8)
 
-EXTERN_C typedef struct EOS_ConnectHandle* EOS_HConnect;
+EOS_EXTERN_C typedef struct EOS_ConnectHandle* EOS_HConnect;
 
 /** Max length of an external account ID in string form */
 #define EOS_CONNECT_EXTERNAL_ACCOUNT_ID_MAX_LENGTH 256
@@ -109,6 +109,39 @@ EOS_STRUCT(EOS_Connect_LoginCallbackInfo, (
  * @param Data A EOS_Connect_LoginCallbackInfo containing the output information and result.
  */
 EOS_DECLARE_CALLBACK(EOS_Connect_OnLoginCallback, const EOS_Connect_LoginCallbackInfo* Data);
+
+/** The most recent version of the EOS_Connect_Logout API. */
+#define EOS_CONNECT_LOGOUT_API_LATEST 1
+
+/** Input parameters for the EOS_Connect_Logout API */
+EOS_STRUCT(EOS_Connect_LogoutOptions, (
+	/** API Version: Set this to EOS_CONNECT_LOGOUT_API_LATEST. */
+	int32_t ApiVersion;
+
+	/** The Product User ID of the player to logout */
+	EOS_ProductUserId LocalUserId;
+));
+
+/**
+ * Output parameters for the EOS_Connect_Logout function.
+ */
+EOS_STRUCT(EOS_Connect_LogoutCallbackInfo, (
+	/** The EOS_EResult code for the operation. EOS_Success indicates that the operation succeeded; other codes indicate errors. */
+	EOS_EResult ResultCode;
+
+	/** Context that was passed into EOS_Connect_Logout. */
+	void* ClientData;
+
+	/** The Product User ID of the player that is being logged out. */
+	EOS_ProductUserId LocalUserId;
+));
+
+/**
+ * Function prototype definition for callbacks passed to EOS_Connect_Logout
+ * 
+ * @param Data A EOS_Connect_LogoutCallbackInfo containing the result.
+ */
+EOS_DECLARE_CALLBACK(EOS_Connect_OnLogoutCallback, const EOS_Connect_LogoutCallbackInfo* Data);
 
 /** The most recent version of the EOS_Connect_CreateUser API. */
 #define EOS_CONNECT_CREATEUSER_API_LATEST 1

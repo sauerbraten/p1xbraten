@@ -6,7 +6,7 @@
 
 #pragma pack(push, 8)
 
-EXTERN_C typedef struct EOS_AchievementsHandle* EOS_HAchievements;
+EOS_EXTERN_C typedef struct EOS_AchievementsHandle* EOS_HAchievements;
 
 /** The most recent version of the EOS_Achievements_QueryDefinitions struct. */
 #define EOS_ACHIEVEMENTS_QUERYDEFINITIONS_API_LATEST 3
@@ -304,8 +304,10 @@ EOS_STRUCT(EOS_Achievements_OnQueryPlayerAchievementsCompleteCallbackInfo, (
 	EOS_EResult ResultCode;
 	/** Context that was passed into EOS_Achievements_QueryPlayerAchievements. */
 	void* ClientData;
-	/** The Product User ID of the user who initiated this request. */
-	EOS_ProductUserId UserId;
+	/** The Product User ID whose achievements were retrieved. */
+	EOS_ProductUserId TargetUserId;
+	/** The Product User ID of the user who initiated this request. For a Dedicated Server this should be null. */
+	EOS_ProductUserId LocalUserId;
 ));
 
 /**

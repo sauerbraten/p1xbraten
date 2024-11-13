@@ -93,13 +93,16 @@ EOS_STRUCT(EOS_IntegratedPlatform_Options, (
 	const void* InitOptions;
 ));
 
-#define EOS_INTEGRATEDPLATFORM_STEAM_OPTIONS_API_LATEST 2
+#define EOS_INTEGRATEDPLATFORM_STEAM_OPTIONS_API_LATEST 3
+
+#define EOS_INTEGRATEDPLATFORM_STEAM_MAX_STEAMAPIINTERFACEVERSIONSARRAY_SIZE 4096
 
 /**
  * Required initialization options to use with EOS_IntegratedPlatform_Options for Steam.
  * Steamworks API needs to be at least v1.13
  * Steam Sanitization requires at least v1.45
- *
+ * Starting Steamworks v1.58a onwards, SteamApiInterfaceVersionsArray is required when EOS_IPMF_LibraryManagedBySDK is set.
+ * 
  * @see EOS_IntegratedPlatform_Options
  */
 EOS_STRUCT(EOS_IntegratedPlatform_Steam_Options, (
@@ -129,9 +132,50 @@ EOS_STRUCT(EOS_IntegratedPlatform_Steam_Options, (
 	/**
 	 * Used to specify the minor version of the Steam SDK your game is compiled against, e.g.:
 	 *
-	 * Options.SteamMinorVersion = 57;
+	 * Options.SteamMinorVersion = 58;
 	 */
 	uint32_t SteamMinorVersion;
+
+	/**
+	 * A pointer to a series of null terminated steam interface version names supported by the current steam dll. 
+	 * 
+	 * This field is only required when the Integrated Platform Management flags has EOS_IPMF_LibraryManagedBySDK set. Else must be set to NULL.
+	 * 
+	 * Starting v1.58 the Steam initialization API requires this new field during initialization for version check validations.
+	 *
+	 * Note: The pointer must be valid until after the execution of the EOS_IntegratedPlatformOptionsContainer_Add method.
+	 *
+	 * This value must be constructed from the corresponding steam_api.h header of the steam dll version that is shipped with the game.
+	 * In the steam_api.h header, look for SteamAPI_InitEx() and copy the value of pszInternalCheckInterfaceVersions as it is.
+	 * 
+	 * For example in v1.58a its this:
+	 * 	const char SteamInterfaceVersionsArray[] = 
+	 *		STEAMUTILS_INTERFACE_VERSION "\0"
+	 *		STEAMNETWORKINGUTILS_INTERFACE_VERSION "\0"
+	 *		...
+	 *		STEAMUSER_INTERFACE_VERSION "\0"
+	 *		STEAMVIDEO_INTERFACE_VERSION "\0"
+	 *      "\0";
+	 */
+	const char* SteamApiInterfaceVersionsArray;
+
+	/**
+	 * Size of the SteamApiInterfaceVersionsArray in bytes. Cannot exceed EOS_INTEGRATEDPLATFORM_STEAM_MAX_STEAMAPIINTERFACEVERSIONSARRAY_SIZE.
+	 * 
+	 * This field is only required when the Integrated Platform Management flags has EOS_IPMF_LibraryManagedBySDK set. Else must be set to 0.
+	 *
+	 * Note: Since SteamInterfaceVersionsArray contains a series of null terminated strings, please ensure that strlen() is NOT used to calculate this field.
+	 * For instance, you can use the following to get the array length:
+	 *  const char SteamInterfaceVersionsArray[] = 
+	 *      STEAMUTILS_INTERFACE_VERSION "\0"
+	 *		STEAMNETWORKINGUTILS_INTERFACE_VERSION "\0"
+	 *      ...
+	 *		STEAMVIDEO_INTERFACE_VERSION "\0"
+	 *      "\0";
+	 * 
+	 *  uint32_t SteamApiInterfaceVersionsArrayBytes = sizeof(SteamApiInterfaceVersionsArray) // Note: sizeof() takes into account the last "\0" of the string literal;
+	 */
+	uint32_t SteamApiInterfaceVersionsArrayBytes;
 ));
 
 #define EOS_INTEGRATEDPLATFORM_CREATEINTEGRATEDPLATFORMOPTIONSCONTAINER_API_LATEST 1

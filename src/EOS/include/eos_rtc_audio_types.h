@@ -6,7 +6,7 @@
 
 #pragma pack(push, 8)
 
-EXTERN_C typedef struct EOS_RTCAudioHandle* EOS_HRTCAudio;
+EOS_EXTERN_C typedef struct EOS_RTCAudioHandle* EOS_HRTCAudio;
 
 /**
  * An enumeration of the different audio channel statuses.
@@ -84,9 +84,9 @@ EOS_DECLARE_CALLBACK(EOS_RTCAudio_OnAudioDevicesChangedCallback, const EOS_RTCAu
  * An enumeration of the different audio input device statuses.
  */
 EOS_ENUM(EOS_ERTCAudioInputStatus,
-	/** The device is not in used right now (e.g: you are alone in the room). In such cases, the hardware resources are not allocated. */
+	/** The device is not in use right now (e.g., you are alone in the room). In such cases, the hardware resources are not allocated. */
 	EOS_RTCAIS_Idle = 0,
-	/** The device is being used and capturing audio */
+	/** The device is being used and capturing audio. */
 	EOS_RTCAIS_Recording = 1,
 	/**
 	 * The SDK is in a recording state, but actually capturing silence because the device is exclusively being used by the platform at the moment.
@@ -94,11 +94,11 @@ EOS_ENUM(EOS_ERTCAudioInputStatus,
 	 */
 	EOS_RTCAIS_RecordingSilent = 2,
 	/**
-	 * The SDK is in a recording state, but actually capturing silence because the device is disconnected (e.g: the microphone is not plugged in).
+	 * The SDK is in a recording state, but actually capturing silence because the device is disconnected (e.g., the microphone is not plugged in).
 	 * This only applies to certain platforms.
 	 */
 	EOS_RTCAIS_RecordingDisconnected = 3,
-	/** Something failed while trying to use the device */
+	/** Something failed while trying to use the device. */
 	EOS_RTCAIS_Failed = 4
 );
 

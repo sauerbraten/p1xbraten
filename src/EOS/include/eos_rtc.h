@@ -3,6 +3,7 @@
 
 #include "eos_rtc_types.h"
 #include "eos_rtc_audio_types.h"
+#include "eos_rtc_data_types.h"
 
 /**
  * The RTC Interface is used to manage joining and leaving rooms.
@@ -18,6 +19,15 @@
  * @see eos_rtc_audio_types.h
  */
 EOS_DECLARE_FUNC(EOS_HRTCAudio) EOS_RTC_GetAudioInterface(EOS_HRTC Handle);
+
+/**
+ * Get a handle to the Data interface
+ * @return EOS_HRTCData handle
+ *
+ * @see eos_rtc_data.h
+ * @see eos_rtc_data_types.h
+ */
+EOS_DECLARE_FUNC(EOS_HRTCData) EOS_RTC_GetDataInterface(EOS_HRTC Handle);
 
 /**
  * Use this function to join a room.
@@ -69,7 +79,7 @@ EOS_DECLARE_FUNC(void) EOS_RTC_BlockParticipant(EOS_HRTC Handle, const EOS_RTC_B
  * status of a Lobby-managed RTC room, use the EOS_Lobby_AddNotifyRTCRoomConnectionChanged function instead.
  *
  * @param ClientData Arbitrary data that is passed back in the CompletionDelegate
- * @param CompletionDelegate The callback to be fired when a presence change occurs
+ * @param CompletionDelegate The callback to be fired when a participant is disconnected from the room
  * @return Notification ID representing the registered callback if successful, an invalid NotificationId if not
  *
  * @see EOS_INVALID_NOTIFICATIONID
@@ -103,7 +113,7 @@ EOS_DECLARE_FUNC(void) EOS_RTC_RemoveNotifyDisconnected(EOS_HRTC Handle, EOS_Not
  * ParticipantStatus set to EOS_RTCPS_Joined and bParticipantInBlocklist set to false.
  *
  * @param ClientData Arbitrary data that is passed back in the CompletionDelegate
- * @param CompletionDelegate The callback to be fired when a presence change occurs
+ * @param CompletionDelegate The callback to be fired when a participant changes status
  * @return Notification ID representing the registered callback if successful, an invalid NotificationId if not
  *
  * @note This notification is also raised when the local user joins the room, but NOT when the local user leaves the room.

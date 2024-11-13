@@ -6,7 +6,7 @@
 
 #pragma pack(push, 8)
 
-EXTERN_C typedef struct EOS_StatsHandle* EOS_HStats;
+EOS_EXTERN_C typedef struct EOS_StatsHandle* EOS_HStats;
 
 /** The most recent version of the EOS_Stats_IngestData struct. */
 #define EOS_STATS_INGESTDATA_API_LATEST 1
@@ -47,6 +47,12 @@ EOS_STRUCT(EOS_Stats_IngestStatOptions, (
 
 /**
  * Data containing the result information for an ingest stat request.
+ * 
+ * NOTE: A result code of EOS_Success indicates the ingest request 
+ * reached the server successfully, but does not guarantee successful processing. 
+ * For example, if an incorrect StatName value is provided in the ingest call, 
+ * processing may still fail.
+ * 
  */
 EOS_STRUCT(EOS_Stats_IngestStatCompleteCallbackInfo, (
 	/** Result code for the operation. EOS_Success is returned for a successful request, other codes indicate an error. */

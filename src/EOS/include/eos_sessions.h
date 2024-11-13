@@ -232,7 +232,7 @@ EOS_DECLARE_FUNC(EOS_EResult) EOS_Sessions_CopyActiveSessionHandle(EOS_HSessions
 
 /**
  * Register to receive session invites.
- * @note must call RemoveNotifySessionInviteReceived to remove the notification
+ * @note If the returned NotificationId is valid, you must call EOS_Sessions_RemoveNotifySessionInviteReceived when you no longer wish to have your NotificationHandler called.
  *
  * @param Options Structure containing information about the session invite notification
  * @param ClientData Arbitrary data that is passed back to you in the CompletionDelegate
@@ -251,7 +251,7 @@ EOS_DECLARE_FUNC(void) EOS_Sessions_RemoveNotifySessionInviteReceived(EOS_HSessi
 
 /**
  * Register to receive notifications when a user accepts a session invite via the social overlay.
- * @note must call RemoveNotifySessionInviteAccepted to remove the notification
+ * @note If the returned NotificationId is valid, you must call EOS_Sessions_RemoveNotifySessionInviteAccepted when you no longer wish to have your NotificationHandler called.
  *
  * @param Options Structure containing information about the request.
  * @param ClientData Arbitrary data that is passed back to you in the CompletionDelegate.
@@ -270,7 +270,7 @@ EOS_DECLARE_FUNC(void) EOS_Sessions_RemoveNotifySessionInviteAccepted(EOS_HSessi
 
 /**
  * Register to receive notifications when a user rejects a session invite.
- * @note must call RemoveNotifySessionInviteRejected to remove the notification
+ * @note If the returned NotificationId is valid, you must call EOS_Sessions_RemoveNotifySessionInviteRejected when you no longer wish to have your NotificationHandler called.
  *
  * @param Options Structure containing information about the request.
  * @param ClientData Arbitrary data that is passed back to you in the CompletionDelegate.
@@ -289,7 +289,7 @@ EOS_DECLARE_FUNC(void) EOS_Sessions_RemoveNotifySessionInviteRejected(EOS_HSessi
 
 /**
  * Register to receive notifications when a user accepts a session join game via the social overlay.
- * @note must call RemoveNotifyJoinSessionAccepted to remove the notification
+ * @note If the returned NotificationId is valid, you must call EOS_Sessions_RemoveNotifyJoinSessionAccepted when you no longer wish to have your NotificationHandler called
  *
  * @param Options Structure containing information about the request.
  * @param ClientData Arbitrary data that is passed back to you in the CompletionDelegate.
@@ -385,7 +385,7 @@ EOS_DECLARE_FUNC(EOS_EResult) EOS_Sessions_DumpSessionState(EOS_HSessions Handle
 /**
  * Register to receive notifications about leave session requests performed by local user via the overlay.
  * When user requests to leave the session in the social overlay, the SDK does not automatically leave the session, it is up to the game to perform any necessary cleanup and call the EOS_Sessions_DestroySession method using the SessionName sent in the notification function.
- * @note must call EOS_Sessions_RemoveNotifyLeaveSessionRequested to remove the notification.
+ * @note If the returned NotificationId is valid, you must call EOS_Sessions_RemoveNotifyLeaveSessionRequested when you no longer wish to have your NotificationHandler called.
  *
  * @param Options Structure containing information about the request.
  * @param ClientData Arbitrary data that is passed back to you in the CompletionDelegate.
@@ -408,7 +408,7 @@ EOS_DECLARE_FUNC(void) EOS_Sessions_RemoveNotifyLeaveSessionRequested(EOS_HSessi
  * then use the state of EOS_IPMF_PreferEOSIdentity and EOS_IPMF_PreferIntegratedIdentity to determine when the NotificationFn is
  * called.
  *
- * @note must call EOS_Sessions_RemoveNotifySendSessionNativeInviteRequested to remove the notification.
+ * @note If the returned NotificationId is valid, you must call EOS_Sessions_RemoveNotifySendSessionNativeInviteRequested when you no longer wish to have your NotificationHandler called.
  *
  * @param Options Structure containing information about the request.
  * @param ClientData Arbitrary data that is passed back to you in the CompletionDelegate.

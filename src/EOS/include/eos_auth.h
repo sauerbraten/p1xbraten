@@ -192,7 +192,7 @@ EOS_DECLARE_FUNC(EOS_EpicAccountId) EOS_Auth_GetMergedAccountByIndex(EOS_HAuth H
 
 /**
  * Register to receive login status updates.
- * @note must call RemoveNotifyLoginStatusChanged to remove the notification
+ * @note If the returned NotificationId is valid, you must call EOS_Auth_RemoveNotifyLoginStatusChanged when you no longer wish to have your NotificationHandler called.
  *
  * @param Options structure containing the api version of AddNotifyLoginStatusChanged to use
  * @param ClientData arbitrary data that is passed back to you in the callback

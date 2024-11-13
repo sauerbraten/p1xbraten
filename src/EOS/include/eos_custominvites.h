@@ -37,7 +37,7 @@ EOS_DECLARE_FUNC(void) EOS_CustomInvites_SendCustomInvite(EOS_HCustomInvites Han
 
 /**
  * Register to receive notifications when a Custom Invite for any logged in local user is received
- * @note must call EOS_CustomInvites_RemoveNotifyCustomInviteReceived to remove the notification
+ * @note If the returned NotificationId is valid, you must call EOS_CustomInvites_RemoveNotifyCustomInviteReceived when you no longer wish to have your NotificationHandler called.
  *
  * @param Options Structure containing information about the request.
  * @param ClientData Arbitrary data that is passed back to you in the CompletionDelegate.
@@ -57,7 +57,7 @@ EOS_DECLARE_FUNC(void) EOS_CustomInvites_RemoveNotifyCustomInviteReceived(EOS_HC
 /**
  * Register to receive notifications when a Custom Invite for any logged in local user is accepted via the Social Overlay
  * Invites accepted in this way still need to have FinalizeInvite called on them after you have finished processing the invite accept (e.g. after joining the game)
- * @note must call EOS_CustomInvites_RemoveNotifyCustomInviteAccepted to remove the notification
+ * @note If the returned NotificationId is valid, you must call EOS_CustomInvites_RemoveNotifyCustomInviteAccepted when you no longer wish to have your NotificationHandler called.
  *
  * @param Options Structure containing information about the request.
  * @param ClientData Arbitrary data that is passed back to you in the CompletionDelegate.
@@ -77,7 +77,7 @@ EOS_DECLARE_FUNC(void) EOS_CustomInvites_RemoveNotifyCustomInviteAccepted(EOS_HC
 /**
  * Register to receive notifications when a Custom Invite for any logged in local user is rejected via the Social Overlay
  * Invites rejected in this way do not need to have FinalizeInvite called on them, it is called automatically internally by the SDK.
- * @note must call EOS_CustomInvites_RemoveNotifyCustomInviteRejected to remove the notification
+ * @note If the returned NotificationId is valid, you must call EOS_CustomInvites_RemoveNotifyCustomInviteRejected when you no longer wish to have your NotificationHandler called.
  *
  * @param Options Structure containing information about the request.
  * @param ClientData Arbitrary data that is passed back to you in the CompletionDelegate.
@@ -119,7 +119,7 @@ EOS_DECLARE_FUNC(void) EOS_CustomInvites_SendRequestToJoin(EOS_HCustomInvites Ha
 /**
  * Register to receive notifications when a request to join is responded to by a target user. Note that there is no guarantee a response will be received for every request to join.
  * A player is free to ignore a Request to Join until it expires at which point it will be deleted without sending a response.
- * @note must call EOS_CustomInvites_RemoveNotifyRequestToJoinResponseReceived to remove the notification
+ * @note If the returned NotificationId is valid, you must call EOS_CustomInvites_RemoveNotifyRequestToJoinResponseReceived when you no longer wish to have your NotificationHandler called.
  *
  * @param Options Structure containing information about the request.
  * @param ClientData Arbitrary data that is passed back to you in the CompletionDelegate.
@@ -138,7 +138,7 @@ EOS_DECLARE_FUNC(void) EOS_CustomInvites_RemoveNotifyRequestToJoinResponseReceiv
 
 /**
  * Register to receive notifications when a request to join is received for a local user
- * @note must call EOS_CustomInvites_RemoveNotifyRequestToJoinReceived to remove the notification
+ * @note If the returned NotificationId is valid, you must call EOS_CustomInvites_RemoveNotifyRequestToJoinReceived when you no longer wish to have your NotificationHandler called.
  *
  * @param Options Structure containing information about the request.
  * @param ClientData Arbitrary data that is passed back to you in the CompletionDelegate.
@@ -161,7 +161,7 @@ EOS_DECLARE_FUNC(void) EOS_CustomInvites_RemoveNotifyRequestToJoinReceived(EOS_H
  * then use the state of EOS_IPMF_PreferEOSIdentity and EOS_IPMF_PreferIntegratedIdentity to determine when the NotificationFn is
  * called.
  *
- * @note must call EOS_CustomInvites_RemoveNotifySendCustomNativeInviteRequested to remove the notification.
+ * @note If the returned NotificationId is valid, you must call EOS_CustomInvites_RemoveNotifySendCustomNativeInviteRequested when you no longer wish to have your NotificationHandler called.
  *
  * @param Options Structure containing information about the request.
  * @param ClientData Arbitrary data that is passed back to you in the CompletionDelegate.
@@ -184,7 +184,7 @@ EOS_DECLARE_FUNC(void) EOS_CustomInvites_RemoveNotifySendCustomNativeInviteReque
 
 /**
  * Register to receive notifications when a Request to Join for any logged in local user is accepted via the Social Overlay
- * @note must call EOS_CustomInvites_RemoveNotifyRequestToJoinAccepted to remove the notification
+ * @note If the returned NotificationId is valid, you must call EOS_CustomInvites_RemoveNotifyRequestToJoinAccepted when you no longer wish to have your NotificationHandler called.
  *
  * @param Options Structure containing information about the request.
  * @param ClientData Arbitrary data that is passed back to you in the CompletionDelegate.
@@ -203,7 +203,7 @@ EOS_DECLARE_FUNC(void) EOS_CustomInvites_RemoveNotifyRequestToJoinAccepted(EOS_H
 
 /**
  * Register to receive notifications when a Request to Join for any logged in local user is rejected via the Social Overlay
- * @note must call EOS_CustomInvites_RemoveNotifyRequestToJoinRejected to remove the notification
+ * @note If the returned NotificationId is valid, you must call EOS_CustomInvites_RemoveNotifyRequestToJoinRejected when you no longer wish to have your NotificationHandler called.
  *
  * @param Options Structure containing information about the request.
  * @param ClientData Arbitrary data that is passed back to you in the CompletionDelegate.

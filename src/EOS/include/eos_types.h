@@ -6,7 +6,7 @@
 
 #pragma pack(push, 8)
 
-EXTERN_C typedef struct EOS_PlatformHandle* EOS_HPlatform;
+EOS_EXTERN_C typedef struct EOS_PlatformHandle* EOS_HPlatform;
 
 /** Max length of a client id, not including the terminating null. */
 #define EOS_PLATFORM_CLIENTCREDENTIALS_CLIENTID_MAX_LENGTH 64
@@ -25,8 +25,8 @@ EOS_STRUCT(EOS_Platform_ClientCredentials, (
 /** All background modes supported by the RTC components */
 EOS_ENUM(EOS_ERTCBackgroundMode,
 	/** 
-	 * Upon entering a background application status, all logged in users leave any RTC rooms. All subsequent attemps to join any RTC rooms will be rejected.
-	 * Upon returning to a foreground application status, all subsequent attemps to join any RTC rooms will be allowed.
+	 * Upon entering a background application status, all logged in users leave any RTC rooms. All subsequent attempts to join any RTC rooms will be rejected.
+	 * Upon returning to a foreground application status, all subsequent attempts to join any RTC rooms will be allowed.
 	 */
 	EOS_RTCBM_LeaveRooms = 0,
 	/** 
@@ -59,7 +59,7 @@ EOS_STRUCT(EOS_Platform_RTCOptions, (
 #define EOS_LOCALECODE_MAX_LENGTH 9
 #define EOS_LOCALECODE_MAX_BUFFER_LEN (EOS_LOCALECODE_MAX_LENGTH + 1)
 
-#define EOS_PLATFORM_OPTIONS_API_LATEST 13
+#define EOS_PLATFORM_OPTIONS_API_LATEST 14
 
 /** Platform Creation Flags used in EOS_Platform_Create */
 
@@ -133,6 +133,18 @@ EOS_STRUCT(EOS_Platform_Options, (
 	EOS_HIntegratedPlatformOptionsContainer IntegratedPlatformOptionsContainerHandle;
 	/** Pointer to EOS_<Platform>_SystemSpecificOptions. This structure will be located in <Platform>/eos_<Platform>.h */
 	const void* SystemSpecificOptions;
+	/** 
+	 * Number of seconds for a task to wait for the network to become available before timing out with an EOS_TimedOut error.
+	 * This timeout period applies when the network status is not EOS_NS_Online. Tasks that need the network will queue for up to
+	 * this timeout until EOS_Platform_SetNetworkStatus is used to set the network status to online.
+	 * 
+	 * Pass a null pointer to use the default. 
+	 * Otherwise, pass a pointer to a double containing the number of seconds for tasks that are waiting for network to time out.
+	 * 
+	 * @see EOS_Platform_SetNetworkStatus
+	 * @see EOS_ENetworkStatus
+	 */
+	double* TaskNetworkTimeoutSeconds;
 ));
 
 /**
