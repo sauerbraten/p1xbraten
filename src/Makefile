@@ -180,7 +180,8 @@ SERVER_OBJS= \
 	p1xbraten/demo_info_message-standalone.o \
 	p1xbraten/managed_games-standalone.o \
 	p1xbraten/proxy_real_ip-standalone.o \
-	p1xbraten/remote_commands-standalone.o
+	p1xbraten/remote_commands-standalone.o \
+	p1xbraten/version-standalone.o
 ifdef ANTICHEAT
 	override SERVER_OBJS+= anticheat/anticheat-standalone.o
 endif
@@ -558,12 +559,9 @@ p1xbraten/serverbrowser.o: shared/igame.h fpsgame/ai.h
 p1xbraten/serverbrowser.o: p1xbraten/serverbrowser.h engine/engine.h
 p1xbraten/serverbrowser.o: engine/world.h engine/octa.h engine/lightmap.h
 p1xbraten/serverbrowser.o: engine/bih.h engine/texture.h engine/model.h
-p1xbraten/version.o: engine/engine.h shared/cube.h shared/tools.h
-p1xbraten/version.o: shared/geom.h shared/ents.h shared/command.h
-p1xbraten/version.o: shared/glexts.h shared/glemu.h shared/iengine.h
-p1xbraten/version.o: shared/igame.h engine/world.h engine/octa.h
-p1xbraten/version.o: engine/lightmap.h engine/bih.h engine/texture.h
-p1xbraten/version.o: engine/model.h
+p1xbraten/version.o: shared/cube.h shared/tools.h shared/geom.h shared/ents.h
+p1xbraten/version.o: shared/command.h shared/glexts.h shared/glemu.h
+p1xbraten/version.o: shared/iengine.h shared/igame.h
 p1xbraten/weaponstats.o: fpsgame/game.h shared/cube.h shared/tools.h
 p1xbraten/weaponstats.o: shared/geom.h shared/ents.h shared/command.h
 p1xbraten/weaponstats.o: shared/glexts.h shared/glemu.h shared/iengine.h
@@ -619,3 +617,6 @@ p1xbraten/remote_commands-standalone.o: shared/tools.h shared/geom.h
 p1xbraten/remote_commands-standalone.o: shared/ents.h shared/command.h
 p1xbraten/remote_commands-standalone.o: shared/iengine.h shared/igame.h
 p1xbraten/remote_commands-standalone.o: fpsgame/ai.h
+p1xbraten/version-standalone.o: shared/cube.h shared/tools.h shared/geom.h
+p1xbraten/version-standalone.o: shared/ents.h shared/command.h
+p1xbraten/version-standalone.o: shared/iengine.h shared/igame.h

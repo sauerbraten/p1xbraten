@@ -979,6 +979,7 @@ void initserver(bool listen, bool dedicated)
 #ifdef WIN32
         setupwindow("Cube 2: Sauerbraten server");
 #endif
+        migratep1xbraten();
     }
     
     execfile("server-init.cfg", false);

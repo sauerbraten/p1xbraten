@@ -1173,10 +1173,10 @@ diff --git src/shared/iengine.h src/shared/iengine.h
 index 7373c6f..c50bf24 100644
 --- src/shared/iengine.h
 +++ src/shared/iengine.h
-@@ -589,3 +589,7 @@ extern void g3d_resetcursor();
- extern void g3d_limitscale(float scale);
-
+@@ -594,3 +594,7 @@ extern void g3d_resetcursor();
  extern char *p1xbratenversion;
+ extern int naturalsort(const char *a, const char *b); // from command.cpp
+ extern void migratep1xbraten();
 +
 +#ifdef ANTICHEAT
 +extern int anticheatenabled; // toggled by -e CLI flag

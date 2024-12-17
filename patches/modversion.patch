@@ -1,29 +1,7 @@
-Index: src/engine/engine.h
-===================================================================
---- src/engine/engine.h	(revision 6502)
-+++ src/engine/engine.h	(working copy)
-@@ -407,6 +407,8 @@
- extern void checksleep(int millis);
- extern void clearsleep(bool clearoverrides = true);
-
-+extern int naturalsort(const char *a, const char *b);
-+
- // console
- extern void processtextinput(const char *str, int len);
- extern void processkey(int code, bool isdown, int modstate = 0);
-@@ -431,6 +433,8 @@
- };
- extern int initing, numcpus;
-
-+extern void migratep1xbraten();
-+
- enum
- {
-     CHANGE_GFX   = 1<<0,
-Index: src/engine/main.cpp
-===================================================================
---- src/engine/main.cpp	(revision 6502)
-+++ src/engine/main.cpp	(working copy)
+diff --git src/engine/main.cpp src/engine/main.cpp
+index d79944d..9811024 100644
+--- src/engine/main.cpp
++++ src/engine/main.cpp
 @@ -1330,6 +1330,8 @@
 
      identflags |= IDF_PERSIST;
@@ -33,12 +11,24 @@ Index: src/engine/main.cpp
      logoutf("init: mainloop");
 
      if(execfile("once.cfg", false)) remove(findfile("once.cfg", "rb"));
+diff --git src/engine/server.cpp src/engine/server.cpp
+index d79944d..9811024 100644
+--- src/engine/server.cpp
++++ src/engine/server.cpp
+@@ -979,6 +979,7 @@ void initserver(bool listen, bool dedicated)
+ #ifdef WIN32
+         setupwindow("Cube 2: Sauerbraten server");
+ #endif
++        migratep1xbraten();
+     }
+
+     execfile("server-init.cfg", false);
 Index: src/p1xbraten/version.cpp
 ===================================================================
 --- src/p1xbraten/version.cpp	(nonexistent)
 +++ src/p1xbraten/version.cpp	(working copy)
 @@ -0,0 +1,22 @@
-+#include "engine.h"
++#include "cube.h"
 +
 +MOD(SVARP, p1xbratenversion, "");
 +
@@ -161,11 +151,14 @@ Index: src/shared/iengine.h
 ===================================================================
 --- src/shared/iengine.h	(revision 6502)
 +++ src/shared/iengine.h	(working copy)
-@@ -581,3 +581,4 @@
+@@ -581,3 +581,7 @@
  extern void g3d_resetcursor();
  extern void g3d_limitscale(float scale);
 
++// p1xbraten
 +extern char *p1xbratenversion;
++extern int naturalsort(const char *a, const char *b); // from command.cpp
++extern void migratep1xbraten();
 Index: src/shared/tools.h
 ===================================================================
 --- src/shared/tools.h	(revision 6502)
