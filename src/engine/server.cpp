@@ -46,7 +46,7 @@ void logoutf(const char *fmt, ...)
 }
 
 time_t walltime = 0;
-MOD(VARP, logtime, 0, 1, 1);
+MOD(VARP, logtime, 0, 0, 1);
 
 static void writelog(FILE *file, const char *buf)
 {
