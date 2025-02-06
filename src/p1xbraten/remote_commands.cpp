@@ -7,6 +7,7 @@ namespace server {
         if(sender->privilege<PRIV_ADMIN) return;
         conoutf("running script '%s' from %s (cn %d)", script, sender->name, sender->clientnum);
         char *result = executestr(script);
+        if(!result) return;
         defformatstring(msg, "'%s' => %s", script, result ? result : "<null>");
         sendf(sender->clientnum, 1, "ris", N_SERVMSG, msg);
     }
@@ -30,4 +31,5 @@ namespace server {
         return false;
     }
 
+    COMMAND(sendservmsg, "s");
 }

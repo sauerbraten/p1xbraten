@@ -391,6 +391,7 @@ Improves logging when running a dedicated server:
 - adds the `#specmute` remote variable: when 1, spectators can't send any chat messages (requires auth or admin)
 - adds the `#tourney [MM:[SS]]` remote command, which is the same as `#competitive`, but also enables specmute for the next match
 - adds the (admin-only) `#do` remote command to evaluate arbitrary cubescript on the server, for example `#do persistteams 1`, `#do servermotd "happy fragging"` or `#do concat $serverauth`
+- adds the server-side `sendservmsg` cubescript command, so admins can broadcast something using `#do sendservmsg foo`
 
 ### [autoauthdomains.patch](./patches/autoauthdomains.patch)
 

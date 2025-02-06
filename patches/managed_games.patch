@@ -681,7 +681,7 @@ new file mode 100644
 index 0000000..e71f710
 --- /dev/null
 +++ src/p1xbraten/remote_commands.cpp
-@@ -0,0 +1,28 @@
+@@ -0,0 +1,30 @@
 +#include "game.h"
 +
 +namespace server {
@@ -691,6 +691,7 @@ index 0000000..e71f710
 +        if(sender->privilege<PRIV_ADMIN) return;
 +        conoutf("running script '%s' from %s (cn %d)", script, sender->name, sender->clientnum);
 +        char *result = executestr(script);
++        if(!result) return;
 +        defformatstring(msg, "'%s' => %s", script, result ? result : "<null>");
 +        sendf(sender->clientnum, 1, "ris", N_SERVMSG, msg);
 +    }
@@ -709,4 +710,5 @@ index 0000000..e71f710
 +        return false;
 +    }
 +
++    COMMAND(sendservmsg, "s");
 +}
