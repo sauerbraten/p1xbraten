@@ -10,20 +10,13 @@ ifndef TARGET
 endif
 
 ifeq (,$(findstring $(HOSTOS),$(TARGET)))
-	USEZIG=1
-endif
-
-ifdef USEZIG
-	CC=zig cc
-	CXX=zig c++
+	CC=zig cc --target=$(TARGET)
+	CXX=zig c++ --target=$(TARGET)
 	AR=zig ar
 else
 	CC=clang
 	CXX=clang++
 endif
-
-CC+= --target=$(TARGET)
-CXX+= --target=$(TARGET)
 
 CFLAGS=
 CXXFLAGS= -fomit-frame-pointer -ffast-math

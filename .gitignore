@@ -2,7 +2,7 @@
 .DS_Store
 
 src/**/*.a
-!src/macos/lib/libenet.a
+src/**/*.lib
 src/**/*.gch
 src/**/*.o
 src/**/*.orig
