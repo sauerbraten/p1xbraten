@@ -4,10 +4,10 @@ SHELL := /bin/bash
 
 # build install: export DEBUG=1
 build:
-	cd src && make --jobs=8
+	$(MAKE) -C src -j
 
 install:
-	cd src && make --jobs=8 install
+	$(MAKE) -C src -j install
 
 clean:
 	cd src && make clean
