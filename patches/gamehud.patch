@@ -106,6 +106,28 @@ Index: src/fpsgame/client.cpp
      bool isspectator(int cn)
      {
          fpsent *d = getclient(cn);
+Index: src/fpsgame/ctf.h
+===================================================================
+--- src/fpsgame/ctf.h	(revision 6502)
++++ src/fpsgame/ctf.h	(working copy)
+@@ -1267,10 +1267,17 @@
+ 		}
+ 		return false;
+ 	}
++
++    bool hasflag(fpsent *d) {
++        if(!m_ctf || !d) return false;
++        loopv(flags) if(flags[i].owner == d) return true;
++        return false;
++    }
+ };
+
+ extern ctfclientmode ctfmode;
+ ICOMMAND(dropflag, "", (), { ctfmode.trydropflag(); });
++ICOMMAND(hasflag,  "i", (int *cn), intret(ctfmode.hasflag(getclient(*cn))));
+
+ #endif
+
 Index: src/fpsgame/fps.cpp
 ===================================================================
 --- src/fpsgame/fps.cpp	(revision 6496)

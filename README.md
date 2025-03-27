@@ -16,15 +16,12 @@ This repository contains the source for my client mod, as well as the patches ap
   - [hudscore.patch](#hudscorepatch)
   - [serverbrowser.patch](#serverbrowserpatch)
   - [listteams.patch](#listteamspatch)
-  - [tex\_commands.patch](#tex_commandspatch)
+  - [settex.patch](#settexpatch)
   - [decouple\_framedrawing.patch](#decouple_framedrawingpatch)
   - [crosshaircolor.patch](#crosshaircolorpatch)
-  - [zenmode.patch](#zenmodepatch)
   - [gamehud.patch](#gamehudpatch)
-  - [chat\_highlight\_words.patch](#chat_highlight_wordspatch)
   - [modversion.patch](#modversionpatch)
   - [minimizedframes.patch](#minimizedframespatch)
-  - [hasflag.patch](#hasflagpatch)
   - [playerspeed.patch](#playerspeedpatch)
   - [up\_down\_hover.patch](#up_down_hoverpatch)
   - [paused\_spec\_movement.patch](#paused_spec_movementpatch)
@@ -37,15 +34,15 @@ This repository contains the source for my client mod, as well as the patches ap
   - [setfont.patch](#setfontpatch)
   - [fullscreenmonitor.patch](#fullscreenmonitorpatch)
 - [Server Patches](#server-patches)
-  - [authservers.patch](#authserverspatch)
-  - [serverlogging.patch](#serverloggingpatch)
-  - [server\_ogzs.patch](#server_ogzspatch)
-  - [managed\_games.patch](#managed_gamespatch)
-  - [autoauthdomains.patch](#autoauthdomainspatch)
-  - [proxy\_setip.patch](#proxy_setippatch)
+  - [server\_authservers.patch](#server_authserverspatch)
+  - [server\_logging.patch](#server_loggingpatch)
+  - [server\_slim\_ogzs.patch](#server_slim_ogzspatch)
+  - [server\_managed\_games.patch](#server_managed_gamespatch)
+  - [server\_autoauthdomains.patch](#server_autoauthdomainspatch)
+  - [server\_proxy\_setip.patch](#server_proxy_setippatch)
   - [anticheat.patch](#anticheatpatch-1)
-  - [serverbotbalanceearly.patch](#serverbotbalanceearlypatch)
-  - [bans.patch](#banspatch)
+  - [server\_botbalanceearly.patch](#server_botbalanceearlypatch)
+  - [server\_bans.patch](#server_banspatch)
 - [Project Structure](#project-structure)
 - [Building your own binary](#building-your-own-binary)
   - [Build dependencies](#build-dependencies)
@@ -209,7 +206,7 @@ The p1xbraten menu gives you a simple search field on the serverbrowser using th
 
 ![master menu](https://i.imgur.com/doC2IcB.png)
 
-### [tex_commands.patch](./patches/tex_commands.patch)
+### [settex.patch](./patches/settex.patch)
 
 - adds `settex <id>` command to apply a texture by ID
 
@@ -232,26 +229,14 @@ Using `maxfps` and `maxtps`, you can optimize for different goals:
 
 - adds `crosshaircolor` variable to set a base crosshair color (for example, `/crosshaircolor 0 255 0` for pleasant green)
 
-### [zenmode.patch](./patches/zenmode.patch)
-
-- adds `zenmode` variable: if 1, hides non-essential console messages:
-  - server messages
-  - chat and team chat messages from spectators
-  - joins (all), leaves and renames (of spectators)
-
 ### [gamehud.patch](./patches/gamehud.patch)
 
 - properly right-justifies gamehud, wallclock, showfps, and/or showfpsrange lines
 - adds a useful playerlist showing who's alive vs. dead when spectating in the lower right corner
 - adds `isdead <cn>` command to check if a player is currently dead (only works when you are spectating)
+- adds the `hasflag <cn>` command: returns 1 if the specfied player carries a flag
 
 <div align="center"><img alt="gamehud with player state" src="https://i.imgur.com/8kfmhSK.gif" /></div>
-
-### [chat_highlight_words.patch](./patches/chat_highlight_words.patch)
-
-- lets you define words that trigger a sound when they appear in chat or team chat
-- adds `addchathighlightword <word>` command (for example, put `addchathighlightword pix` and `addchathighlightword p1x` into autoexec.cfg to receive a highlight on both spellings)
-- adds `chathighlightsound` variable to set the sound to play (default: `free/itempick`)
 
 ### [modversion.patch](./patches/modversion.patch)
 
@@ -266,10 +251,6 @@ For an overview of who uses p1xbraten, you can run `/showgui p1xbratenusage`.
 ### [minimizedframes.patch](./patches/minimizedframes.patch)
 
 - adds the `minimizedframes` toggle: when 1, frames will always be drawn, even when they would usually be skipped because p1xbraten is minimized
-
-### [hasflag.patch](./patches/hasflag.patch)
-
-- adds the `hasflag <cn>` command: returns 1 if the specfied player carries a flag
 
 ### [playerspeed.patch](./patches/playerspeed.patch)
 
@@ -321,7 +302,7 @@ Also, you can put the following into your autoexec.cfg for cleaner command promp
 bind "SLASH"     [inputcommand "" [$commandbuf] "/" "cx"]
 bind "BACKQUOTE" [inputcommand "" [$commandbuf] "/" "cx"]
 bind "CARET"     [inputcommand "" [$commandbuf] "/" "cx"] // BACKQUOTE on German keyboards
-bind "BACKSLASH" [inputcommand "" [servcmd $commandbuf] "#"] // works for #commands on zeromod, spaghetti, and remod
+bind "BACKSLASH" [inputcommand "" [servcmd $commandbuf] "#"] // works for #commands on zeromod, spaghetti, remod and p1xbraten servers
 bind "HASH"      [inputcommand "" [servcmd $commandbuf] "#"] // only works with German keyboard layout
 ```
 
@@ -356,13 +337,13 @@ Integrates Epic's Online Services SDK and Anti-Cheat framework to provide protec
 
 These are the patches that make p1x.pw different from other servers.
 
-### [authservers.patch](./patches/authservers.patch)
+### [server_authservers.patch](./patches/server_authservers.patch)
 
 - adds `addauthserver <key_domain> <hostname> <port> <privilege>` server command to add an additional auth backend (other than the master server)
 
 For example, you can put `addauthserver "p1x.pw" "p1x.pw" 28787 "m"` into your `server-init.cfg` to allow users registered with my master server to claim auth on your server.
 
-### [serverlogging.patch](./patches/serverlogging.patch)
+### [server_logging.patch](./patches/server_logging.patch)
 
 Improves logging when running a dedicated server:
 
@@ -372,11 +353,11 @@ Improves logging when running a dedicated server:
 - logs map changes
 - logs all privilege changes
 
-### [server_ogzs.patch](./patches/server_ogzs.patch)
+### [server_slim_ogzs.patch](./patches/server_slim_ogzs.patch)
 
 - allows using slim .ogz files (see https://github.com/sauerbraten/genserverogz) on the server without getting `checkmaps` errors
 
-### [managed_games.patch](./patches/managed_games.patch)
+### [server_managed_games.patch](./patches/server_managed_games.patch)
 
 - adds the `#competitive [MM[:SS]]` remote command, that will (for the next match only):
   - enable server demo recording and request client demo recording from p1xbraten users
@@ -394,11 +375,11 @@ Improves logging when running a dedicated server:
 - adds the (admin-only) `#do` remote command to evaluate arbitrary cubescript on the server, for example `#do persistteams 1`, `#do servermotd "happy fragging"` or `#do concat $serverauth`
 - adds the server-side `sendservmsg` cubescript command, so admins can broadcast something using `#do sendservmsg foo`
 
-### [autoauthdomains.patch](./patches/autoauthdomains.patch)
+### [server_autoauthdomains.patch](./patches/server_autoauthdomains.patch)
 
 - adds the `addautoauthdomain` command to request an auth key automatically right after a player joined (*not* before joining; this won't let the player connect in private mode: only the server auth domain can be used for that!)
 
-### [proxy_setip.patch](./patches/proxy_setip.patch)
+### [server_proxy_setip.patch](./patches/server_proxy_setip.patch)
 
 - adds the `addtrustedproxyip` command to declare a packet source IP as belonging to a trusted proxy
 
@@ -409,13 +390,13 @@ This patch adds support for the [SauerDuels proxy](https://github.com/sauerduels
 - adds the `-e` command line flag to enable anticheat support
 - adds the `forceanticheatclient` toggle: if enabled, players are forced-to-spec on connect, and have to be using a p1xbraten anticheat client in order to play
 
-### [serverbotbalanceearly.patch](./patches/serverbotbalanceearly.patch)
+### [server_botbalanceearly.patch](./patches/server_botbalanceearly.patch)
 
 - adds the `serverbotbalanceearly` variable: if 1 (and `serverbotbalance` is also enabled), the server will equalize the player count of all teams by adding/reassigning/removing bots
 
 This is a more aggressive form of auto-balance than vanilla's `serverbotbalance`, which only reassigns bots, and never adds or removes bots on its own. It's intended for public play and disables manually adding/removing bots.
 
-### [bans.patch](./patches/bans.patch)
+### [server_bans.patch](./patches/server_bans.patch)
 
 - adds the `getip <cn>` command to return a client's IP
 - adds the `ban <ip> <minutes>` command to ban an IP for the specified duration (or 30 minutes if not specified)

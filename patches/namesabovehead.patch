@@ -16,7 +16,7 @@ Index: src/fpsgame/render.cpp
          }
 -        if(icons) concatstring(d->info, " ");
 -        particle_text(p, d->info, PART_TEXT, 1, team ? (team==1 ? 0x6496FF : 0xFF4B19) : 0x1EC850, 2.0f, 0, icons);
-+        if (namesabovehead) {
++        if(namesabovehead) {
 +            if(icons) concatstring(d->info, " ");
 +            particle_text(p, d->info, PART_TEXT, 1, team ? (team==1 ? 0x6496FF : 0xFF4B19) : 0x1EC850, 2.0f, 0, icons);
 +        }

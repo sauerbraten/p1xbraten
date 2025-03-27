@@ -1282,13 +1282,19 @@ char *loadfile(const char *fn, size_t *size, bool utf8, bool gz)
     size_t len = fsize;
     char *buf = new (false) char[len+1];
     if(!buf) { delete f; return NULL; }
-    size_t rlen = f->read(buf, len);
-    delete f;
-    if(rlen != len) { delete[] buf; return NULL; }
     size_t offset = 0;
-    if(utf8 && len >= 3 && ((uchar *)buf)[0] == 0xEF && ((uchar *)buf)[1] == 0xBB && ((uchar *)buf)[2] == 0xBF) offset += 3;
-    if(utf8) len = decodeutf8((uchar *)&buf[offset], len-offset, (uchar *)&buf[offset], len-offset);
+    if(utf8 && len >= 3)
+    {
+        if(f->read(buf, 3) != 3) { delete f; delete[] buf; return NULL; }
+        if(((uchar *)buf)[0] == 0xEF && ((uchar *)buf)[1] == 0xBB && ((uchar *)buf)[2] == 0xBF) len -= 3;
+        else offset += 3;
+    } 
+    size_t rlen = f->read(&buf[offset], len-offset);
+    delete f;
+    if(rlen != len-offset) { delete[] buf; return NULL; }
+    if(utf8) len = decodeutf8((uchar *)buf, len, (uchar *)buf, len);
     buf[len] = '\0';
     if(size!=NULL) *size = len;
     return buf;
 }
+

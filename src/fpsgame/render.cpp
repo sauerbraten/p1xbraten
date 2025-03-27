@@ -239,7 +239,7 @@ namespace game
             if(d->maxhealth>100) icons += (min(d->maxhealth, boost.max) - 100 + boost.info-1) / boost.info;
             if(d->armour>0 && d->armourtype>=A_GREEN && !m_noitems) icons++;
         }
-        if (namesabovehead) {
+        if(namesabovehead) {
             if(icons) concatstring(d->info, " ");
             particle_text(p, d->info, PART_TEXT, 1, team ? (team==1 ? COL_BLUE : COL_RED) : COL_GREEN, 2.0f, 0, icons);
         }

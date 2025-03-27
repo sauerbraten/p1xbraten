@@ -40,8 +40,7 @@ apply-patches:
 	$(PATCH) < patches/2020_compat.patch # keeps SVN changes compatible with 2020 edition
 	$(PATCH) < patches/modconfig.patch
 	$(PATCH) < patches/modversion.patch
-	$(PATCH) < patches/moviehud.patch
-	$(PATCH) < patches/hasflag.patch
+	$(PATCH) < patches/namesabovehead.patch
 	$(PATCH) < patches/colors.patch
 	$(PATCH) < patches/listteams.patch
 	$(PATCH) < patches/scoreboard.patch
@@ -49,38 +48,38 @@ apply-patches:
 	$(PATCH) < patches/fullconsole.patch
 	$(PATCH) < patches/hudscore.patch
 	$(PATCH) < patches/serverbrowser.patch
-	$(PATCH) < patches/execfile.patch
+	$(PATCH) < patches/execfile_gz_support.patch
 	$(PATCH) < patches/embedded_cfgs.patch
-	$(PATCH) < patches/tex_commands.patch
+	$(PATCH) < patches/settex.patch
 	$(PATCH) < patches/decouple_framedrawing.patch
 	$(PATCH) < patches/crosshaircolor.patch
 	$(PATCH) < patches/chat_highlight_words.patch
 	$(PATCH) < patches/zenmode.patch
-	$(PATCH) < patches/authservers.patch
-	$(PATCH) < patches/serverlogging.patch
+	$(PATCH) < patches/server_authservers.patch
+	$(PATCH) < patches/server_logging.patch
 	$(PATCH) < patches/gamehud.patch
-	$(PATCH) < patches/server_ogzs.patch
+	$(PATCH) < patches/server_slim_ogzs.patch
 	$(PATCH) < patches/minimizedframes.patch
 	$(PATCH) < patches/playerspeed.patch
 	$(PATCH) < patches/up_down_hover.patch
 	$(PATCH) < patches/paused_spec_movement.patch
 	$(PATCH) < patches/clientdemo.patch
 	$(PATCH) < patches/colored_weapon_trails.patch
-	$(PATCH) < patches/serverevents.patch
+	$(PATCH) < patches/server_events.patch
 	$(PATCH) < patches/crosshairreloadfade.patch
-	$(PATCH) < patches/managed_games.patch
+	$(PATCH) < patches/server_managed_games.patch
 	$(PATCH) < patches/better_console.patch
-	$(PATCH) < patches/autoauthdomains.patch
+	$(PATCH) < patches/server_autoauthdomains.patch
 	$(PATCH) < patches/nextfollowteam.patch
-	$(PATCH) < patches/proxy_setip.patch
+	$(PATCH) < patches/server_proxy_setip.patch
 	$(PATCH) < patches/server_demo_name.patch
 	$(PATCH) < patches/spec_teleports.patch
 	$(PATCH) < patches/demo_info_message.patch
-	$(PATCH) < patches/extinfo_mod_id.patch
+	$(PATCH) < patches/server_extinfo_mod_id.patch
 	$(PATCH) < patches/anticheat.patch
 	$(PATCH) < patches/setfont.patch
-	$(PATCH) < patches/serverbotbalanceearly.patch
-	$(PATCH) < patches/bans.patch
+	$(PATCH) < patches/server_botbalanceearly.patch
+	$(PATCH) < patches/server_bans.patch
 	$(PATCH) < patches/fullscreenmonitor.patch
 	$(PATCH) < patches/enet_fragment_flood.patch
 	cd src && make depend
