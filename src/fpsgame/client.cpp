@@ -508,19 +508,6 @@ namespace game
     ICOMMAND(unignore, "s", (char *arg), unignore(parseplayer(arg))); 
     ICOMMAND(isignored, "s", (char *arg), intret(isignored(parseplayer(arg)) ? 1 : 0));
 
-    MOD(VARFP, zenmode, 0, 0, 1, {
-        if(zenmode)
-        {
-            if(miniconfilter&CON_NONZEN) miniconfilter -= CON_NONZEN;
-            if(confilter&CON_NONZEN) confilter -= CON_NONZEN;
-        }
-        else
-        {
-            if(!(miniconfilter&CON_NONZEN)) miniconfilter += CON_NONZEN;
-            if(!(confilter&CON_NONZEN)) confilter += CON_NONZEN;
-        }
-    });
-
     void setteam(const char *arg1, const char *arg2)
     {
         int i = parseplayer(arg1);
@@ -1014,10 +1001,6 @@ namespace game
 
     ICOMMAND(servcmd, "C", (char *cmd), addmsg(N_SERVCMD, "rs", cmd));
 
-    MOD(SVARP, chathighlightsound, "free/tick");
-    vector<const char *> chathighlightwords;
-    ICOMMAND(addchathighlightword, "s", (char *text), chathighlightwords.add(newstring(text)));
-
     static void sendposition(fpsent *d, packetbuf &q)
     {
         int offset = q.length();
@@ -1433,8 +1416,7 @@ namespace game
                 if(isignored(d->clientnum)) break;
                 if(d->state!=CS_DEAD && d->state!=CS_SPECTATOR)
                     particle_textcopy(d->abovehead(), text, PART_TEXT, 2000, 0x32FF64, 4.0f, -8);
-                conoutf(CON_CHAT + (d->state==CS_SPECTATOR ? CON_NONZEN : 0), "%s:\f0 %s", chatcolorname(d), text);
-                if(!hasfocus) loopv(chathighlightwords) if(strstr(text, chathighlightwords[i])) { playsoundname(chathighlightsound); break; }
+                conoutf(CON_CHAT, "%s:\f0 %s", chatcolorname(d), text);
                 break;
             }
 
@@ -1447,8 +1429,7 @@ namespace game
                 if(!t || isignored(t->clientnum)) break;
                 if(t->state!=CS_DEAD && t->state!=CS_SPECTATOR)
                     particle_textcopy(t->abovehead(), text, PART_TEXT, 2000, COL_BLUE, 4.0f, -8);
-                conoutf(CON_TEAMCHAT + (t->state==CS_SPECTATOR ? CON_NONZEN : 0), "\fs\f8[%s]\fr %s: \f8%s", t->state==CS_SPECTATOR ? "spec" : "team", chatcolorname(t), text);
-                if(!hasfocus) loopv(chathighlightwords) if(strstr(text, chathighlightwords[i])) { playsoundname(chathighlightsound); break; }
+                conoutf(CON_TEAMCHAT, "\fs\f8[%s]\fr %s: \f8%s", t->state==CS_SPECTATOR ? "spec" : "team", chatcolorname(t), text);
                 break;
             }
 
@@ -1506,11 +1487,11 @@ namespace game
                 if(d->name[0])          // already connected
                 {
                     if(strcmp(d->name, text) && !isignored(d->clientnum))
-                        conoutf(CON_INFO + (d->state==CS_SPECTATOR ? CON_NONZEN : 0), "%s is now known as %s", colorname(d), colorname(d, text));
+                        conoutf("%s is now known as %s", colorname(d), colorname(d, text));
                 }
                 else                    // new client
                 {
-                    conoutf(CON_INFO|CON_NONZEN, "\f0join:\f7 %s", colorname(d, text));
+                    conoutf("\f0join:\f7 %s", colorname(d, text));
                     if(needclipboard >= 0) needclipboard++;
                     broadcastp1xbratenversion();
                 }
@@ -1531,7 +1512,7 @@ namespace game
                     if(!text[0]) copystring(text, "unnamed");
                     if(strcmp(text, d->name))
                     {
-                        if(!isignored(d->clientnum)) conoutf(CON_INFO + (d->state==CS_SPECTATOR ? CON_NONZEN : 0), "%s is now known as %s", colorname(d), colorname(d, text));
+                        if(!isignored(d->clientnum)) conoutf("%s is now known as %s", colorname(d), colorname(d, text));
                         copystring(d->name, text, MAXNAMELEN+1);
                         filternonalphanum(text, text, MAXNAMELEN);
                         copystring(d->alphanumname, text, MAXNAMELEN);
@@ -1886,7 +1867,7 @@ namespace game
 
             case N_SERVMSG:
                 getstring(text, p);
-                conoutf(CON_INFO|CON_NONZEN, "%s", text);
+                conoutf("%s", text);
                 break;
 
             case N_SENDDEMOLIST:

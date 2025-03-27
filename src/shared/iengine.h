@@ -203,7 +203,6 @@ enum
 };
 
 extern int fullconsole;
-extern int confilter, fullconfilter, miniconfilter;
 
 extern void conoutf(const char *s, ...) PRINTFARGS(1, 2);
 extern void conoutf(int type, const char *s, ...) PRINTFARGS(2, 3);
@@ -254,7 +253,6 @@ extern void renderentring(const extentity &e, float radius, int axis = 0);
 
 // main
 extern void fatal(const char *s, ...) PRINTFARGS(1, 2);
-extern bool hasfocus;
 
 // rendertext
 extern bool setfont(const char *name);

@@ -467,7 +467,7 @@ VARN(relativemouse, userelativemouse, 1, 1, 0);
 VARNP(relativemouse, userelativemouse, 0, 1, 1);
 #endif
 
-bool shouldgrab = false, grabinput = false, minimized = false, hasfocus = true, canrelativemouse = true, relativemouse = false;
+bool shouldgrab = false, grabinput = false, minimized = false, canrelativemouse = true, relativemouse = false;
 
 #ifdef SDL_VIDEO_DRIVER_X11
 VAR(sdl_xgrab_bug, 0, 0, 1);
@@ -957,7 +957,6 @@ void checkinput()
 
                     case SDL_WINDOWEVENT_FOCUS_GAINED:
                         shouldgrab = true;
-                        hasfocus = true;
                         break;
                     case SDL_WINDOWEVENT_ENTER:
                         shouldgrab = false;
@@ -968,7 +967,6 @@ void checkinput()
                     case SDL_WINDOWEVENT_FOCUS_LOST:
                         shouldgrab = false;
                         focused = -1;
-                        hasfocus = false;
                         break;
 
                     case SDL_WINDOWEVENT_MINIMIZED:

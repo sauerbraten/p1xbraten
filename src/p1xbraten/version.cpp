@@ -15,12 +15,13 @@ void migratep1xbraten()
     if(naturalsort(p1xbratenversion, version) == -1)
     {
         // we're newer, run migrations
-        if(naturalsort(p1xbratenversion, "3.0.0") == -1) {
+        if(naturalsort(p1xbratenversion, "9.0.0") == -1) {
 #ifndef STANDALONE
-            // activate CON_NONZEN in all consoles
-            if(!(confilter&(1<<14))) confilter += 1<<14;
-            if(!(fullconfilter&(1<<14))) fullconfilter += 1<<14;
-            if(!(miniconfilter&(1<<14))) miniconfilter += 1<<14;
+            // unset CON_NONZEN (from archived/zenmode.patch) in all consoles
+            extern int confilter, fullconfilter, miniconfilter;
+            if((confilter&(1<<14)))         confilter -= 1<<14;
+            if((fullconfilter&(1<<14))) fullconfilter -= 1<<14;
+            if((miniconfilter&(1<<14))) miniconfilter -= 1<<14;
 #endif
         }
     }

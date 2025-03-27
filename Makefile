@@ -53,8 +53,7 @@ apply-patches:
 	$(PATCH) < patches/settex.patch
 	$(PATCH) < patches/decouple_framedrawing.patch
 	$(PATCH) < patches/crosshaircolor.patch
-	$(PATCH) < patches/chat_highlight_words.patch
-	$(PATCH) < patches/zenmode.patch
+	$(PATCH) < patches/migr_zenmode.patch
 	$(PATCH) < patches/server_authservers.patch
 	$(PATCH) < patches/server_logging.patch
 	$(PATCH) < patches/gamehud.patch

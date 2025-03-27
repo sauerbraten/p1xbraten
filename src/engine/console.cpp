@@ -119,8 +119,7 @@ int drawconlines(int conskip, int confade, int conwidth, int conheight, int cono
     {
         // shuffle backwards to fill if necessary
         int idx = offset+i < numl ? offset+i : --offset;
-        int flags = conlines[idx].type & CON_FLAGS;
-        if((flags&filter)!=flags) continue;
+        if(!(conlines[idx].type&filter)) continue;
         char *line = conlines[idx].line;
         int width, height;
         text_bounds(line, width, height, conwidth);
@@ -131,8 +130,7 @@ int drawconlines(int conskip, int confade, int conwidth, int conheight, int cono
     loopi(numl)
     {
         int idx = offset + (dir > 0 ? numl-i-1 : i);
-        int flags = conlines[idx].type & CON_FLAGS;
-        if((flags&filter)!=flags) continue;
+        if(!(conlines[idx].type&filter)) continue;
         char *line = conlines[idx].line;
         int width, height;
         text_bounds(line, width, height, conwidth);
