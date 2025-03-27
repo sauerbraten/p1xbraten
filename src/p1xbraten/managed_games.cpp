@@ -120,10 +120,8 @@ namespace server {
         }
     }
 
-    const char *demofilename(const char *povname)
+    const char *demofilename(int povcn)
     {
-        if(!povname) return NULL;
-
         static string ts;
         ts[0] = 0;
         time_t t = time(NULL);
@@ -131,7 +129,8 @@ namespace server {
         ts[min(len, sizeof(ts)-1)] = 0;
 
         static string basename;
-        formatstring(basename, "%s_%s_%s_%s", ts, gamemodes[gamemode-STARTGAMEMODE].name, smapname, povname);
+        if(povcn<0) formatstring(basename, "%s_%s_%s_server", ts, gamemodes[gamemode-STARTGAMEMODE].name, smapname);
+        else        formatstring(basename, "%s_%s_%s_pov_%d", ts, gamemodes[gamemode-STARTGAMEMODE].name, smapname, povcn);
         filtertext(basename, basename, false);
         len = strlen(basename);
         if(len < 4 || strcasecmp(&basename[len-4], ".dmo")) concatstring(basename, ".dmo");
@@ -140,9 +139,9 @@ namespace server {
         return fname ? fname : basename;
     }
 
-    bool savedemo(demofile &d, const char *povname)
+    bool savedemo(demofile &d, int povcn)
     {
-        const char *fname = demofilename(povname);
+        const char *fname = demofilename(povcn);
         if(!fname) { conoutf(CON_WARN, "could not build demo file name"); return false; }
         stream *f = openrawfile(fname, "wb");
         if(!f) { conoutf(CON_WARN, "could not open %s to save demo", fname); return false; }
@@ -170,7 +169,7 @@ namespace server {
         clientinfo *ci = getinfo(sender);
         if(ci->state.state==CS_SPECTATOR) return;
         demofile d; d.data = data; d.len = len;
-        savedemo(d, ci->name);
+        savedemo(d, ci->clientnum);
         static string msg;
         formatstring(msg, "received client-side demo from %s", colorname(ci));
         notifyprivclients(PRIV_ADMIN, msg);

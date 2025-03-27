@@ -1243,7 +1243,7 @@ namespace server
     };
     extern bool demonextmatch;
     extern char *demodir;
-    extern bool savedemo(demofile &d, const char *povname = "server");
+    extern bool savedemo(demofile &d, int povcn = -1);
 
     // managed games
     extern int autolockedcompetitive;
