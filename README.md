@@ -21,7 +21,7 @@ This repository contains the source for my client mod, as well as the patches ap
   - [crosshaircolor.patch](#crosshaircolorpatch)
   - [gamehud.patch](#gamehudpatch)
   - [modversion.patch](#modversionpatch)
-  - [minimizedframes.patch](#minimizedframespatch)
+  - [ignoreminimize.patch](#ignoreminimizepatch)
   - [playerspeed.patch](#playerspeedpatch)
   - [up\_down\_hover.patch](#up_down_hoverpatch)
   - [paused\_spec\_movement.patch](#paused_spec_movementpatch)
@@ -248,9 +248,9 @@ This lets you see wether a player connected to the same server as you is using p
 
 For an overview of who uses p1xbraten, you can run `/showgui p1xbratenusage`.
 
-### [minimizedframes.patch](./patches/minimizedframes.patch)
+### [ignoreminimize.patch](./patches/ignoreminimize.patch)
 
-- adds the `minimizedframes` toggle: when 1, frames will always be drawn, even when they would usually be skipped because p1xbraten is minimized
+- adds the `ignoreminimize` toggle: when 1, the game will not stop playing sounds or drawing frames when minimized
 
 ### [playerspeed.patch](./patches/playerspeed.patch)
 

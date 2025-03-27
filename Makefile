@@ -58,7 +58,7 @@ apply-patches:
 	$(PATCH) < patches/server_logging.patch
 	$(PATCH) < patches/gamehud.patch
 	$(PATCH) < patches/server_slim_ogzs.patch
-	$(PATCH) < patches/minimizedframes.patch
+	$(PATCH) < patches/ignoreminimize.patch
 	$(PATCH) < patches/playerspeed.patch
 	$(PATCH) < patches/up_down_hover.patch
 	$(PATCH) < patches/paused_spec_movement.patch

@@ -915,6 +915,9 @@ static void checkmousemotion(int &dx, int &dy)
     }
 }
 
+MOD(VARP, ignoreminimize, 0, 0, 1);
+MOD(VARF, minimizedframes, 0, 0, 1, { if(minimizedframes) ignoreminimize = 1; });
+
 void checkinput()
 {
     if(interceptkeysym) clearinterceptkey();
@@ -970,7 +973,7 @@ void checkinput()
                         break;
 
                     case SDL_WINDOWEVENT_MINIMIZED:
-                        minimized = true;
+                        if(!ignoreminimize) minimized = true;
                         break;
 
                     case SDL_WINDOWEVENT_MAXIMIZED:
@@ -1191,7 +1194,6 @@ int getclockmillis()
 }
 
 VAR(numcpus, 1, 1, 16);
-MOD(VARP, minimizedframes, 0, 0, 1);
 
 int main(int argc, char **argv)
 {
@@ -1419,7 +1421,7 @@ int main(int argc, char **argv)
         updateparticles();
         updatesounds();
 
-        if(minimized && !minimizedframes) continue;
+        if(minimized) continue;
 
         if(draw)
         {

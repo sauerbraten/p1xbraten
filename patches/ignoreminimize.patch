@@ -1,0 +1,23 @@
+diff --git src/engine/main.cpp src/engine/main.cpp
+index 594a24b..5431955 100644
+--- src/engine/main.cpp
++++ src/engine/main.cpp
+@@ -915,6 +915,9 @@ static void checkmousemotion(int &dx, int &dy)
+     }
+ }
+
++MOD(VARP, ignoreminimize, 0, 0, 1);
++MOD(VARF, minimizedframes, 0, 0, 1, { if(minimizedframes) ignoreminimize = 1; });
++
+ void checkinput()
+ {
+     if(interceptkeysym) clearinterceptkey();
+@@ -970,7 +973,7 @@ void checkinput()
+                         break;
+
+                     case SDL_WINDOWEVENT_MINIMIZED:
+-                        minimized = true;
++                        if(!ignoreminimize) minimized = true;
+                         break;
+
+                     case SDL_WINDOWEVENT_MAXIMIZED:
