@@ -2092,6 +2092,7 @@ namespace game
                 neterr("type", cn < 0);
                 return;
         }
+        if(mapchanged) execident("mapstart");
     }
 
     struct demoreq
@@ -2292,4 +2293,3 @@ namespace game
     }
     COMMAND(gotosel, "");
 }
-

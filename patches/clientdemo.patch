@@ -1,3 +1,5 @@
+requires mapstart.patch to work correctly!
+
 diff --git src/fpsgame/capture.h src/fpsgame/capture.h
 index f6f7555..59b8c54 100644
 --- src/fpsgame/capture.h
@@ -275,7 +277,7 @@ new file mode 100644
 index 0000000..839b0a9
 --- /dev/null
 +++ src/p1xbraten/clientdemo.cpp
-@@ -0,0 +1,315 @@
+@@ -0,0 +1,314 @@
 +#include "game.h"
 +
 +// client-side demo recording works mostly the same as server-side:
@@ -449,7 +451,6 @@ index 0000000..839b0a9
 +            putint(p, pl->flags);
 +            putint(p, pl->deaths);
 +            putint(p, pl->quadmillis);
-+
 +            sendstate(pl, p);
 +        }
 +        putint(p, -1);

@@ -724,8 +724,6 @@ namespace game
         showscores(false);
         disablezoom();
         lasthit = 0;
-
-        execident("mapstart");
     }
 
     void loadingmap(const char *name)
@@ -1375,4 +1373,3 @@ namespace game
         execfile("auth.cfg", false);
     }
 }
-

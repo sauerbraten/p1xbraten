@@ -177,7 +177,6 @@ namespace game {
             putint(p, pl->flags);
             putint(p, pl->deaths);
             putint(p, pl->quadmillis);
-
             sendstate(pl, p);
         }
         putint(p, -1);

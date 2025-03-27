@@ -1,0 +1,35 @@
+diff --git src/fpsgame/client.cpp src/fpsgame/client.cpp
+index eebb6e3..a89dfb4 100644
+--- src/fpsgame/client.cpp
++++ src/fpsgame/client.cpp
+@@ -2092,6 +2092,7 @@ namespace game
+                 neterr("type", cn < 0);
+                 return;
+         }
++        if(mapchanged) execident("mapstart");
+     }
+ 
+     struct demoreq
+@@ -2292,4 +2293,3 @@ namespace game
+     }
+     COMMAND(gotosel, "");
+ }
+-
+diff --git src/fpsgame/fps.cpp src/fpsgame/fps.cpp
+index 286d58c..1a4af43 100644
+--- src/fpsgame/fps.cpp
++++ src/fpsgame/fps.cpp
+@@ -724,8 +724,6 @@ namespace game
+         showscores(false);
+         disablezoom();
+         lasthit = 0;
+-
+-        execident("mapstart");
+     }
+ 
+     void loadingmap(const char *name)
+@@ -1375,4 +1373,3 @@ namespace game
+         execfile("auth.cfg", false);
+     }
+ }
+-
