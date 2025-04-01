@@ -19,7 +19,7 @@ else
 endif
 
 CFLAGS=
-CXXFLAGS= -fomit-frame-pointer -ffast-math
+CXXFLAGS= -fomit-frame-pointer -ffast-math -Wno-deprecated-declarations
 LINKERFLAGS=
 ifdef DEBUG
 	override CFLAGS+= -g3

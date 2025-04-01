@@ -13,7 +13,7 @@ function createHashCatalogue() {
     popd || exit
 }
 
-function pack() {
+function build() {
     local platform=$1
     local target="$platform"
     shift
@@ -32,6 +32,11 @@ function pack() {
     # restore git-dev version
     rm src/p1xbraten/version.cpp
     mv src/p1xbraten/version.cpp.orig src/p1xbraten/version.cpp
+}
+
+function pack() {
+    local platform=$1
+    local version=$(git describe)
 
     # create hash catalogue
     local binDir="bin_unix"
@@ -82,14 +87,23 @@ platform=$1
 
 case "$platform" in
     linux)
-        pack "$platform" "debian"
+        build "$platform" "debian"
+        pack "$platform"
         ;;
-    windows | macos)
+    windows)
+        build "$platform"
+        pack "$platform"
+        ;;
+    macos)
+        build "$platform"
         pack "$platform"
         ;;
     all)
-        pack "linux" "debian"
+        build "linux" "debian"
+        pack "linux"
+        build "windows"
         pack "windows"
+        build "macos"
         pack "macos"
         ;;
     *)

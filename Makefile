@@ -23,7 +23,7 @@ linux macos windows: | clean key
 	source secrets.env && go run encrypt_credentials.go < src/anticheat/key && \
 	cd src && \
 	export TARGET="x86_64-$@" && \
-	make --jobs=8 install
+	make -j install
 
 debian: clean
 	dd if=/dev/random of=Dockertrigger count=64 && \
