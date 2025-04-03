@@ -1753,6 +1753,8 @@ namespace server
         notgotitems = false;
     }
         
+    void clearmapevents();
+
     void changemap(const char *s, int mode)
     {
         stopdemo();
@@ -1760,6 +1762,7 @@ namespace server
         changegamespeed(100);
         if(smode) smode->cleanup();
         aiman::clearai();
+        clearmapevents();
 
         gamemode = mode;
         gamemillis = 0;
@@ -2149,21 +2152,23 @@ namespace server
         return true;
     }
 
-    vector<gameevent *> events;
-
     void clearevent(clientinfo *ci)
     {
         delete ci->events.remove(0);
     }
 
-    void flushevents()
+    vector<timedevent *> mapevents; // based on totalmillis (to run while paused), but cleared on mapchange
+
+    void flushmapevents()
     {
-        loopv(events)
+        loopv(mapevents)
         {
-            gameevent *ev = events[i];
-            if(ev->flush(NULL, totalmillis)) { events.remove(i); i--; }
+            timedevent *ev = mapevents[i];
+            if(ev->flush(NULL, totalmillis)) { mapevents.remove(i); i--; }
         }
     }
+
+    void clearmapevents() { mapevents.deletecontents(); }
 
     void flushevents(clientinfo *ci, int millis)
     {
@@ -2238,7 +2243,7 @@ namespace server
                 if(smode) smode->update();
             }
         }
-        flushevents(); // server events, always based on totalmillis!
+        flushmapevents();
 
         while(bannedips.length() && bannedips[0].expire-totalmillis <= 0) bannedips.remove(0);
         loopv(connects) if(totalmillis-connects[i]->connectmillis>15000) disconnect_client(connects[i]->clientnum, DISC_TIMEOUT);

@@ -151,7 +151,6 @@ namespace server {
         return true;
     }
 
-
     void notifyprivclients(int minpriv, char *msg)
     {
         loopv(clients)
@@ -175,34 +174,23 @@ namespace server {
         notifyprivclients(PRIV_ADMIN, msg);
     }
 
-    struct messageevent : gameevent
+    struct messageevent : timedevent
     {
-        int millis;
-        clientinfo *ci = NULL;
         string msg;
 
-        bool flush(clientinfo *_ , int fmillis)
-        {
-            if(millis > fmillis) return false;
-            if(!ci || ci->connected) sendf(-1, 1, "ris", N_SERVMSG, msg);
-            return true;
-        }
+        void process(clientinfo *_) { sendf(-1, 1, "ris", N_SERVMSG, msg); }
     };
 
-    struct startevent : gameevent
+    struct startevent : timedevent
     {
-        int millis;
-
-        bool flush(clientinfo *_ , int fmillis)
+        void process(clientinfo *_)
         {
-            if(millis > fmillis) return false;
             pausegame(false);
             if(m_mp(gamemode)) loopv(clients)
             {
                 clientinfo *ci = clients[i];
                 if(ci->state.state!=CS_SPECTATOR) sendspawn(ci);
             }
-            return true;
         }
     };
 
@@ -221,60 +209,46 @@ namespace server {
         {
             sendf(-1, 1, "ris", N_SERVMSG, "all players ready, game starts in 3");
             waitingforspawns = false;
-
             messageevent *m2 = new messageevent;
             m2->millis = totalmillis + 1*COUNTDOWN_INTERVAL;
             copystring(m2->msg, "... 2");
-            events.add(m2);
-
+            mapevents.add(m2);
             messageevent *m1 = new messageevent;
             m1->millis = totalmillis + 2*COUNTDOWN_INTERVAL;
             copystring(m1->msg, "... 1");
-            events.add(m1);
-
+            mapevents.add(m1);
             startevent *u = new startevent;
             u->millis = totalmillis + 3*COUNTDOWN_INTERVAL;
-            events.add(u);
+            mapevents.add(u);
         }
     }
 
     bool resuming = false;
 
-    struct resumeevent : gameevent
+    struct resumeevent : timedevent
     {
-        int millis;
-        clientinfo *ci = NULL;
+        int cn = -1;
 
-        bool flush(clientinfo *_ , int fmillis)
-        {
-            if(millis > fmillis) return false;
-            pausegame(false, ci);
-            return true;
-        }
+        void process(clientinfo *_) { pausegame(false, (clientinfo *)getclientinfo(cn)); }
     };
 
     void resumewithcountdown(clientinfo *ci)
     {
-        if(resuming) return;
+        if(!ci || resuming) return;
+        if(waitingforspawns && ci->privilege < PRIV_MASTER && !ci->local) return;
         resuming = true;
-
         sendf(-1, 1, "ris", N_SERVMSG, "resuming in 3");
-
         messageevent *m2 = new messageevent;
-        m2->millis = totalmillis + 1*COUNTDOWN_INTERVAL;
-        m2->ci = ci;
+        m2->millis = totalmillis + COUNTDOWN_INTERVAL * 1;
         copystring(m2->msg, "... 2");
-        events.add(m2);
-
+        mapevents.add(m2);
         messageevent *m1 = new messageevent;
-        m1->millis = totalmillis + 2*COUNTDOWN_INTERVAL;
-        m1->ci = ci;
+        m1->millis = totalmillis + COUNTDOWN_INTERVAL * 2;
         copystring(m1->msg, "... 1");
-        events.add(m1);
-
+        mapevents.add(m1);
         resumeevent *r = new resumeevent;
-        r->millis = totalmillis + 3*COUNTDOWN_INTERVAL;
-        r->ci = ci;
-        events.add(r);
+        r->millis = totalmillis + COUNTDOWN_INTERVAL * 3;
+        r->cn = ci->clientnum;
+        mapevents.add(r);
     }
 }

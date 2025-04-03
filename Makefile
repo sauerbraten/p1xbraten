@@ -65,8 +65,8 @@ apply-patches:
 	$(PATCH) < patches/mapstart.patch
 	$(PATCH) < patches/clientdemo.patch
 	$(PATCH) < patches/colored_weapon_trails.patch
-	$(PATCH) < patches/server_events.patch
 	$(PATCH) < patches/crosshairreloadfade.patch
+	$(PATCH) < patches/server_events.patch
 	$(PATCH) < patches/server_managed_games.patch
 	$(PATCH) < patches/better_console.patch
 	$(PATCH) < patches/server_autoauthdomains.patch

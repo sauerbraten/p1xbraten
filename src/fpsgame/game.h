@@ -916,7 +916,6 @@ namespace server
 
         virtual bool keepable() const { return false; }
     };
-    extern vector<gameevent *> events;
 
     struct timedevent : gameevent
     {
@@ -924,6 +923,7 @@ namespace server
 
         bool flush(clientinfo *ci, int fmillis);
     };
+    extern vector<timedevent *> mapevents;
 
     struct hitinfo
     {

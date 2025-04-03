@@ -17,7 +17,6 @@ index 64a92ad..02277f9 100644
 +
 +        virtual bool keepable() const { return false; }
 +    };
-+    extern vector<gameevent *> events;
 +
 +    struct timedevent : gameevent
 +    {
@@ -25,6 +24,7 @@ index 64a92ad..02277f9 100644
 +
 +        bool flush(clientinfo *ci, int fmillis);
 +    };
++    extern vector<timedevent *> mapevents;
 +
 +    struct hitinfo
 +    {
@@ -623,25 +623,41 @@ index 6256cd4..7d25726 100644
      struct ban
      {
          int time, expire;
-@@ -2434,11 +2137,22 @@ namespace server
-         return true;
+@@ -1753,6 +1456,8 @@ namespace server
+         notgotitems = false;
      }
 
-+    vector<gameevent *> events;
++    void clearmapevents();
 +
+     void changemap(const char *s, int mode)
+     {
+         stopdemo();
+@@ -1760,6 +1465,7 @@ namespace server
+         changegamespeed(100);
+         if(smode) smode->cleanup();
+         aiman::clearai();
++        clearmapevents();
+
+         gamemode = mode;
+         gamemillis = 0;
+@@ -2437,8 +2140,21 @@ namespace server
      void clearevent(clientinfo *ci)
      {
          delete ci->events.remove(0);
      }
 
-+    void flushevents()
++    vector<timedevent *> mapevents; // based on totalmillis (to run while paused), but cleared on mapchange
++
++    void flushmapevents()
 +    {
-+        loopv(events)
++        loopv(mapevents)
 +        {
-+            gameevent *ev = events[i];
-+            if(ev->flush(NULL, totalmillis)) { events.remove(i); i--; }
++            timedevent *ev = mapevents[i];
++            if(ev->flush(NULL, totalmillis)) { mapevents.remove(i); i--; }
 +        }
 +    }
++
++    void clearmapevents() { mapevents.deletecontents(); }
 +
      void flushevents(clientinfo *ci, int millis)
      {
@@ -650,7 +666,7 @@ index 6256cd4..7d25726 100644
                  if(smode) smode->update();
              }
          }
-+        flushevents(); // server events, always based on totalmillis!
++        flushmapevents();
 
          while(bannedips.length() && bannedips[0].expire-totalmillis <= 0) bannedips.remove(0);
          loopv(connects) if(totalmillis-connects[i]->connectmillis>15000) disconnect_client(connects[i]->clientnum, DISC_TIMEOUT);
